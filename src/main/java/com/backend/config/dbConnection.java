@@ -4,11 +4,14 @@ import java.sql.*;
 public class dbConnection {
     public static Connection getConnection() {
         try {
-            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/urbanlife", "root", "Admin@2424.");
+            String URL = "jdbc:mysql://localhost:3306/urbanlife";
+            String USER = "root";
+            String PASS = "#Aprendiz2024";
+            Connection connection = DriverManager.getConnection(URL, USER, PASS);
             return connection;
         } catch (Exception e) {
             System.out.println(e);
             return null;
         }
     }
-}
+}           
