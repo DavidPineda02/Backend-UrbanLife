@@ -1,35 +1,58 @@
-package com.backend.services;
+ package com.backend.services;
 
 import com.backend.dao.UsuarioDAO;
-import com.backend.dto.LoginRequest;
-import com.backend.dto.LoginResponse;
 import com.backend.helpers.JwtHelper;
 import com.backend.helpers.PasswordHelper;
 import com.backend.models.Usuario;
+import com.google.gson.JsonObject;
 
 public class AuthService {
 
-    private final UsuarioDAO usuarioDAO = new UsuarioDAO();
+    public static JsonObject validateLogin(String correo, String contrasena) {
+        JsonObject response = new JsonObject();
 
-    public LoginResponse login(LoginRequest request) {
-        if (!request.isValid())
-            return new LoginResponse(false, "Correo y contraseña son requeridos");
+        if (correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
+            response.addProperty("success", false);
+            response.addProperty("message", "Correo y contraseña son requeridos");
+            response.addProperty("status", 400);
+            return response;
+        }
 
-        Usuario usuario = usuarioDAO.findByCorreo(request.getCorreo());
-        if (usuario == null)
-            return new LoginResponse(false, "Credenciales inválidas");
+        Usuario usuario = UsuarioDAO.findByCorreo(correo);
+        if (usuario == null) {
+            response.addProperty("success", false);
+            response.addProperty("message", "Credenciales inválidas");
+            response.addProperty("status", 401);
+            return response;
+        }
 
-        if (!PasswordHelper.checkPassword(request.getContrasena(), usuario.getContrasena()))
-            return new LoginResponse(false, "Credenciales inválidas");
+        if (!PasswordHelper.checkPassword(contrasena, usuario.getContrasena())) {
+            response.addProperty("success", false);
+            response.addProperty("message", "Credenciales inválidas");
+            response.addProperty("status", 401);
+            return response;
+        }
 
-        if (!"Activo".equalsIgnoreCase(usuario.getEstado()))
-            return new LoginResponse(false, "Usuario inactivo. Contacte al administrador");
+        if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
+            response.addProperty("success", false);
+            response.addProperty("message", "Usuario inactivo. Contacte al administrador");
+            response.addProperty("status", 403);
+            return response;
+        }
 
-        String rol = usuarioDAO.findRolByUsuarioId(usuario.getIdUsuario());
+        String rol = UsuarioDAO.findRolByUsuarioId(usuario.getIdUsuario());
         if (rol == null) rol = "Sin rol";
 
         String token = JwtHelper.generateToken(usuario.getIdUsuario(), usuario.getCorreo(), rol);
 
-        return new LoginResponse(true, "Login exitoso", token, usuario.getNombre(), usuario.getCorreo(), rol);
+        response.addProperty("success", true);
+        response.addProperty("message", "Login exitoso");
+        response.addProperty("token", token);
+        response.addProperty("nombre", usuario.getNombre());
+        response.addProperty("correo", usuario.getCorreo());
+        response.addProperty("rol", rol);
+        response.addProperty("status", 200);
+
+        return response;
     }
 }

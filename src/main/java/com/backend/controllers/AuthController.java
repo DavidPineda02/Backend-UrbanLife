@@ -1,40 +1,55 @@
 package com.backend.controllers;
 
-import com.backend.dto.LoginRequest;
-import com.backend.dto.LoginResponse;
-import com.backend.helpers.JsonHelper;
+import com.backend.server.http.ApiRequest;
+import com.backend.server.http.ApiResponse;
 import com.backend.services.AuthService;
-import com.backend.util.HttpResponseUtil;
-import com.sun.net.httpserver.HttpExchange;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpHandler;
 
-import java.io.IOException;
+public class AuthController {
 
-public class AuthController implements HttpHandler {
+    public static HttpHandler login() {
+        return exchange -> {
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/login");
 
-    private final AuthService authService = new AuthService();
+            ApiRequest request = new ApiRequest(exchange);
+            String body = request.readBody();
 
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        try {
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                HttpResponseUtil.handleCors(exchange);
+            if (body.isEmpty()) {
+                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
                 return;
             }
 
-            if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                HttpResponseUtil.sendError(exchange, 405, "Método no permitido. Use POST");
-                return;
-            }
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(body, JsonObject.class);
 
-            LoginRequest request = JsonHelper.fromJson(exchange.getRequestBody(), LoginRequest.class);
-            LoginResponse response = authService.login(request);
+            String correo = json.has("correo") ? json.get("correo").getAsString() : "";
+            String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : "";
 
-            HttpResponseUtil.sendJson(exchange, response.isSuccess() ? 200 : 401, response);
+            JsonObject response = AuthService.validateLogin(correo, contrasena);
+            int code = response.get("status").getAsInt();
+            response.remove("status");
 
-        } catch (Exception e) {
-            System.out.println("Error en AuthController: " + e.getMessage());
-            HttpResponseUtil.sendError(exchange, 500, "Error interno del servidor");
-        }
+            ApiResponse.send(exchange, response.toString(), code);
+        };
+    }
+
+    public static HttpHandler me() {
+        return exchange -> {
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/me");
+
+            String userId = (String) exchange.getAttribute("userId");
+            String correo = (String) exchange.getAttribute("correo");
+            String rol = (String) exchange.getAttribute("rol");
+
+            JsonObject response = new JsonObject();
+            response.addProperty("success", true);
+            response.addProperty("userId", userId);
+            response.addProperty("correo", correo);
+            response.addProperty("rol", rol);
+
+            ApiResponse.send(exchange, response.toString(), 200);
+        };
     }
 }
