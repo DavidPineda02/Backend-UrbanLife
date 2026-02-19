@@ -7,8 +7,8 @@ public class Usuario {
     private String contrasena;
     private String estado; // 'Activo' | 'Inactivo'
 
-    // public Usuario() {
-    // }
+    public Usuario() {
+    }
 
     public Usuario(int idUsuario, String nombre, String correo, String contrasena, String estado) {
         this.idUsuario = idUsuario;

@@ -1,18 +1,31 @@
 package com.backend.server;
+
+import com.backend.routes.Router;
 import com.sun.net.httpserver.HttpServer;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
 public class serverConnection {
-    public static HttpServer server;
+
+    private static HttpServer server;
+
     public static void startServer(int port) {
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
-            server.createContext("/");
+            Router.registerRoutes(server);
             server.setExecutor(null);
             server.start();
+            System.out.println("UrbanLife Backend corriendo en: http://localhost:" + port);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Error al iniciar el servidor: " + e.getMessage());
+        }
+    }
+
+    public static void stopServer() {
+        if (server != null) {
+            server.stop(0);
+            System.out.println("Servidor detenido.");
         }
     }
 }

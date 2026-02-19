@@ -1,9 +1,12 @@
 package com.backend;
-import com.backend.config.dbConnection;
+
+import com.backend.server.serverConnection;
 
 public class Main {
     public static void main(String[] args) {
-        dbConnection.getConnection();
-        System.out.println("Conexion exitosa");
+        System.out.println("Iniciando UrbanLife Backend...");
+
+        // Iniciar el servidor en puerto 8080
+        serverConnection.startServer(8080);
     }
 }
