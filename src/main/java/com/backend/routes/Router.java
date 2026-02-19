@@ -1,37 +1,57 @@
 package com.backend.routes;
 
-import com.backend.controllers.AuthController;
-import com.backend.controllers.UserController;
-import com.backend.middlewares.AuthMiddleware;
-import com.backend.util.HttpResponseUtil;
-import com.sun.net.httpserver.HttpServer;
+import com.backend.server.http.ApiResponse;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
-public class Router {
+public class Router implements HttpHandler {
 
-    public static void registerRoutes(HttpServer server) {
+    Map<String, Map<String, HttpHandler>> routes = new HashMap<>();
 
-        // Rutas públicas
-        server.createContext("/api/auth/login", new AuthController());
-        server.createContext("/api/users", new UserController());
+    public void addRoute(String method, String path, HttpHandler handler) {
+        routes.computeIfAbsent(method, k -> new HashMap<>()).put(path, handler);
+    }
 
-        // Rutas protegidas (requieren JWT)
-        server.createContext("/api/auth/me", new AuthMiddleware(exchange -> {
-            try {
-                HttpResponseUtil.sendJson(exchange, 200, Map.of(
-                        "success", true,
-                        "userId", (String) exchange.getAttribute("userId"),
-                        "correo", (String) exchange.getAttribute("correo"),
-                        "rol", (String) exchange.getAttribute("rol")));
-            } catch (Exception e) {
-                HttpResponseUtil.sendError(exchange, 500, "Error interno del servidor");
+    public void get(String path, HttpHandler handler) {
+        addRoute("GET", path, handler);
+    }
+
+    public void post(String path, HttpHandler handler) {
+        addRoute("POST", path, handler);
+    }
+
+    public void put(String path, HttpHandler handler) {
+        addRoute("PUT", path, handler);
+    }
+
+    public void delete(String path, HttpHandler handler) {
+        addRoute("DELETE", path, handler);
+    }
+
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        String method = exchange.getRequestMethod();
+
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            ApiResponse.handleCors(exchange);
+            return;
+        }
+
+        String path = exchange.getRequestURI().getPath();
+        Map<String, HttpHandler> methodRoutes = routes.get(method);
+
+        if (methodRoutes != null) {
+            HttpHandler handler = methodRoutes.get(path);
+            if (handler != null) {
+                handler.handle(exchange);
+                return;
             }
-        }));
+        }
 
-        System.out.println("Rutas registradas:");
-        System.out.println("  POST   /api/auth/login   (público)");
-        System.out.println("  GET    /api/auth/me       (protegido)");
-        System.out.println("  CRUD   /api/users         (público)");
+        ApiResponse.error(exchange, 404, "Ruta no encontrada");
     }
 }
