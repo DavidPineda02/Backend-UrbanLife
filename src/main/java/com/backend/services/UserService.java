@@ -10,7 +10,7 @@ public class UserService {
 
     private static final Gson gson = new Gson();
 
-    public static JsonObject validateAndCreate(String nombre, String correo, String contrasena, String estado) {
+    public static JsonObject validateAndCreate(String nombre, String correo, String contrasena, boolean estado) {
         JsonObject response = new JsonObject();
 
         if (nombre == null || nombre.isBlank() || correo == null || correo.isBlank()
@@ -29,8 +29,7 @@ public class UserService {
         }
 
         Usuario nuevo = new Usuario(nombre, correo,
-                PasswordHelper.hashPassword(contrasena),
-                estado.isEmpty() ? "Activo" : estado);
+                PasswordHelper.hashPassword(contrasena), estado);
 
         Usuario creado = UsuarioDAO.create(nuevo);
 
@@ -50,7 +49,7 @@ public class UserService {
     }
 
     public static JsonObject validateAndUpdate(int id, String nombre, String correo,
-                                               String contrasena, String estado) {
+                                               String contrasena, Boolean estado) {
         JsonObject response = new JsonObject();
 
         Usuario usuario = UsuarioDAO.findById(id);
@@ -79,7 +78,7 @@ public class UserService {
 
         if (nombre != null && !nombre.isBlank()) usuario.setNombre(nombre);
         if (correo != null && !correo.isBlank()) usuario.setCorreo(correo);
-        if (estado != null && !estado.isBlank()) usuario.setEstado(estado);
+        if (estado != null) usuario.setEstado(estado);
 
         if (!UsuarioDAO.update(usuario)) {
             response.addProperty("success", false);
