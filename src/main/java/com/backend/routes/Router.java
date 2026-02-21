@@ -28,6 +28,10 @@ public class Router implements HttpHandler {
         addRoute("PUT", path, handler);
     }
 
+    public void patch(String path, HttpHandler handler) {
+        addRoute("PATCH", path, handler);
+    }
+
     public void delete(String path, HttpHandler handler) {
         addRoute("DELETE", path, handler);
     }

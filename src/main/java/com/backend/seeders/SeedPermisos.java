@@ -28,7 +28,7 @@ public class SeedPermisos {
 
             String checkSQL = "SELECT COUNT(*) FROM Permisos";
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSQL);
-                 ResultSet rs = checkStmt.executeQuery()) {
+                ResultSet rs = checkStmt.executeQuery()) {
                 if (rs.next() && rs.getInt(1) > 0) {
                     System.out.println("  [Permisos] Ya existen datos -> omitido");
                     return;
