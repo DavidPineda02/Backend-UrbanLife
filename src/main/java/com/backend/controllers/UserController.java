@@ -98,7 +98,7 @@ public class UserController {
             String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
             String correo = json.has("correo") ? json.get("correo").getAsString() : "";
             String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : "";
-            Boolean estado = json.has("estado") ? json.get("estado").getAsBoolean() : null;
+            boolean estado = json.has("estado") ? json.get("estado").getAsBoolean() : true;
 
             JsonObject response = UserService.validateAndUpdate(id, nombre, correo, contrasena, estado);
             int code = response.get("status").getAsInt();
@@ -108,7 +108,7 @@ public class UserController {
         };
     }
 
-    public static HttpHandler delete() {
+    public static HttpHandler patch() {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
 
@@ -119,11 +119,46 @@ public class UserController {
             }
             int id = Integer.parseInt(query.split("=")[1]);
 
-            JsonObject response = UserService.deleteUser(id);
+            ApiRequest request = new ApiRequest(exchange);
+            String body = request.readBody();
+
+            if (body.isEmpty()) {
+                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
+                return;
+            }
+
+            Gson gson = new Gson();
+            JsonObject json = gson.fromJson(body, JsonObject.class);
+
+            String nombre = json.has("nombre") ? json.get("nombre").getAsString() : null;
+            String correo = json.has("correo") ? json.get("correo").getAsString() : null;
+            String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : null;
+            Boolean estado = json.has("estado") ? json.get("estado").getAsBoolean() : null;
+
+            JsonObject response = UserService.partialUpdate(id, nombre, correo, contrasena, estado);
             int code = response.get("status").getAsInt();
             response.remove("status");
 
             ApiResponse.send(exchange, response.toString(), code);
         };
     }
+
+    // public static HttpHandler delete() {
+    //     return exchange -> {
+    //         System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
+    //
+    //         String query = exchange.getRequestURI().getQuery();
+    //         if (query == null || !query.matches("id=\\d+")) {
+    //             ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
+    //             return;
+    //         }
+    //         int id = Integer.parseInt(query.split("=")[1]);
+    //
+    //         JsonObject response = UserService.deleteUser(id);
+    //         int code = response.get("status").getAsInt();
+    //         response.remove("status");
+    //
+    //         ApiResponse.send(exchange, response.toString(), code);
+    //     };
+    // }
 }

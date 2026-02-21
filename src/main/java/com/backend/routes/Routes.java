@@ -22,7 +22,8 @@ public class Routes {
         router.post("/api/users", UserController.create());
         router.get("/api/users/id", UserController.getById());
         router.put("/api/users/id", UserController.update());
-        router.delete("/api/users/id", UserController.delete());
+        router.patch("/api/users/id", UserController.patch());
+        // router.delete("/api/users/id", UserController.delete());
 
         System.out.println("Rutas registradas:");
         System.out.println("  POST   /api/auth/login       (publico)");
@@ -31,7 +32,8 @@ public class Routes {
         System.out.println("  POST   /api/users             (publico)");
         System.out.println("  GET    /api/users/id?id=X     (publico)");
         System.out.println("  PUT    /api/users/id?id=X     (publico)");
-        System.out.println("  DELETE /api/users/id?id=X     (publico)");
+        System.out.println("  PATCH  /api/users/id?id=X     (publico)");
+        // System.out.println("  DELETE /api/users/id?id=X     (publico)");
 
         return router;
     }

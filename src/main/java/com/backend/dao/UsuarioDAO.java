@@ -95,17 +95,17 @@ public class UsuarioDAO {
         return false;
     }
 
-    public static boolean delete(int id) {
-        String sql = "DELETE FROM usuarios WHERE id_usuario = ?";
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            System.out.println("Error UsuarioDAO.delete: " + e.getMessage());
-        }
-        return false;
-    }
+    // public static boolean delete(int id) {
+    //     String sql = "DELETE FROM usuarios WHERE id_usuario = ?";
+    //     try (Connection conn = dbConnection.getConnection();
+    //          PreparedStatement stmt = conn.prepareStatement(sql)) {
+    //         stmt.setInt(1, id);
+    //         return stmt.executeUpdate() > 0;
+    //     } catch (Exception e) {
+    //         System.out.println("Error UsuarioDAO.delete: " + e.getMessage());
+    //     }
+    //     return false;
+    // }
 
     public static String findRolByUsuarioId(int usuarioId) {
         String sql = """
