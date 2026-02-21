@@ -55,7 +55,7 @@ public class UsuarioDAO {
             stmt.setString(1, u.getNombre());
             stmt.setString(2, u.getCorreo());
             stmt.setString(3, u.getContrasena());
-            stmt.setString(4, u.getEstado());
+            stmt.setBoolean(4, u.isEstado());
             if (stmt.executeUpdate() > 0) {
                 ResultSet keys = stmt.getGeneratedKeys();
                 if (keys.next()) u.setIdUsuario(keys.getInt(1));
@@ -73,7 +73,7 @@ public class UsuarioDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, u.getNombre());
             stmt.setString(2, u.getCorreo());
-            stmt.setString(3, u.getEstado());
+            stmt.setBoolean(3, u.isEstado());
             stmt.setInt(4, u.getIdUsuario());
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
@@ -130,6 +130,6 @@ public class UsuarioDAO {
                 rs.getString("nombre"),
                 rs.getString("correo"),
                 rs.getString("contrasena"),
-                rs.getString("estado"));
+                rs.getBoolean("estado"));
     }
 }

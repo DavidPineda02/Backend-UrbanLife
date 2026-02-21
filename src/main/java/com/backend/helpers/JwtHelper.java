@@ -1,5 +1,6 @@
 package com.backend.helpers;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -10,7 +11,7 @@ import java.util.Date;
 
 public class JwtHelper {
 
-    private static final String SECRET = "UrbanLife_SecretKey_2024_Backend!";
+    private static final String SECRET = Dotenv.load().get("JWT_SECRET");
     private static final SecretKey KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
     private static final long EXPIRATION = 24 * 60 * 60 * 1000; // 24 horas
 

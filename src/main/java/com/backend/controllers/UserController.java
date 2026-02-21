@@ -63,7 +63,7 @@ public class UserController {
             String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
             String correo = json.has("correo") ? json.get("correo").getAsString() : "";
             String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : "";
-            String estado = json.has("estado") ? json.get("estado").getAsString() : "Activo";
+            boolean estado = json.has("estado") ? json.get("estado").getAsBoolean() : true;
 
             JsonObject response = UserService.validateAndCreate(nombre, correo, contrasena, estado);
             int code = response.get("status").getAsInt();
@@ -98,7 +98,7 @@ public class UserController {
             String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
             String correo = json.has("correo") ? json.get("correo").getAsString() : "";
             String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : "";
-            String estado = json.has("estado") ? json.get("estado").getAsString() : "";
+            Boolean estado = json.has("estado") ? json.get("estado").getAsBoolean() : null;
 
             JsonObject response = UserService.validateAndUpdate(id, nombre, correo, contrasena, estado);
             int code = response.get("status").getAsInt();

@@ -33,7 +33,7 @@ public class AuthService {
             return response;
         }
 
-        if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
+        if (!usuario.isEstado()) {
             response.addProperty("success", false);
             response.addProperty("message", "Usuario inactivo. Contacte al administrador");
             response.addProperty("status", 403);
