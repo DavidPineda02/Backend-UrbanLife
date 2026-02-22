@@ -9,7 +9,7 @@ import java.util.List;
 
 public class UsuarioDAO {
 
-    public Usuario findByCorreo(String correo) {
+    public static Usuario findByCorreo(String correo) {
         String sql = "SELECT * FROM usuarios WHERE correo = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -22,7 +22,7 @@ public class UsuarioDAO {
         return null;
     }
 
-    public Usuario findById(int id) {
+    public static Usuario findById(int id) {
         String sql = "SELECT * FROM usuarios WHERE id_usuario = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -35,7 +35,7 @@ public class UsuarioDAO {
         return null;
     }
 
-    public List<Usuario> findAll() {
+    public static List<Usuario> findAll() {
         List<Usuario> lista = new ArrayList<>();
         String sql = "SELECT * FROM usuarios ORDER BY id_usuario ASC";
         try (Connection conn = dbConnection.getConnection();
@@ -48,14 +48,14 @@ public class UsuarioDAO {
         return lista;
     }
 
-    public Usuario create(Usuario u) {
+    public static Usuario create(Usuario u) {
         String sql = "INSERT INTO usuarios (nombre, correo, contrasena, estado) VALUES (?, ?, ?, ?)";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, u.getNombre());
             stmt.setString(2, u.getCorreo());
             stmt.setString(3, u.getContrasena());
-            stmt.setString(4, u.getEstado());
+            stmt.setBoolean(4, u.isEstado());
             if (stmt.executeUpdate() > 0) {
                 ResultSet keys = stmt.getGeneratedKeys();
                 if (keys.next()) u.setIdUsuario(keys.getInt(1));
@@ -67,13 +67,13 @@ public class UsuarioDAO {
         return null;
     }
 
-    public boolean update(Usuario u) {
+    public static boolean update(Usuario u) {
         String sql = "UPDATE usuarios SET nombre = ?, correo = ?, estado = ? WHERE id_usuario = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, u.getNombre());
             stmt.setString(2, u.getCorreo());
-            stmt.setString(3, u.getEstado());
+            stmt.setBoolean(3, u.isEstado());
             stmt.setInt(4, u.getIdUsuario());
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
@@ -82,7 +82,7 @@ public class UsuarioDAO {
         return false;
     }
 
-    public boolean updatePassword(int id, String hashedPassword) {
+    public static boolean updatePassword(int id, String hashedPassword) {
         String sql = "UPDATE usuarios SET contrasena = ? WHERE id_usuario = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -95,19 +95,19 @@ public class UsuarioDAO {
         return false;
     }
 
-    public boolean delete(int id) {
-        String sql = "DELETE FROM usuarios WHERE id_usuario = ?";
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            System.out.println("Error UsuarioDAO.delete: " + e.getMessage());
-        }
-        return false;
-    }
+    // public static boolean delete(int id) {
+    //     String sql = "DELETE FROM usuarios WHERE id_usuario = ?";
+    //     try (Connection conn = dbConnection.getConnection();
+    //          PreparedStatement stmt = conn.prepareStatement(sql)) {
+    //         stmt.setInt(1, id);
+    //         return stmt.executeUpdate() > 0;
+    //     } catch (Exception e) {
+    //         System.out.println("Error UsuarioDAO.delete: " + e.getMessage());
+    //     }
+    //     return false;
+    // }
 
-    public String findRolByUsuarioId(int usuarioId) {
+    public static String findRolByUsuarioId(int usuarioId) {
         String sql = """
                 SELECT r.nombre FROM roles r
                 INNER JOIN usuarios_roles ur ON r.id_roles = ur.rol_id
@@ -124,12 +124,12 @@ public class UsuarioDAO {
         return null;
     }
 
-    private Usuario mapRow(ResultSet rs) throws SQLException {
+    private static Usuario mapRow(ResultSet rs) throws SQLException {
         return new Usuario(
                 rs.getInt("id_usuario"),
                 rs.getString("nombre"),
                 rs.getString("correo"),
                 rs.getString("contrasena"),
-                rs.getString("estado"));
+                rs.getBoolean("estado"));
     }
 }

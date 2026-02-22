@@ -5,12 +5,12 @@ public class Usuario {
     private String nombre;
     private String correo;
     private String contrasena;
-    private String estado; // 'Activo' | 'Inactivo'
+    private boolean estado;
 
     public Usuario() {
     }
 
-    public Usuario(int idUsuario, String nombre, String correo, String contrasena, String estado) {
+    public Usuario(int idUsuario, String nombre, String correo, String contrasena, boolean estado) {
         this.idUsuario = idUsuario;
         this.nombre = nombre;
         this.correo = correo;
@@ -18,7 +18,7 @@ public class Usuario {
         this.estado = estado;
     }
 
-    public Usuario(String nombre, String correo, String contrasena, String estado) {
+    public Usuario(String nombre, String correo, String contrasena, boolean estado) {
         this.nombre = nombre;
         this.correo = correo;
         this.contrasena = contrasena;
@@ -58,11 +58,11 @@ public class Usuario {
         this.contrasena = contrasena;
     }
 
-    public String getEstado() {
+    public boolean isEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(boolean estado) {
         this.estado = estado;
     }
 }
