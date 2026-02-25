@@ -17,29 +17,29 @@ public class SeedRoles {
     };
 
     public static void insertRoles() {
-        try (Connection conn = dbConnection.getConnection()) {
+        try (Connection conexion = dbConnection.getConnection()) {
 
-            String checkSQL = "SELECT COUNT(*) FROM Roles";
-            try (PreparedStatement checkStmt = conn.prepareStatement(checkSQL);
-                 ResultSet rs = checkStmt.executeQuery()) {
-                if (rs.next() && rs.getInt(1) > 0) {
+            String sqlVerificacion = "SELECT COUNT(*) FROM Roles";
+            try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion);
+                 ResultSet resultado = consultaVerificacion.executeQuery()) {
+                if (resultado.next() && resultado.getInt(1) > 0) {
                     System.out.println("  [Roles] Ya existen datos -> omitido");
                     return;
                 }
             }
 
-            try (PreparedStatement pstmt = conn.prepareStatement(SQL_INSERT)) {
+            try (PreparedStatement consulta = conexion.prepareStatement(SQL_INSERT)) {
                 int filas = 0;
                 for (String[] rol : roles) {
-                    pstmt.setString(1, rol[0]);
-                    pstmt.setString(2, rol[1]);
-                    filas += pstmt.executeUpdate();
+                    consulta.setString(1, rol[0]);
+                    consulta.setString(2, rol[1]);
+                    filas += consulta.executeUpdate();
                 }
                 System.out.println("  [Roles] Insertados: " + filas);
             }
 
-        } catch (Exception e) {
-            System.err.println("Error SeedRoles: " + e.getMessage());
+        } catch (Exception excepcion) {
+            System.err.println("Error SeedRoles: " + excepcion.getMessage());
         }
     }
 }
