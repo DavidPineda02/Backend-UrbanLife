@@ -10,12 +10,16 @@ public class MovimientoFinanciero {
     private String metodoPago; // 'Transferencia' | 'Efectivo'
     private int tipoMovimientoId;
     private int usuarioId;
+    private Integer ventaId;
+    private Integer compraId;
+    private Integer gastoAdicionalId;
 
     // public MovimientoFinanciero() {
     // }
 
     public MovimientoFinanciero(int idMovsFinancieros, LocalDate fechaMovimiento, String concepto,
-            double monto, String metodoPago, int tipoMovimientoId, int usuarioId) {
+            double monto, String metodoPago, int tipoMovimientoId, int usuarioId,
+            Integer ventaId, Integer compraId, Integer gastoAdicionalId) {
         this.idMovsFinancieros = idMovsFinancieros;
         this.fechaMovimiento = fechaMovimiento;
         this.concepto = concepto;
@@ -23,16 +27,23 @@ public class MovimientoFinanciero {
         this.metodoPago = metodoPago;
         this.tipoMovimientoId = tipoMovimientoId;
         this.usuarioId = usuarioId;
+        this.ventaId = ventaId;
+        this.compraId = compraId;
+        this.gastoAdicionalId = gastoAdicionalId;
     }
 
     public MovimientoFinanciero(LocalDate fechaMovimiento, String concepto, double monto,
-            String metodoPago, int tipoMovimientoId, int usuarioId) {
+            String metodoPago, int tipoMovimientoId, int usuarioId,
+            Integer ventaId, Integer compraId, Integer gastoAdicionalId) {
         this.fechaMovimiento = fechaMovimiento;
         this.concepto = concepto;
         this.monto = monto;
         this.metodoPago = metodoPago;
         this.tipoMovimientoId = tipoMovimientoId;
         this.usuarioId = usuarioId;
+        this.ventaId = ventaId;
+        this.compraId = compraId;
+        this.gastoAdicionalId = gastoAdicionalId;
     }
 
     // Getters y Setters
@@ -90,5 +101,29 @@ public class MovimientoFinanciero {
 
     public void setUsuarioId(int usuarioId) {
         this.usuarioId = usuarioId;
+    }
+
+    public Integer getVentaId() {
+        return ventaId;
+    }
+
+    public void setVentaId(Integer ventaId) {
+        this.ventaId = ventaId;
+    }
+
+    public Integer getCompraId() {
+        return compraId;
+    }
+
+    public void setCompraId(Integer compraId) {
+        this.compraId = compraId;
+    }
+
+    public Integer getGastoAdicionalId() {
+        return gastoAdicionalId;
+    }
+
+    public void setGastoAdicionalId(Integer gastoAdicionalId) {
+        this.gastoAdicionalId = gastoAdicionalId;
     }
 }
