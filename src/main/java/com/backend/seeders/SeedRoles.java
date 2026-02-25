@@ -11,9 +11,9 @@ public class SeedRoles {
     private static final String SQL_INSERT = "INSERT INTO Roles (NOMBRE, DESCRIPCION) VALUES (?, ?)";
 
     private static final String[][] roles = {
-            {"Administrador", "Acceso total al sistema"},
-            {"Vendedor", "Gestion de ventas y clientes"},
-            {"Almacenero", "Gestion de inventario y compras"}
+            {"SUPER_ADMIN", "Acceso total al sistema incluyendo configuracion tecnica"},
+            {"ADMIN", "Gestion completa del negocio: ventas, inventario, compras y reportes"},
+            {"EMPLEADO", "Acceso operativo limitado a funciones del dia a dia"}
     };
 
     public static void insertRoles() {
