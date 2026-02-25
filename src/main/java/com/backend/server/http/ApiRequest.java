@@ -14,7 +14,7 @@ public class ApiRequest {
     }
 
     public String readBody() throws IOException {
-        InputStream bodyStream = exchange.getRequestBody();
-        return new String(bodyStream.readAllBytes(), StandardCharsets.UTF_8);
+        InputStream flujoEntrada = exchange.getRequestBody();
+        return new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
     }
 }

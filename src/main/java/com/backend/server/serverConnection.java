@@ -28,8 +28,8 @@ public class serverConnection {
             server.start();
 
             System.out.println("\nUrbanLife Backend corriendo en: http://localhost:" + port + "\n");
-        } catch (IOException e) {
-            System.out.println("Error al iniciar el servidor: " + e.getMessage());
+        } catch (IOException excepcion) {
+            System.out.println("Error al iniciar el servidor: " + excepcion.getMessage());
         }
     }
 

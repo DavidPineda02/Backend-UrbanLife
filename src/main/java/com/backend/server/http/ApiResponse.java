@@ -13,17 +13,17 @@ public class ApiResponse {
     private static final Gson gson = new Gson();
 
     public static void send(HttpExchange exchange, String body, int statusCode) throws IOException {
-        byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
+        byte[] cuerpoBytes = body.getBytes(StandardCharsets.UTF_8);
 
         exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-        exchange.sendResponseHeaders(statusCode, bodyBytes.length);
+        exchange.sendResponseHeaders(statusCode, cuerpoBytes.length);
 
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(bodyBytes);
+        try (OutputStream salida = exchange.getResponseBody()) {
+            salida.write(cuerpoBytes);
         }
     }
 
@@ -32,17 +32,17 @@ public class ApiResponse {
     }
 
     public static void success(HttpExchange exchange, String message) throws IOException {
-        JsonObject json = new JsonObject();
-        json.addProperty("success", true);
-        json.addProperty("message", message);
-        send(exchange, json.toString(), 200);
+        JsonObject respuestaJson = new JsonObject();
+        respuestaJson.addProperty("success", true);
+        respuestaJson.addProperty("message", message);
+        send(exchange, respuestaJson.toString(), 200);
     }
 
     public static void error(HttpExchange exchange, int code, String message) throws IOException {
-        JsonObject json = new JsonObject();
-        json.addProperty("success", false);
-        json.addProperty("message", message);
-        send(exchange, json.toString(), code);
+        JsonObject respuestaJson = new JsonObject();
+        respuestaJson.addProperty("success", false);
+        respuestaJson.addProperty("message", message);
+        send(exchange, respuestaJson.toString(), code);
     }
 
     public static void handleCors(HttpExchange exchange) throws IOException {
