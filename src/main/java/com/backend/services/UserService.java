@@ -11,68 +11,68 @@ public class UserService {
     private static final Gson gson = new Gson();
 
     public static JsonObject validateAndCreate(String nombre, String correo, String contrasena, boolean estado) {
-        JsonObject response = new JsonObject();
+        JsonObject respuesta = new JsonObject();
 
         if (nombre == null || nombre.isBlank() || correo == null || correo.isBlank()
                 || contrasena == null || contrasena.isBlank()) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Nombre, correo y contraseña son requeridos");
-            response.addProperty("status", 400);
-            return response;
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "Nombre, correo y contraseña son requeridos");
+            respuesta.addProperty("status", 400);
+            return respuesta;
         }
 
         if (UsuarioDAO.findByCorreo(correo) != null) {
-            response.addProperty("success", false);
-            response.addProperty("message", "El correo ya está registrado");
-            response.addProperty("status", 409);
-            return response;
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El correo ya está registrado");
+            respuesta.addProperty("status", 409);
+            return respuesta;
         }
 
-        Usuario nuevo = new Usuario(nombre, correo,
+        Usuario nuevoUsuario = new Usuario(nombre, correo,
                 PasswordHelper.hashPassword(contrasena), estado);
 
-        Usuario creado = UsuarioDAO.create(nuevo);
+        Usuario usuarioCreado = UsuarioDAO.create(nuevoUsuario);
 
-        if (creado != null) {
-            creado.setContrasena(null);
-            response.addProperty("success", true);
-            response.addProperty("message", "Usuario creado exitosamente");
-            response.add("data", gson.toJsonTree(creado));
-            response.addProperty("status", 201);
+        if (usuarioCreado != null) {
+            usuarioCreado.setContrasena(null);
+            respuesta.addProperty("success", true);
+            respuesta.addProperty("message", "Usuario creado exitosamente");
+            respuesta.add("data", gson.toJsonTree(usuarioCreado));
+            respuesta.addProperty("status", 201);
         } else {
-            response.addProperty("success", false);
-            response.addProperty("message", "Error al crear el usuario");
-            response.addProperty("status", 500);
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "Error al crear el usuario");
+            respuesta.addProperty("status", 500);
         }
 
-        return response;
+        return respuesta;
     }
 
     // PUT - Reemplazo completo (nombre y correo obligatorios)
-    public static JsonObject validateAndUpdate(int id, String nombre, String correo,String contrasena, boolean estado) {
-        JsonObject response = new JsonObject();
+    public static JsonObject validateAndUpdate(int id, String nombre, String correo, String contrasena, boolean estado) {
+        JsonObject respuesta = new JsonObject();
 
         Usuario usuario = UsuarioDAO.findById(id);
         if (usuario == null) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Usuario no encontrado");
-            response.addProperty("status", 404);
-            return response;
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "Usuario no encontrado");
+            respuesta.addProperty("status", 404);
+            return respuesta;
         }
 
         if (nombre == null || nombre.isBlank() || correo == null || correo.isBlank()) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Nombre y correo son obligatorios en PUT");
-            response.addProperty("status", 400);
-            return response;
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "Nombre y correo son obligatorios en PUT");
+            respuesta.addProperty("status", 400);
+            return respuesta;
         }
 
         if (!correo.equals(usuario.getCorreo())) {
             if (UsuarioDAO.findByCorreo(correo) != null) {
-                response.addProperty("success", false);
-                response.addProperty("message", "El correo ya está en uso por otro usuario");
-                response.addProperty("status", 409);
-                return response;
+                respuesta.addProperty("success", false);
+                respuesta.addProperty("message", "El correo ya está en uso por otro usuario");
+                respuesta.addProperty("status", 409);
+                return respuesta;
             }
         }
 
@@ -81,44 +81,44 @@ public class UserService {
         usuario.setEstado(estado);
 
         if (!UsuarioDAO.update(usuario)) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Error al actualizar el usuario");
-            response.addProperty("status", 500);
-            return response;
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "Error al actualizar el usuario");
+            respuesta.addProperty("status", 500);
+            return respuesta;
         }
 
         if (contrasena != null && !contrasena.isBlank()) {
             UsuarioDAO.updatePassword(id, PasswordHelper.hashPassword(contrasena));
         }
 
-        Usuario actualizado = UsuarioDAO.findById(id);
-        actualizado.setContrasena(null);
-        response.addProperty("success", true);
-        response.addProperty("message", "Usuario actualizado exitosamente");
-        response.add("data", gson.toJsonTree(actualizado));
-        response.addProperty("status", 200);
+        Usuario usuarioActualizado = UsuarioDAO.findById(id);
+        usuarioActualizado.setContrasena(null);
+        respuesta.addProperty("success", true);
+        respuesta.addProperty("message", "Usuario actualizado exitosamente");
+        respuesta.add("data", gson.toJsonTree(usuarioActualizado));
+        respuesta.addProperty("status", 200);
 
-        return response;
+        return respuesta;
     }
 
     // PATCH - Actualizacion parcial (solo los campos enviados)
     public static JsonObject partialUpdate(int id, String nombre, String correo, String contrasena, Boolean estado) {
-        JsonObject response = new JsonObject();
+        JsonObject respuesta = new JsonObject();
 
         Usuario usuario = UsuarioDAO.findById(id);
         if (usuario == null) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Usuario no encontrado");
-            response.addProperty("status", 404);
-            return response;
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "Usuario no encontrado");
+            respuesta.addProperty("status", 404);
+            return respuesta;
         }
 
         if (correo != null && !correo.isBlank() && !correo.equals(usuario.getCorreo())) {
             if (UsuarioDAO.findByCorreo(correo) != null) {
-                response.addProperty("success", false);
-                response.addProperty("message", "El correo ya está en uso por otro usuario");
-                response.addProperty("status", 409);
-                return response;
+                respuesta.addProperty("success", false);
+                respuesta.addProperty("message", "El correo ya está en uso por otro usuario");
+                respuesta.addProperty("status", 409);
+                return respuesta;
             }
         }
 
@@ -127,46 +127,46 @@ public class UserService {
         if (estado != null) usuario.setEstado(estado);
 
         if (!UsuarioDAO.update(usuario)) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Error al actualizar el usuario");
-            response.addProperty("status", 500);
-            return response;
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "Error al actualizar el usuario");
+            respuesta.addProperty("status", 500);
+            return respuesta;
         }
 
         if (contrasena != null && !contrasena.isBlank()) {
             UsuarioDAO.updatePassword(id, PasswordHelper.hashPassword(contrasena));
         }
 
-        Usuario actualizado = UsuarioDAO.findById(id);
-        actualizado.setContrasena(null);
-        response.addProperty("success", true);
-        response.addProperty("message", "Usuario actualizado parcialmente");
-        response.add("data", gson.toJsonTree(actualizado));
-        response.addProperty("status", 200);
+        Usuario usuarioActualizado = UsuarioDAO.findById(id);
+        usuarioActualizado.setContrasena(null);
+        respuesta.addProperty("success", true);
+        respuesta.addProperty("message", "Usuario actualizado parcialmente");
+        respuesta.add("data", gson.toJsonTree(usuarioActualizado));
+        respuesta.addProperty("status", 200);
 
-        return response;
+        return respuesta;
     }
 
     // public static JsonObject deleteUser(int id) {
-    //     JsonObject response = new JsonObject();
+    //     JsonObject respuesta = new JsonObject();
     //
     //     if (UsuarioDAO.findById(id) == null) {
-    //         response.addProperty("success", false);
-    //         response.addProperty("message", "Usuario no encontrado");
-    //         response.addProperty("status", 404);
-    //         return response;
+    //         respuesta.addProperty("success", false);
+    //         respuesta.addProperty("message", "Usuario no encontrado");
+    //         respuesta.addProperty("status", 404);
+    //         return respuesta;
     //     }
     //
     //     if (UsuarioDAO.delete(id)) {
-    //         response.addProperty("success", true);
-    //         response.addProperty("message", "Usuario eliminado exitosamente");
-    //         response.addProperty("status", 200);
+    //         respuesta.addProperty("success", true);
+    //         respuesta.addProperty("message", "Usuario eliminado exitosamente");
+    //         respuesta.addProperty("status", 200);
     //     } else {
-    //         response.addProperty("success", false);
-    //         response.addProperty("message", "Error al eliminar el usuario");
-    //         response.addProperty("status", 500);
+    //         respuesta.addProperty("success", false);
+    //         respuesta.addProperty("message", "Error al eliminar el usuario");
+    //         respuesta.addProperty("status", 500);
     //     }
     //
-    //     return response;
+    //     return respuesta;
     // }
 }
