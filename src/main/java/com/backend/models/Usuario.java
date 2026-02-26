@@ -6,6 +6,7 @@ public class Usuario {
     private String correo;
     private String contrasena;
     private boolean estado;
+    private String googleId;
 
     public Usuario() {
     }
@@ -16,6 +17,15 @@ public class Usuario {
         this.correo = correo;
         this.contrasena = contrasena;
         this.estado = estado;
+    }
+
+    public Usuario(int idUsuario, String nombre, String correo, String contrasena, boolean estado, String googleId) {
+        this.idUsuario = idUsuario;
+        this.nombre = nombre;
+        this.correo = correo;
+        this.contrasena = contrasena;
+        this.estado = estado;
+        this.googleId = googleId;
     }
 
     public Usuario(String nombre, String correo, String contrasena, boolean estado) {
@@ -64,5 +74,13 @@ public class Usuario {
 
     public void setEstado(boolean estado) {
         this.estado = estado;
+    }
+
+    public String getGoogleId() {
+        return googleId;
+    }
+
+    public void setGoogleId(String googleId) {
+        this.googleId = googleId;
     }
 }
