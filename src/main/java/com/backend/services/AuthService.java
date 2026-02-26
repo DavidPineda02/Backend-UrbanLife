@@ -26,6 +26,13 @@ public class AuthService {
             return respuesta;
         }
 
+        if (usuario.getContrasena() == null) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "Esta cuenta usa inicio de sesión con Google");
+            respuesta.addProperty("status", 401);
+            return respuesta;
+        }
+
         if (!PasswordHelper.checkPassword(contrasena, usuario.getContrasena())) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "Credenciales inválidas");

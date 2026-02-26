@@ -63,9 +63,8 @@ public class UserController {
             String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : "";
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
             String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
-            boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : true;
 
-            JsonObject respuesta = UserService.validateAndCreate(nombre, correo, contrasena, estado);
+            JsonObject respuesta = UserService.validateAndCreate(nombre, correo, contrasena);
             int codigoHttp = respuesta.get("status").getAsInt();
             respuesta.remove("status");
 
