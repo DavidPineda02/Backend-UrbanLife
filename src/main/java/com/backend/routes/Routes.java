@@ -1,6 +1,7 @@
 package com.backend.routes;
 
 import com.backend.controllers.AuthController;
+import com.backend.controllers.GoogleAuthController;
 import com.backend.controllers.UserController;
 import com.backend.middlewares.AuthMiddleware;
 import com.sun.net.httpserver.HttpHandler;
@@ -15,6 +16,7 @@ public class Routes {
 
         // ========== RUTAS DE AUTH ==========
         router.post("/api/auth/login", AuthController.login());
+        router.post("/api/auth/google", GoogleAuthController.loginWithGoogle());
         router.get("/api/auth/me", auth.protect(AuthController.me()));
 
         // ========== RUTAS DE USUARIOS ==========
@@ -27,6 +29,7 @@ public class Routes {
 
         System.out.println("Rutas registradas:");
         System.out.println("  POST   /api/auth/login       (publico)");
+        System.out.println("  POST   /api/auth/google      (publico)");
         System.out.println("  GET    /api/auth/me           (protegido)");
         System.out.println("  GET    /api/users             (publico)");
         System.out.println("  POST   /api/users             (publico)");

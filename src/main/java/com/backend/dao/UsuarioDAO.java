@@ -35,6 +35,19 @@ public class UsuarioDAO {
         return null;
     }
 
+    public static Usuario findByGoogleId(String googleId) {
+        String sql = "SELECT * FROM usuarios WHERE google_id = ?";
+        try (Connection conexion = dbConnection.getConnection();
+             PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            consulta.setString(1, googleId);
+            ResultSet resultado = consulta.executeQuery();
+            if (resultado.next()) return mapRow(resultado);
+        } catch (Exception excepcion) {
+            System.out.println("Error UsuarioDAO.findByGoogleId: " + excepcion.getMessage());
+        }
+        return null;
+    }
+
     public static List<Usuario> findAll() {
         List<Usuario> lista = new ArrayList<>();
         String sql = "SELECT * FROM usuarios ORDER BY id_usuario ASC";
@@ -65,6 +78,42 @@ public class UsuarioDAO {
             System.out.println("Error UsuarioDAO.create: " + excepcion.getMessage());
         }
         return null;
+    }
+
+    public static Usuario createWithGoogle(String googleId, String nombre, String correo) {
+        String sql = "INSERT INTO usuarios (nombre, correo, contrasena, estado, google_id) VALUES (?, ?, NULL, true, ?)";
+        try (Connection conexion = dbConnection.getConnection();
+             PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            consulta.setString(1, nombre);
+            consulta.setString(2, correo);
+            consulta.setString(3, googleId);
+            if (consulta.executeUpdate() > 0) {
+                ResultSet clavesGeneradas = consulta.getGeneratedKeys();
+                Usuario nuevo = new Usuario();
+                nuevo.setNombre(nombre);
+                nuevo.setCorreo(correo);
+                nuevo.setGoogleId(googleId);
+                nuevo.setEstado(true);
+                if (clavesGeneradas.next()) nuevo.setIdUsuario(clavesGeneradas.getInt(1));
+                return nuevo;
+            }
+        } catch (Exception excepcion) {
+            System.out.println("Error UsuarioDAO.createWithGoogle: " + excepcion.getMessage());
+        }
+        return null;
+    }
+
+    public static boolean linkGoogleId(int usuarioId, String googleId) {
+        String sql = "UPDATE usuarios SET google_id = ? WHERE id_usuario = ?";
+        try (Connection conexion = dbConnection.getConnection();
+             PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            consulta.setString(1, googleId);
+            consulta.setInt(2, usuarioId);
+            return consulta.executeUpdate() > 0;
+        } catch (Exception excepcion) {
+            System.out.println("Error UsuarioDAO.linkGoogleId: " + excepcion.getMessage());
+        }
+        return false;
     }
 
     public static boolean update(Usuario usuario) {
@@ -137,11 +186,17 @@ public class UsuarioDAO {
     }
 
     private static Usuario mapRow(ResultSet resultado) throws SQLException {
-        return new Usuario(
+        Usuario usuario = new Usuario(
                 resultado.getInt("id_usuario"),
                 resultado.getString("nombre"),
                 resultado.getString("correo"),
                 resultado.getString("contrasena"),
                 resultado.getBoolean("estado"));
+        try {
+            usuario.setGoogleId(resultado.getString("google_id"));
+        } catch (SQLException ignored) {
+            // La columna google_id puede no existir en consultas antiguas
+        }
+        return usuario;
     }
 }
