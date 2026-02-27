@@ -2,6 +2,7 @@ package com.backend.routes;
 
 import com.backend.controllers.AuthController;
 import com.backend.controllers.GoogleAuthController;
+import com.backend.controllers.PasswordResetController;
 import com.backend.controllers.UserController;
 import com.backend.middlewares.AuthMiddleware;
 import com.sun.net.httpserver.HttpHandler;
@@ -19,6 +20,11 @@ public class Routes {
         router.post("/api/auth/google", GoogleAuthController.loginWithGoogle());
         router.get("/api/auth/me", auth.protect(AuthController.me()));
 
+        // ========== RUTAS DE RECUPERACION DE CONTRASENA ==========
+        router.post("/api/auth/forgot-password", PasswordResetController.solicitarRecuperacion());
+        router.get("/api/auth/reset-password/validate", PasswordResetController.validarToken());
+        router.post("/api/auth/reset-password", PasswordResetController.cambiarContrasena());
+
         // ========== RUTAS DE USUARIOS ==========
         router.get("/api/users", UserController.listAll());
         router.post("/api/users", UserController.create());
@@ -31,6 +37,9 @@ public class Routes {
         System.out.println("  POST   /api/auth/login       (publico)");
         System.out.println("  POST   /api/auth/google      (publico)");
         System.out.println("  GET    /api/auth/me           (protegido)");
+        System.out.println("  POST   /api/auth/forgot-password        (publico)");
+        System.out.println("  GET    /api/auth/reset-password/validate?token=X (publico)");
+        System.out.println("  POST   /api/auth/reset-password         (publico)");
         System.out.println("  GET    /api/users             (publico)");
         System.out.println("  POST   /api/users             (publico)");
         System.out.println("  GET    /api/users/id?id=X     (publico)");

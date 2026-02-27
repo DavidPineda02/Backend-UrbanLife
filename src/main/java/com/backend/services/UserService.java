@@ -5,7 +5,7 @@ import com.backend.dao.UsuarioDAO;
 import com.backend.dao.UsuarioRolDAO;
 import com.backend.helpers.JwtHelper;
 import com.backend.helpers.PasswordHelper;
-import com.backend.models.Rol;
+import com.backend.models.Rol;  
 import com.backend.models.Usuario;
 import com.backend.models.UsuarioRol;
 import com.google.gson.Gson;
