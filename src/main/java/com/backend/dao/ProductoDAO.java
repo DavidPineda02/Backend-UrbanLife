@@ -58,7 +58,7 @@ public class ProductoDAO {
             consulta.setDouble(3, producto.getPrecioVenta());
             consulta.setDouble(4, producto.getCostoPromedio());
             consulta.setInt(5, producto.getStock());
-            consulta.setBoolean(6, producto.getEstado().equalsIgnoreCase("Activo"));
+            consulta.setBoolean(6, producto.isEstado());
             consulta.setInt(7, producto.getCategoriaId());
             if (consulta.executeUpdate() > 0) {
                 ResultSet clavesGeneradas = consulta.getGeneratedKeys();
@@ -80,7 +80,7 @@ public class ProductoDAO {
             consulta.setDouble(3, producto.getPrecioVenta());
             consulta.setDouble(4, producto.getCostoPromedio());
             consulta.setInt(5, producto.getStock());
-            consulta.setBoolean(6, producto.getEstado().equalsIgnoreCase("Activo"));
+            consulta.setBoolean(6, producto.isEstado());
             consulta.setInt(7, producto.getCategoriaId());
             consulta.setInt(8, producto.getIdProducto());
             return consulta.executeUpdate() > 0;
@@ -135,7 +135,7 @@ public class ProductoDAO {
                 resultado.getDouble("precio_venta"),
                 resultado.getDouble("costo_promedio"),
                 resultado.getInt("stock"),
-                resultado.getBoolean("estado") ? "Activo" : "Inactivo",
+                resultado.getBoolean("estado"),
                 resultado.getInt("categoria_id"));
     }
 }
