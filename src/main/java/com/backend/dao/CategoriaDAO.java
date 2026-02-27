@@ -54,7 +54,7 @@ public class CategoriaDAO {
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             consulta.setString(1, categoria.getNombre());
             consulta.setString(2, categoria.getDescripcion());
-            consulta.setBoolean(3, categoria.getEstado().equalsIgnoreCase("Activo"));
+            consulta.setBoolean(3, categoria.isEstado());
             if (consulta.executeUpdate() > 0) {
                 ResultSet clavesGeneradas = consulta.getGeneratedKeys();
                 if (clavesGeneradas.next()) categoria.setIdCategoria(clavesGeneradas.getInt(1));
@@ -72,7 +72,7 @@ public class CategoriaDAO {
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
             consulta.setString(1, categoria.getNombre());
             consulta.setString(2, categoria.getDescripcion());
-            consulta.setBoolean(3, categoria.getEstado().equalsIgnoreCase("Activo"));
+            consulta.setBoolean(3, categoria.isEstado());
             consulta.setInt(4, categoria.getIdCategoria());
             return consulta.executeUpdate() > 0;
         } catch (Exception excepcion) {
@@ -110,6 +110,6 @@ public class CategoriaDAO {
                 resultado.getInt("id_categoria"),
                 resultado.getString("nombre"),
                 resultado.getString("descripcion"),
-                resultado.getBoolean("estado") ? "Activo" : "Inactivo");
+                resultado.getBoolean("estado"));
     }
 }

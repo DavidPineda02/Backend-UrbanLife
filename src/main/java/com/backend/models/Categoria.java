@@ -4,19 +4,19 @@ public class Categoria {
     private int idCategoria;
     private String nombre;
     private String descripcion;
-    private String estado; // 'Activo' | 'Inactivo'
+    private boolean estado;
 
     // public Categoria() {
     // }
 
-    public Categoria(int idCategoria, String nombre, String descripcion, String estado) {
+    public Categoria(int idCategoria, String nombre, String descripcion, boolean estado) {
         this.idCategoria = idCategoria;
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.estado = estado;
     }
 
-    public Categoria(String nombre, String descripcion, String estado) {
+    public Categoria(String nombre, String descripcion, boolean estado) {
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.estado = estado;
@@ -47,11 +47,11 @@ public class Categoria {
         this.descripcion = descripcion;
     }
 
-    public String getEstado() {
+    public boolean isEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(boolean estado) {
         this.estado = estado;
     }
 }
