@@ -11,14 +11,14 @@ import java.util.Map;
 public class HttpResponseUtil {
 
     public static void sendJson(HttpExchange exchange, int statusCode, Object data) throws IOException {
-        byte[] bytes = JsonHelper.toJson(data).getBytes(StandardCharsets.UTF_8);
+        byte[] cuerpoBytes = JsonHelper.toJson(data).getBytes(StandardCharsets.UTF_8);
 
         setCorsHeaders(exchange);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
-        exchange.sendResponseHeaders(statusCode, bytes.length);
+        exchange.sendResponseHeaders(statusCode, cuerpoBytes.length);
 
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(bytes);
+        try (OutputStream salida = exchange.getResponseBody()) {
+            salida.write(cuerpoBytes);
         }
     }
 

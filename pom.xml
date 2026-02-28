@@ -45,6 +45,13 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             <version>0.4</version>
         </dependency>
 
+        <!-- JavaMail - Envio de correos -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+            <version>1.6.2</version>
+        </dependency>
+
         <!-- JJWT - Tokens JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

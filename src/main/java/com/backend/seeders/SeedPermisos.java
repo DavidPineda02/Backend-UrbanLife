@@ -24,29 +24,29 @@ public class SeedPermisos {
     };
 
     public static void insertPermisos() {
-        try (Connection conn = dbConnection.getConnection()) {
+        try (Connection conexion = dbConnection.getConnection()) {
 
-            String checkSQL = "SELECT COUNT(*) FROM Permisos";
-            try (PreparedStatement checkStmt = conn.prepareStatement(checkSQL);
-                ResultSet rs = checkStmt.executeQuery()) {
-                if (rs.next() && rs.getInt(1) > 0) {
+            String sqlVerificacion = "SELECT COUNT(*) FROM Permisos";
+            try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion);
+                ResultSet resultado = consultaVerificacion.executeQuery()) {
+                if (resultado.next() && resultado.getInt(1) > 0) {
                     System.out.println("  [Permisos] Ya existen datos -> omitido");
                     return;
                 }
             }
 
-            try (PreparedStatement pstmt = conn.prepareStatement(SQL_INSERT)) {
+            try (PreparedStatement consulta = conexion.prepareStatement(SQL_INSERT)) {
                 int filas = 0;
                 for (String[] permiso : permisos) {
-                    pstmt.setString(1, permiso[0]);
-                    pstmt.setString(2, permiso[1]);
-                    filas += pstmt.executeUpdate();
+                    consulta.setString(1, permiso[0]);
+                    consulta.setString(2, permiso[1]);
+                    filas += consulta.executeUpdate();
                 }
                 System.out.println("  [Permisos] Insertados: " + filas);
             }
 
-        } catch (Exception e) {
-            System.err.println("Error SeedPermisos: " + e.getMessage());
+        } catch (Exception excepcion) {
+            System.err.println("Error SeedPermisos: " + excepcion.getMessage());
         }
     }
 }

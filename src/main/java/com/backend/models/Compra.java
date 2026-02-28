@@ -8,23 +8,26 @@ public class Compra {
     private double totalCompra;
     private String metodoPago; // 'Transferencia' | 'Efectivo'
     private int usuarioId;
+    private int proveedorId;
 
     // public Compra() {
     // }
 
-    public Compra(int idCompra, LocalDate fechaCompra, double totalCompra, String metodoPago, int usuarioId) {
+    public Compra(int idCompra, LocalDate fechaCompra, double totalCompra, String metodoPago, int usuarioId, int proveedorId) {
         this.idCompra = idCompra;
         this.fechaCompra = fechaCompra;
         this.totalCompra = totalCompra;
         this.metodoPago = metodoPago;
         this.usuarioId = usuarioId;
+        this.proveedorId = proveedorId;
     }
 
-    public Compra(LocalDate fechaCompra, double totalCompra, String metodoPago, int usuarioId) {
+    public Compra(LocalDate fechaCompra, double totalCompra, String metodoPago, int usuarioId, int proveedorId) {
         this.fechaCompra = fechaCompra;
         this.totalCompra = totalCompra;
         this.metodoPago = metodoPago;
         this.usuarioId = usuarioId;
+        this.proveedorId = proveedorId;
     }
 
     // Getters y Setters
@@ -66,5 +69,13 @@ public class Compra {
 
     public void setUsuarioId(int usuarioId) {
         this.usuarioId = usuarioId;
+    }
+
+    public int getProveedorId() {
+        return proveedorId;
+    }
+
+    public void setProveedorId(int proveedorId) {
+        this.proveedorId = proveedorId;
     }
 }
