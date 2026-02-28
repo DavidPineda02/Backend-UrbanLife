@@ -12,8 +12,8 @@ public class Router implements HttpHandler {
 
     Map<String, Map<String, HttpHandler>> routes = new HashMap<>();
 
-    public void addRoute(String method, String path, HttpHandler handler) {
-        routes.computeIfAbsent(method, k -> new HashMap<>()).put(path, handler);
+    public void addRoute(String metodo, String ruta, HttpHandler handler) {
+        routes.computeIfAbsent(metodo, clave -> new HashMap<>()).put(ruta, handler);
     }
 
     public void get(String path, HttpHandler handler) {
@@ -38,18 +38,18 @@ public class Router implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String method = exchange.getRequestMethod();
+        String metodo = exchange.getRequestMethod();
 
-        if ("OPTIONS".equalsIgnoreCase(method)) {
+        if ("OPTIONS".equalsIgnoreCase(metodo)) {
             ApiResponse.handleCors(exchange);
             return;
         }
 
-        String path = exchange.getRequestURI().getPath();
-        Map<String, HttpHandler> methodRoutes = routes.get(method);
+        String ruta = exchange.getRequestURI().getPath();
+        Map<String, HttpHandler> rutasDelMetodo = routes.get(metodo);
 
-        if (methodRoutes != null) {
-            HttpHandler handler = methodRoutes.get(path);
+        if (rutasDelMetodo != null) {
+            HttpHandler handler = rutasDelMetodo.get(ruta);
             if (handler != null) {
                 handler.handle(exchange);
                 return;

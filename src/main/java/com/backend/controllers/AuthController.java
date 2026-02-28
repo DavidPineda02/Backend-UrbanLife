@@ -13,25 +13,25 @@ public class AuthController {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/login");
 
-            ApiRequest request = new ApiRequest(exchange);
-            String body = request.readBody();
+            ApiRequest peticion = new ApiRequest(exchange);
+            String cuerpo = peticion.readBody();
 
-            if (body.isEmpty()) {
+            if (cuerpo.isEmpty()) {
                 ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
                 return;
             }
 
             Gson gson = new Gson();
-            JsonObject json = gson.fromJson(body, JsonObject.class);
+            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
 
-            String correo = json.has("correo") ? json.get("correo").getAsString() : "";
-            String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : "";
+            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
+            String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
 
-            JsonObject response = AuthService.validateLogin(correo, contrasena);
-            int code = response.get("status").getAsInt();
-            response.remove("status");
+            JsonObject respuesta = AuthService.validateLogin(correo, contrasena);
+            int codigoHttp = respuesta.get("status").getAsInt();
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, response.toString(), code);
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -39,17 +39,17 @@ public class AuthController {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/me");
 
-            String userId = (String) exchange.getAttribute("userId");
+            String idUsuario = (String) exchange.getAttribute("userId");
             String correo = (String) exchange.getAttribute("correo");
             String rol = (String) exchange.getAttribute("rol");
 
-            JsonObject response = new JsonObject();
-            response.addProperty("success", true);
-            response.addProperty("userId", userId);
-            response.addProperty("correo", correo);
-            response.addProperty("rol", rol);
+            JsonObject respuesta = new JsonObject();
+            respuesta.addProperty("success", true);
+            respuesta.addProperty("userId", idUsuario);
+            respuesta.addProperty("correo", correo);
+            respuesta.addProperty("rol", rol);
 
-            ApiResponse.send(exchange, response.toString(), 200);
+            ApiResponse.send(exchange, respuesta.toString(), 200);
         };
     }
 }

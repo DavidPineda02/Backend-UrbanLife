@@ -19,29 +19,29 @@ public class SeedTipoGasto {
     };
 
     public static void insertTipoGasto() {
-        try (Connection conn = dbConnection.getConnection()) {
+        try (Connection conexion = dbConnection.getConnection()) {
 
-            String checkSQL = "SELECT COUNT(*) FROM Tipo_Gasto";
-            try (PreparedStatement checkStmt = conn.prepareStatement(checkSQL);
-                 ResultSet rs = checkStmt.executeQuery()) {
-                if (rs.next() && rs.getInt(1) > 0) {
+            String sqlVerificacion = "SELECT COUNT(*) FROM Tipo_Gasto";
+            try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion);
+                 ResultSet resultado = consultaVerificacion.executeQuery()) {
+                if (resultado.next() && resultado.getInt(1) > 0) {
                     System.out.println("  [Tipo_Gasto] Ya existen datos -> omitido");
                     return;
                 }
             }
 
-            try (PreparedStatement pstmt = conn.prepareStatement(SQL_INSERT)) {
+            try (PreparedStatement consulta = conexion.prepareStatement(SQL_INSERT)) {
                 int filas = 0;
                 for (String[] tipo : tipos) {
-                    pstmt.setString(1, tipo[0]);
-                    pstmt.setString(2, tipo[1]);
-                    filas += pstmt.executeUpdate();
+                    consulta.setString(1, tipo[0]);
+                    consulta.setString(2, tipo[1]);
+                    filas += consulta.executeUpdate();
                 }
                 System.out.println("  [Tipo_Gasto] Insertados: " + filas);
             }
 
-        } catch (Exception e) {
-            System.err.println("Error SeedTipoGasto: " + e.getMessage());
+        } catch (Exception excepcion) {
+            System.err.println("Error SeedTipoGasto: " + excepcion.getMessage());
         }
     }
 }

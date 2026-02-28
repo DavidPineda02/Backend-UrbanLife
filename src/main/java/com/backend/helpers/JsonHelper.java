@@ -9,11 +9,11 @@ public class JsonHelper {
 
     private static final Gson gson = new Gson();
 
-    public static <T> T fromJson(InputStream body, Class<T> clazz) {
-        return gson.fromJson(new InputStreamReader(body, StandardCharsets.UTF_8), clazz);
+    public static <T> T fromJson(InputStream cuerpo, Class<T> clase) {
+        return gson.fromJson(new InputStreamReader(cuerpo, StandardCharsets.UTF_8), clase);
     }
 
-    public static String toJson(Object obj) {
-        return gson.toJson(obj);
+    public static String toJson(Object objeto) {
+        return gson.toJson(objeto);
     }
 }

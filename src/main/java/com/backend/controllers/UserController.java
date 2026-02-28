@@ -19,7 +19,7 @@ public class UserController {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
 
             List<Usuario> lista = UsuarioDAO.findAll();
-            lista.forEach(u -> u.setContrasena(null));
+            lista.forEach(usuario -> usuario.setContrasena(null));
             ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", lista));
         };
     }
@@ -28,20 +28,20 @@ public class UserController {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
 
-            String query = exchange.getRequestURI().getQuery();
-            if (query == null || !query.matches("id=\\d+")) {
+            String parametrosUrl = exchange.getRequestURI().getQuery();
+            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
                 ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
                 return;
             }
-            int id = Integer.parseInt(query.split("=")[1]);
+            int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
-            Usuario u = UsuarioDAO.findById(id);
-            if (u == null) {
+            Usuario usuario = UsuarioDAO.findById(id);
+            if (usuario == null) {
                 ApiResponse.error(exchange, 404, "Usuario no encontrado");
                 return;
             }
-            u.setContrasena(null);
-            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", u));
+            usuario.setContrasena(null);
+            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", usuario));
         };
     }
 
@@ -49,27 +49,26 @@ public class UserController {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
 
-            ApiRequest request = new ApiRequest(exchange);
-            String body = request.readBody();
+            ApiRequest peticion = new ApiRequest(exchange);
+            String cuerpo = peticion.readBody();
 
-            if (body.isEmpty()) {
+            if (cuerpo.isEmpty()) {
                 ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
                 return;
             }
 
             Gson gson = new Gson();
-            JsonObject json = gson.fromJson(body, JsonObject.class);
+            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
 
-            String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
-            String correo = json.has("correo") ? json.get("correo").getAsString() : "";
-            String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : "";
-            boolean estado = json.has("estado") ? json.get("estado").getAsBoolean() : true;
+            String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : "";
+            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
+            String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
 
-            JsonObject response = UserService.validateAndCreate(nombre, correo, contrasena, estado);
-            int code = response.get("status").getAsInt();
-            response.remove("status");
+            JsonObject respuesta = UserService.validateAndCreate(nombre, correo, contrasena);
+            int codigoHttp = respuesta.get("status").getAsInt();
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, response.toString(), code);
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -77,34 +76,34 @@ public class UserController {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
 
-            String query = exchange.getRequestURI().getQuery();
-            if (query == null || !query.matches("id=\\d+")) {
+            String parametrosUrl = exchange.getRequestURI().getQuery();
+            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
                 ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
                 return;
             }
-            int id = Integer.parseInt(query.split("=")[1]);
+            int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
-            ApiRequest request = new ApiRequest(exchange);
-            String body = request.readBody();
+            ApiRequest peticion = new ApiRequest(exchange);
+            String cuerpo = peticion.readBody();
 
-            if (body.isEmpty()) {
+            if (cuerpo.isEmpty()) {
                 ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
                 return;
             }
 
             Gson gson = new Gson();
-            JsonObject json = gson.fromJson(body, JsonObject.class);
+            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
 
-            String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
-            String correo = json.has("correo") ? json.get("correo").getAsString() : "";
-            String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : "";
-            boolean estado = json.has("estado") ? json.get("estado").getAsBoolean() : true;
+            String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : "";
+            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
+            String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
+            boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : true;
 
-            JsonObject response = UserService.validateAndUpdate(id, nombre, correo, contrasena, estado);
-            int code = response.get("status").getAsInt();
-            response.remove("status");
+            JsonObject respuesta = UserService.validateAndUpdate(id, nombre, correo, contrasena, estado);
+            int codigoHttp = respuesta.get("status").getAsInt();
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, response.toString(), code);
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -112,34 +111,34 @@ public class UserController {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
 
-            String query = exchange.getRequestURI().getQuery();
-            if (query == null || !query.matches("id=\\d+")) {
+            String parametrosUrl = exchange.getRequestURI().getQuery();
+            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
                 ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
                 return;
             }
-            int id = Integer.parseInt(query.split("=")[1]);
+            int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
-            ApiRequest request = new ApiRequest(exchange);
-            String body = request.readBody();
+            ApiRequest peticion = new ApiRequest(exchange);
+            String cuerpo = peticion.readBody();
 
-            if (body.isEmpty()) {
+            if (cuerpo.isEmpty()) {
                 ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
                 return;
             }
 
             Gson gson = new Gson();
-            JsonObject json = gson.fromJson(body, JsonObject.class);
+            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
 
-            String nombre = json.has("nombre") ? json.get("nombre").getAsString() : null;
-            String correo = json.has("correo") ? json.get("correo").getAsString() : null;
-            String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : null;
-            Boolean estado = json.has("estado") ? json.get("estado").getAsBoolean() : null;
+            String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : null;
+            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : null;
+            String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : null;
+            Boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : null;
 
-            JsonObject response = UserService.partialUpdate(id, nombre, correo, contrasena, estado);
-            int code = response.get("status").getAsInt();
-            response.remove("status");
+            JsonObject respuesta = UserService.partialUpdate(id, nombre, correo, contrasena, estado);
+            int codigoHttp = respuesta.get("status").getAsInt();
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, response.toString(), code);
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -147,18 +146,18 @@ public class UserController {
     //     return exchange -> {
     //         System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
     //
-    //         String query = exchange.getRequestURI().getQuery();
-    //         if (query == null || !query.matches("id=\\d+")) {
+    //         String parametrosUrl = exchange.getRequestURI().getQuery();
+    //         if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
     //             ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
     //             return;
     //         }
-    //         int id = Integer.parseInt(query.split("=")[1]);
+    //         int id = Integer.parseInt(parametrosUrl.split("=")[1]);
     //
-    //         JsonObject response = UserService.deleteUser(id);
-    //         int code = response.get("status").getAsInt();
-    //         response.remove("status");
+    //         JsonObject respuesta = UserService.deleteUser(id);
+    //         int codigoHttp = respuesta.get("status").getAsInt();
+    //         respuesta.remove("status");
     //
-    //         ApiResponse.send(exchange, response.toString(), code);
+    //         ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
     //     };
     // }
 }
