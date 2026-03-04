@@ -1,18 +1,19 @@
-package com.backend.server.http; // Paquete de utilidades HTTP del servidor
+// Paquete de utilidades HTTP del servidor
+package com.backend.server.http;
 
 // Libreria Gson para convertir objetos Java a JSON
-import com.google.gson.Gson; // Biblioteca para manejo de JSON
+import com.google.gson.Gson;
 // Para construir objetos JSON de forma manual
-import com.google.gson.JsonObject; // Clase para objetos JSON
+import com.google.gson.JsonObject;
 // Clase que representa el intercambio HTTP
-import com.sun.net.httpserver.HttpExchange; // Clase para intercambio HTTP
+import com.sun.net.httpserver.HttpExchange;
 
 // Para el manejo de excepciones de entrada/salida
-import java.io.IOException; // Clase para excepciones IO
+import java.io.IOException;
 // Para escribir el cuerpo de la respuesta
-import java.io.OutputStream; // Clase para flujo de salida
+import java.io.OutputStream;
 // Para la codificacion UTF-8 al convertir texto a bytes
-import java.nio.charset.StandardCharsets; // Clase para codificación de caracteres
+import java.nio.charset.StandardCharsets;
 
 /**
  * Clase utilitaria centralizada para enviar respuestas HTTP estandarizadas.
@@ -22,7 +23,7 @@ import java.nio.charset.StandardCharsets; // Clase para codificación de caracte
 public class ApiResponse {
 
     /** Instancia compartida de Gson para serializar objetos a JSON */
-    private static final Gson gson = new Gson(); // Instancia para serialización JSON
+    private static final Gson gson = new Gson();
 
     /**
      * Método base que envía cualquier String como respuesta con un código HTTP dado.
@@ -32,26 +33,28 @@ public class ApiResponse {
      * @param statusCode Código de estado HTTP
      * @throws IOException Si ocurre un error al enviar la respuesta
      */
-    public static void send(HttpExchange exchange, String body, int statusCode) throws IOException { // Método base
+    public static void send(HttpExchange exchange, String body, int statusCode) throws IOException {
         // Convertir el texto de la respuesta a bytes en UTF-8
-        byte[] cuerpoBytes = body.getBytes(StandardCharsets.UTF_8); // Convertir string a bytes UTF-8
+        byte[] cuerpoBytes = body.getBytes(StandardCharsets.UTF_8);
 
         // Indicar al cliente que la respuesta es JSON con codificacion UTF-8
-        exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8"); // Header Content-Type
+        exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
         // Permitir solicitudes desde cualquier origen (CORS)
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*"); // Header CORS origin
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         // Indicar los metodos HTTP permitidos en el CORS
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // Header CORS methods
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         // Indicar los encabezados permitidos en el CORS
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Header CORS headers
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
         // Enviar el codigo de estado y el tamano del cuerpo antes de escribirlo
-        exchange.sendResponseHeaders(statusCode, cuerpoBytes.length); // Enviar headers y status
+        exchange.sendResponseHeaders(statusCode, cuerpoBytes.length);
 
         // Escribir el cuerpo de la respuesta y cerrar el flujo automaticamente
-        try (OutputStream salida = exchange.getResponseBody()) { // Try-with-resources para auto-cierre
-            salida.write(cuerpoBytes); // Escribir bytes en el flujo de salida
-        } // El OutputStream se cierra automáticamente
+        try (OutputStream salida = exchange.getResponseBody()) {
+            // Escribir bytes en el flujo de salida
+            salida.write(cuerpoBytes);
+        // El OutputStream se cierra automáticamente
+        }
     }
 
     /**
@@ -62,9 +65,9 @@ public class ApiResponse {
      * @param data Objeto Java a serializar como JSON
      * @throws IOException Si ocurre un error al enviar la respuesta
      */
-    public static void sendJson(HttpExchange exchange, int statusCode, Object data) throws IOException { // Método para JSON
+    public static void sendJson(HttpExchange exchange, int statusCode, Object data) throws IOException {
         // Serializar el objeto a JSON y delegar al metodo base send()
-        send(exchange, gson.toJson(data), statusCode); // Convertir objeto a JSON y enviar
+        send(exchange, gson.toJson(data), statusCode);
     }
 
     /**
@@ -74,13 +77,15 @@ public class ApiResponse {
      * @param message Mensaje de éxito a incluir en la respuesta
      * @throws IOException Si ocurre un error al enviar la respuesta
      */
-    public static void success(HttpExchange exchange, String message) throws IOException { // Método para éxito
+    public static void success(HttpExchange exchange, String message) throws IOException {
         // Construir el objeto JSON con success=true y el mensaje
-        JsonObject respuestaJson = new JsonObject(); // Crear objeto JSON
-        respuestaJson.addProperty("success", true); // Agregar campo success
-        respuestaJson.addProperty("message", message); // Agregar campo message
+        JsonObject respuestaJson = new JsonObject();
+        // Agregar campo success
+        respuestaJson.addProperty("success", true);
+        // Agregar campo message
+        respuestaJson.addProperty("message", message);
         // Enviar con codigo 200 OK
-        send(exchange, respuestaJson.toString(), 200); // Enviar respuesta exitosa
+        send(exchange, respuestaJson.toString(), 200);
     }
 
     /**
@@ -91,13 +96,15 @@ public class ApiResponse {
      * @param message Mensaje de error a incluir en la respuesta
      * @throws IOException Si ocurre un error al enviar la respuesta
      */
-    public static void error(HttpExchange exchange, int code, String message) throws IOException { // Método para error
+    public static void error(HttpExchange exchange, int code, String message) throws IOException {
         // Construir el objeto JSON con success=false y el mensaje de error
-        JsonObject respuestaJson = new JsonObject(); // Crear objeto JSON
-        respuestaJson.addProperty("success", false); // Agregar campo success
-        respuestaJson.addProperty("message", message); // Agregar campo message
+        JsonObject respuestaJson = new JsonObject();
+        // Agregar campo success
+        respuestaJson.addProperty("success", false);
+        // Agregar campo message
+        respuestaJson.addProperty("message", message);
         // Enviar con el codigo de error proporcionado (400, 401, 403, 404, 500, etc.)
-        send(exchange, respuestaJson.toString(), code); // Enviar respuesta de error
+        send(exchange, respuestaJson.toString(), code);
     }
 
     /**
@@ -106,12 +113,14 @@ public class ApiResponse {
      * @param exchange Objeto HttpExchange para la respuesta
      * @throws IOException Si ocurre un error al enviar la respuesta
      */
-    public static void handleCors(HttpExchange exchange) throws IOException { // Método para CORS
+    public static void handleCors(HttpExchange exchange) throws IOException {
         // Agregar los encabezados CORS necesarios para el preflight del navegador
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*"); // Header CORS origin
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // Header CORS methods
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Header CORS headers
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        // Header CORS methods
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        // Header CORS headers
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
         // Responder con 204 No Content (sin cuerpo) para confirmar que el CORS es valido
-        exchange.sendResponseHeaders(204, -1); // Enviar respuesta 204 sin contenido
+        exchange.sendResponseHeaders(204, -1);
     }
 }
