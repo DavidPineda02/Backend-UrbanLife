@@ -9,12 +9,18 @@ import com.sun.net.httpserver.HttpHandler;
 // Representa el payload decodificado del JWT (id, correo, rol, etc.)
 import io.jsonwebtoken.Claims;
 
-// Middleware de autenticacion: protege rutas verificando el JWT y los roles del usuario
+/**
+ * Middleware de autenticación: protege rutas verificando el JWT y los roles del usuario.
+ * Intercepta las peticiones y valida tokens antes de permitir el acceso a los endpoints.
+ */
 public class AuthMiddleware {
 
-    // Envuelve un HttpHandler con verificacion de autenticacion y roles opcionales
-    // next: handler a ejecutar si la autenticacion es exitosa
-    // rolesPermitidos: varargs de roles que pueden acceder (vacio = solo requiere token valido)
+    /**
+     * Envuelve un HttpHandler con verificación de autenticación y roles opcionales.
+     * @param next Handler a ejecutar si la autenticación es exitosa
+     * @param rolesPermitidos Varargs de roles que pueden acceder (vacío = solo requiere token válido)
+     * @return HttpHandler que incluye la verificación de autenticación
+     */
     public HttpHandler protect(HttpHandler next, String... rolesPermitidos) {
         return exchange -> {
             try {
