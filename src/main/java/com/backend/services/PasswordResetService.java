@@ -92,9 +92,10 @@ public class PasswordResetService {
             return respuesta;
         }
 
-        if (nuevaContrasena.length() < 8) {
+        // Mínimo 8 caracteres, al menos una mayúscula, una minúscula y un número
+        if (!nuevaContrasena.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$")) {
             respuesta.addProperty("success", false);
-            respuesta.addProperty("message", "La contrasena debe tener al menos 8 caracteres");
+            respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
             respuesta.addProperty("status", 400);
             return respuesta;
         }
