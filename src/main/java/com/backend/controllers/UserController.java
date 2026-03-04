@@ -1,32 +1,33 @@
-package com.backend.controllers;
+package com.backend.controllers; // Paquete de controladores HTTP de la aplicación
 
 // Para acceder directamente a la BD y listar/buscar usuarios
-import com.backend.dao.UsuarioDAO;
+import com.backend.dao.UsuarioDAO; // DAO para operaciones de base de datos de usuarios
 // DTO que mapea el JSON del body al crear un usuario
-import com.backend.dto.CreateUserRequest;
+import com.backend.dto.CreateUserRequest; // DTO para creación de usuarios
 // Entidad que representa un usuario del sistema
-import com.backend.models.Usuario;
+import com.backend.models.Usuario; // Modelo de datos de usuario
 // Para leer el cuerpo de la peticion HTTP
-import com.backend.server.http.ApiRequest;
+import com.backend.server.http.ApiRequest; // Clase para leer cuerpo de peticiones
 // Para enviar respuestas HTTP estandarizadas
-import com.backend.server.http.ApiResponse;
+import com.backend.server.http.ApiResponse; // Clase para enviar respuestas HTTP
 // Servicio con la logica de negocio de usuarios
-import com.backend.services.UserService;
+import com.backend.services.UserService; // Lógica de negocio de usuarios
 // Para parsear el JSON del body
-import com.google.gson.Gson;
+import com.google.gson.Gson; // Biblioteca para manejo de JSON
 // Para manipular objetos JSON manualmente
-import com.google.gson.JsonObject;
+import com.google.gson.JsonObject; // Clase para objetos JSON
 // Interfaz del manejador HTTP de Java
-import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpHandler; // Interfaz para manejar peticiones HTTP
 
 // Para la lista de usuarios retornada por findAll
-import java.util.List;
+import java.util.List; // Interfaz para listas genéricas
 // Para construir el mapa de respuesta con Map.of()
-import java.util.Map;
+import java.util.Map; // Interfaz para mapas
 
 /**
  * Controller que maneja todos los endpoints CRUD de usuarios.
  * Proporciona operaciones para crear, leer, actualizar y desactivar usuarios.
+ * Centraliza la gestión de usuarios del sistema con validaciones y seguridad.
  */
 public class UserController {
 
@@ -37,26 +38,32 @@ public class UserController {
      */
     public static HttpHandler findAll() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users"); // Log de petición
 
             try {
-                List<Usuario> usuarios = UsuarioDAO.findAll();
-                ApiResponse.send(exchange, new Gson().toJson(usuarios), 200);
-            } catch (Exception excepcion) {
-                ApiResponse.error(exchange, 500, "Error al obtener usuarios: " + excepcion.getMessage());
+                List<Usuario> usuarios = UsuarioDAO.findAll(); // Obtener todos los usuarios
+                ApiResponse.send(exchange, new Gson().toJson(usuarios), 200); // Enviar respuesta
+            } catch (Exception excepcion) { // Capturar errores de base de datos
+                ApiResponse.error(exchange, 500, "Error al obtener usuarios: " + excepcion.getMessage()); // Error 500
             }
         };
     }
+    
+    /**
+     * Handler para GET /api/users (versión mejorada).
+     * Retorna todos los usuarios del sistema sin contraseñas.
+     * @return HttpHandler que procesa la solicitud de listar usuarios
+     */
     public static HttpHandler listAll() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users"); // Log de petición
 
             // Obtener la lista completa de usuarios desde la base de datos
-            List<Usuario> lista = UsuarioDAO.findAll();
+            List<Usuario> lista = UsuarioDAO.findAll(); // Obtener todos los usuarios
             // Eliminar la contrasena de cada usuario antes de enviarla al cliente
-            lista.forEach(usuario -> usuario.setContrasena(null));
+            lista.forEach(usuario -> usuario.setContrasena(null)); // Limpiar contraseñas por seguridad
             // Enviar la lista de usuarios serializada como JSON con codigo 200
-            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", lista));
+            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", lista)); // Enviar respuesta segura
         };
     }
 
