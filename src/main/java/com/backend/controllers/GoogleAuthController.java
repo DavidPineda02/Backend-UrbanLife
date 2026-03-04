@@ -13,10 +13,17 @@ import com.google.gson.JsonObject;
 // Interfaz del manejador HTTP de Java
 import com.sun.net.httpserver.HttpHandler;
 
-// Controller que maneja el endpoint POST /api/auth/google para login con Google OAuth
+/**
+ * Controller que maneja el endpoint POST /api/auth/google para login con Google OAuth.
+ * Procesa tokens de Google Sign-In y autentica usuarios en el sistema.
+ */
 public class GoogleAuthController {
 
-    // Handler para POST /api/auth/google: autentica al usuario con el token de Google
+    /**
+     * Handler para POST /api/auth/google.
+     * Autentica al usuario con el token de Google.
+     * @return HttpHandler que procesa la solicitud de login con Google
+     */
     public static HttpHandler loginWithGoogle() {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/google");
