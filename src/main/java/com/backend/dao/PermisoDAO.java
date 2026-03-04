@@ -7,8 +7,17 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DAO (Data Access Object) para gestionar operaciones CRUD y consultas
+ * relacionadas con permisos en la base de datos.
+ */
 public class PermisoDAO {
 
+    /**
+     * Busca un permiso por su ID.
+     * @param id ID del permiso a buscar
+     * @return Permiso encontrado o null si no existe
+     */
     public static Permiso findById(int id) {
         String sql = "SELECT * FROM permisos WHERE id_permisos = ?";
         try (Connection conexion = dbConnection.getConnection();
