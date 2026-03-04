@@ -1,7 +1,8 @@
-package com.backend.helpers; // Paquete de clases auxiliares de la aplicación
+// Paquete de clases auxiliares de la aplicación
+package com.backend.helpers;
 
 // Libreria jBCrypt para el hashing seguro de contrasenas
-import org.mindrot.jbcrypt.BCrypt; // Biblioteca para encriptación BCrypt
+import org.mindrot.jbcrypt.BCrypt;
 
 /**
  * Clase auxiliar para encriptar y verificar contraseñas con BCrypt.
@@ -19,7 +20,7 @@ public class PasswordHelper {
     public static String hashPassword(String password) {
         // gensalt(12) genera una sal aleatoria con factor de costo 12
         // hashpw aplica el algoritmo BCrypt y retorna el hash resultante
-        return BCrypt.hashpw(password, BCrypt.gensalt(12)); // Generar hash con sal aleatoria
+        return BCrypt.hashpw(password, BCrypt.gensalt(12));
     }
 
     /**
@@ -30,6 +31,7 @@ public class PasswordHelper {
      * @return true si la contraseña coincide, false si no coincide
      */
     public static boolean checkPassword(String password, String hash) {
-        return BCrypt.checkpw(password, hash); // Verificar contraseña contra hash
+        // Verificar contraseña contra hash
+        return BCrypt.checkpw(password, hash);
     }
 }

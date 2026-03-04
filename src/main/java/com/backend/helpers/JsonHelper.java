@@ -1,13 +1,14 @@
-package com.backend.helpers; // Paquete de clases auxiliares de la aplicación
+// Paquete de clases auxiliares de la aplicación
+package com.backend.helpers;
 
 // Libreria Gson para la serializacion y deserializacion de JSON
-import com.google.gson.Gson; // Biblioteca principal para manejo de JSON
+import com.google.gson.Gson;
 // Para leer el cuerpo de la peticion como flujo de bytes
-import java.io.InputStream; // Clase para leer flujos de datos
+import java.io.InputStream;
 // Para envolver el InputStream en un lector de texto con codificacion
-import java.io.InputStreamReader; // Convierte bytes a caracteres con codificación
+import java.io.InputStreamReader;
 // Para especificar la codificacion UTF-8 al leer el flujo
-import java.nio.charset.StandardCharsets; // Estándar de codificación UTF-8
+import java.nio.charset.StandardCharsets;
 
 /**
  * Clase auxiliar que centraliza las operaciones de conversión JSON.
@@ -17,7 +18,7 @@ import java.nio.charset.StandardCharsets; // Estándar de codificación UTF-8
 public class JsonHelper {
 
     // Instancia compartida de Gson (es thread-safe y reusable)
-    private static final Gson gson = new Gson(); // Instancia global para todas las operaciones
+    private static final Gson gson = new Gson();
 
     /**
      * Deserializa un flujo de bytes (cuerpo HTTP) en un objeto del tipo indicado.
@@ -39,6 +40,7 @@ public class JsonHelper {
      * @return String con la representación JSON del objeto
      */
     public static String toJson(Object objeto) {
-        return gson.toJson(objeto); // Convertir objeto a JSON string
+        // Convertir objeto a JSON string
+        return gson.toJson(objeto);
     }
 }
