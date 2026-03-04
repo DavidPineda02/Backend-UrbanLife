@@ -1,18 +1,19 @@
-package com.backend.util; // Paquete de utilidades del sistema
+// Paquete de utilidades del sistema
+package com.backend.util;
 
 // Para la conversion de objetos a JSON usando JsonHelper
-import com.backend.helpers.JsonHelper; // Helper para manejo de JSON
+import com.backend.helpers.JsonHelper;
 // Clase que representa el intercambio HTTP
-import com.sun.net.httpserver.HttpExchange; // Clase para intercambio HTTP
+import com.sun.net.httpserver.HttpExchange;
 
 // Para el manejo de excepciones de entrada/salida
-import java.io.IOException; // Clase para excepciones IO
+import java.io.IOException;
 // Para escribir el cuerpo de la respuesta HTTP
-import java.io.OutputStream; // Clase para flujo de salida
+import java.io.OutputStream;
 // Para la codificacion UTF-8
-import java.nio.charset.StandardCharsets; // Clase para codificación de caracteres
+import java.nio.charset.StandardCharsets;
 // Para crear mapas literales con Map.of()
-import java.util.Map; // Interfaz para mapas
+import java.util.Map;
 
 /**
  * Clase utilitaria alternativa para enviar respuestas HTTP.
@@ -29,21 +30,23 @@ public class HttpResponseUtil {
      * @param data Objeto Java a serializar como JSON
      * @throws IOException Si ocurre un error al enviar la respuesta
      */
-    public static void sendJson(HttpExchange exchange, int statusCode, Object data) throws IOException { // Método para JSON
+    public static void sendJson(HttpExchange exchange, int statusCode, Object data) throws IOException {
         // Convertir el objeto a JSON y luego a bytes en UTF-8
-        byte[] cuerpoBytes = JsonHelper.toJson(data).getBytes(StandardCharsets.UTF_8); // Serializar y convertir
+        byte[] cuerpoBytes = JsonHelper.toJson(data).getBytes(StandardCharsets.UTF_8);
 
         // Agregar encabezados CORS antes de enviar la respuesta
-        setCorsHeaders(exchange); // Configurar headers CORS
+        setCorsHeaders(exchange);
         // Indicar que el contenido es JSON con codificacion UTF-8
-        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8"); // Header Content-Type
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
         // Enviar el codigo de estado y el tamano del cuerpo
-        exchange.sendResponseHeaders(statusCode, cuerpoBytes.length); // Enviar headers y status
+        exchange.sendResponseHeaders(statusCode, cuerpoBytes.length);
 
         // Escribir el cuerpo y cerrar el flujo de salida automaticamente
-        try (OutputStream salida = exchange.getResponseBody()) { // Try-with-resources para auto-cierre
-            salida.write(cuerpoBytes); // Escribir bytes en el flujo de salida
-        } // El OutputStream se cierra automáticamente
+        try (OutputStream salida = exchange.getResponseBody()) {
+            // Escribir bytes en el flujo de salida
+            salida.write(cuerpoBytes);
+        // El OutputStream se cierra automáticamente
+        }
     }
 
     /**
@@ -54,9 +57,9 @@ public class HttpResponseUtil {
      * @param message Mensaje de error a incluir
      * @throws IOException Si ocurre un error al enviar la respuesta
      */
-    public static void sendError(HttpExchange exchange, int statusCode, String message) throws IOException { // Método para error
+    public static void sendError(HttpExchange exchange, int statusCode, String message) throws IOException {
         // Crear un mapa con los campos de error y delegarlo a sendJson
-        sendJson(exchange, statusCode, Map.of("success", false, "message", message)); // Crear mapa de error y enviar
+        sendJson(exchange, statusCode, Map.of("success", false, "message", message));
     }
 
     /**
@@ -65,11 +68,11 @@ public class HttpResponseUtil {
      * @param exchange Objeto HttpExchange para la respuesta
      * @throws IOException Si ocurre un error al enviar la respuesta
      */
-    public static void handleCors(HttpExchange exchange) throws IOException { // Método para CORS
+    public static void handleCors(HttpExchange exchange) throws IOException {
         // Agregar encabezados CORS necesarios para el preflight
-        setCorsHeaders(exchange); // Configurar headers CORS
+        setCorsHeaders(exchange);
         // Enviar 204 sin cuerpo (-1 indica cuerpo vacio)
-        exchange.sendResponseHeaders(204, -1); // Enviar respuesta 204 sin contenido
+        exchange.sendResponseHeaders(204, -1);
     }
 
     /**
@@ -77,12 +80,12 @@ public class HttpResponseUtil {
      * Centraliza la configuración de headers CORS para reutilización.
      * @param exchange Objeto HttpExchange para configurar los encabezados
      */
-    private static void setCorsHeaders(HttpExchange exchange) { // Método privado para CORS
+    private static void setCorsHeaders(HttpExchange exchange) {
         // Permitir solicitudes desde cualquier origen
-        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*"); // Header CORS origin
+        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
         // Definir los metodos HTTP permitidos en solicitudes cross-origin
-        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // Header CORS methods
+        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         // Definir los encabezados permitidos en solicitudes cross-origin
-        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Header CORS headers
+        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
 }
