@@ -1,10 +1,15 @@
-package com.backend.seeders; // Paquete de seeders para datos iniciales
+// Paquete de seeders para datos iniciales
+package com.backend.seeders;
 
-import com.backend.config.dbConnection; // Clase para conexión a BD
+// Clase para conexión a BD
+import com.backend.config.dbConnection;
 
-import java.sql.Connection; // Interfaz para conexión JDBC
-import java.sql.PreparedStatement; // Clase para consultas preparadas
-import java.sql.ResultSet; // Interfaz para resultados de consultas
+// Interfaz para conexión JDBC
+import java.sql.Connection;
+// Clase para consultas preparadas
+import java.sql.PreparedStatement;
+// Interfaz para resultados de consultas
+import java.sql.ResultSet;
 
 /**
  * Seeder que inserta los tipos de movimientos del sistema si la tabla está vacía.
@@ -14,43 +19,64 @@ import java.sql.ResultSet; // Interfaz para resultados de consultas
 public class SeedTipoMovimientos {
 
     /** SQL para insertar un tipo de movimiento con su nombre y naturaleza */
-    private static final String SQL_INSERT = "INSERT INTO Tipo_Movimientos (MOVIMIENTO, NATURALEZA) VALUES (?, ?)"; // Query de inserción
+    private static final String SQL_INSERT = "INSERT INTO Tipo_Movimientos (MOVIMIENTO, NATURALEZA) VALUES (?, ?)";
 
     /** Catálogo de tipos de movimientos del sistema: [movimiento, naturaleza] */
-    private static final String[][] tipos = { // Arreglo de tipos de movimientos predefinidos
-            {"Venta", "Ingreso"}, // Movimiento de venta (ingreso)
-            {"Compra", "Egreso"}, // Movimiento de compra (egreso)
-            {"Gasto Adicional", "Egreso"} // Movimiento de gasto adicional (egreso)
+    private static final String[][] tipos = {
+            // Movimiento de venta (ingreso)
+            {"Venta", "Ingreso"},
+            // Movimiento de compra (egreso)
+            {"Compra", "Egreso"},
+            // Movimiento de gasto adicional (egreso)
+            {"Gasto Adicional", "Egreso"}
     };
 
     /**
      * Inserta los tipos de movimientos iniciales solo si la tabla Tipo_Movimientos está vacía (idempotente).
      * Verifica primero si existen datos antes de insertar para evitar duplicados.
      */
-    public static void insertTipoMovimientos() { // Método principal de inserción
-        try (Connection conexion = dbConnection.getConnection()) { // Obtener conexión con auto-cierre
+    public static void insertTipoMovimientos() {
+        // Obtener conexión con auto-cierre
+        try (Connection conexion = dbConnection.getConnection()) {
 
-            String sqlVerificacion = "SELECT COUNT(*) FROM Tipo_Movimientos"; // Query de verificación
-            try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion); // Preparar consulta
-                 ResultSet resultado = consultaVerificacion.executeQuery()) { // Ejecutar consulta
-                if (resultado.next() && resultado.getInt(1) > 0) { // Verificar si existen datos
-                    System.out.println("  [Tipo_Movimientos] Ya existen datos -> omitido"); // Log de omisión
-                    return; // Salir del método
+            // Query de verificación
+            String sqlVerificacion = "SELECT COUNT(*) FROM Tipo_Movimientos";
+            // Preparar consulta y ejecutar verificación
+            try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion);
+                 ResultSet resultado = consultaVerificacion.executeQuery()) {
+                // Verificar si existen datos
+                if (resultado.next() && resultado.getInt(1) > 0) {
+                    // Log de omisión
+                    System.out.println("  [Tipo_Movimientos] Ya existen datos -> omitido");
+                    // Salir del método
+                    return;
                 }
-            } // El ResultSet y PreparedStatement se cierran automáticamente
+            // El ResultSet y PreparedStatement se cierran automáticamente
+            }
 
-            try (PreparedStatement consulta = conexion.prepareStatement(SQL_INSERT)) { // Preparar inserción
-                int filas = 0; // Contador de filas insertadas
-                for (String[] tipo : tipos) { // Recorrer tipos de movimientos predefinidos
-                    consulta.setString(1, tipo[0]); // Nombre del tipo de movimiento
-                    consulta.setString(2, tipo[1]); // Naturaleza del movimiento (Ingreso/Egreso)
-                    filas += consulta.executeUpdate(); // Ejecutar INSERT y acumular filas insertadas
+            // Preparar inserción
+            try (PreparedStatement consulta = conexion.prepareStatement(SQL_INSERT)) {
+                // Contador de filas insertadas
+                int filas = 0;
+                // Recorrer tipos de movimientos predefinidos
+                for (String[] tipo : tipos) {
+                    // Nombre del tipo de movimiento
+                    consulta.setString(1, tipo[0]);
+                    // Naturaleza del movimiento (Ingreso/Egreso)
+                    consulta.setString(2, tipo[1]);
+                    // Ejecutar INSERT y acumular filas insertadas
+                    filas += consulta.executeUpdate();
                 }
-                System.out.println("  [Tipo_Movimientos] Insertados: " + filas); // Log de resultados
-            } // El PreparedStatement se cierra automáticamente
+                // Log de resultados
+                System.out.println("  [Tipo_Movimientos] Insertados: " + filas);
+            // El PreparedStatement se cierra automáticamente
+            }
 
-        } catch (Exception excepcion) { // Capturar errores generales
-            System.err.println("Error SeedTipoMovimientos: " + excepcion.getMessage()); // Log de error
-        } // La Connection se cierra automáticamente
+        // Capturar errores generales
+        } catch (Exception excepcion) {
+            // Log de error
+            System.err.println("Error SeedTipoMovimientos: " + excepcion.getMessage());
+        // La Connection se cierra automáticamente
+        }
     }
 }
