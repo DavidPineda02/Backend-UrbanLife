@@ -1,4 +1,4 @@
- package com.backend.services;
+package com.backend.services;
 
 import com.backend.dao.UsuarioDAO;
 import com.backend.helpers.JwtHelper;
@@ -8,12 +8,21 @@ import com.google.gson.JsonObject;
 
 public class AuthService {
 
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
+
     public static JsonObject validateLogin(String correo, String contrasena) {
         JsonObject respuesta = new JsonObject();
 
         if (correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "Correo y contraseña son requeridos");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+
+        if (!correo.matches(EMAIL_REGEX)) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El formato del correo no es válido");
             respuesta.addProperty("status", 400);
             return respuesta;
         }
