@@ -21,8 +21,13 @@ public class PasswordResetController {
                 return;
             }
 
-            Gson gson = new Gson();
-            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
+            JsonObject datosJson;
+            try {
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            } catch (Exception e) {
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                return;
+            }
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
 
             JsonObject respuesta = PasswordResetService.solicitarRecuperacion(correo);
@@ -63,9 +68,14 @@ public class PasswordResetController {
                 return;
             }
 
-            Gson gson = new Gson();
-            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
-            String token          = datosJson.has("token")          ? datosJson.get("token").getAsString()          : "";
+            JsonObject datosJson;
+            try {
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            } catch (Exception e) {
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                return;
+            }
+            String token          = datosJson.has("token")      ? datosJson.get("token").getAsString()      : "";
             String nuevaContrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
 
             JsonObject respuesta = PasswordResetService.cambiarContrasena(token, nuevaContrasena);

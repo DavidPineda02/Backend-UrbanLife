@@ -21,8 +21,13 @@ public class AuthController {
                 return;
             }
 
-            Gson gson = new Gson();
-            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
+            JsonObject datosJson;
+            try {
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            } catch (Exception e) {
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                return;
+            }
 
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
             String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
