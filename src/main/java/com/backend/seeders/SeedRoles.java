@@ -1,14 +1,15 @@
-package com.backend.seeders; // Paquete de seeders para datos iniciales
+// Paquete de seeders para datos iniciales
+package com.backend.seeders;
 
 // Para obtener la conexion a la base de datos
-import com.backend.config.dbConnection; // Clase para conexión a BD
+import com.backend.config.dbConnection;
 
 // Para la conexion JDBC
-import java.sql.Connection; // Interfaz para conexión JDBC
+import java.sql.Connection;
 // Para las consultas parametrizadas
-import java.sql.PreparedStatement; // Clase para consultas preparadas
+import java.sql.PreparedStatement;
 // Para leer el resultado de la consulta de verificacion
-import java.sql.ResultSet; // Interfaz para resultados de consultas
+import java.sql.ResultSet;
 
 /**
  * Seeder que inserta los roles iniciales del sistema si la tabla está vacía.
@@ -18,47 +19,66 @@ import java.sql.ResultSet; // Interfaz para resultados de consultas
 public class SeedRoles {
 
     /** SQL para insertar un rol con su nombre y descripcion */
-    private static final String SQL_INSERT = "INSERT INTO Roles (NOMBRE, DESCRIPCION) VALUES (?, ?)"; // Query de inserción
+    private static final String SQL_INSERT = "INSERT INTO Roles (NOMBRE, DESCRIPCION) VALUES (?, ?)";
 
     /** Datos de los 3 roles del sistema: [nombre, descripcion] */
-    private static final String[][] roles = { // Arreglo de roles predefinidos
-            {"SUPER_ADMIN", "Acceso total al sistema incluyendo configuracion tecnica"}, // Rol de super administrador
-            {"ADMIN", "Gestion completa del negocio: ventas, inventario, compras y reportes"}, // Rol de administrador
-            {"EMPLEADO", "Acceso operativo limitado a funciones del dia a dia"} // Rol de empleado
+    private static final String[][] roles = {
+            // Rol de super administrador
+            {"SUPER_ADMIN", "Acceso total al sistema incluyendo configuracion tecnica"},
+            // Rol de administrador
+            {"ADMIN", "Gestion completa del negocio: ventas, inventario, compras y reportes"},
+            // Rol de empleado
+            {"EMPLEADO", "Acceso operativo limitado a funciones del dia a dia"}
     };
 
     /**
      * Inserta los roles iniciales solo si la tabla Roles está vacía (idempotente).
      * Verifica primero si existen datos antes de insertar para evitar duplicados.
      */
-    public static void insertRoles() { // Método principal de inserción
-        try (Connection conexion = dbConnection.getConnection()) { // Obtener conexión con auto-cierre
+    public static void insertRoles() {
+        // Obtener conexión con auto-cierre
+        try (Connection conexion = dbConnection.getConnection()) {
 
             // Verificar si ya existen roles para evitar insertar duplicados en cada inicio
-            String sqlVerificacion = "SELECT COUNT(*) FROM Roles"; // Query de verificación
-            try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion); // Preparar consulta
-                 ResultSet resultado = consultaVerificacion.executeQuery()) { // Ejecutar consulta
+            String sqlVerificacion = "SELECT COUNT(*) FROM Roles";
+            // Preparar consulta y ejecutar verificación
+            try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion);
+                 ResultSet resultado = consultaVerificacion.executeQuery()) {
                 // Si ya hay al menos un rol, omitir la insercion
-                if (resultado.next() && resultado.getInt(1) > 0) { // Verificar si existen datos
-                    System.out.println("  [Roles] Ya existen datos -> omitido"); // Log de omisión
-                    return; // Salir del método
+                if (resultado.next() && resultado.getInt(1) > 0) {
+                    // Log de omisión
+                    System.out.println("  [Roles] Ya existen datos -> omitido");
+                    // Salir del método
+                    return;
                 }
-            } // El ResultSet y PreparedStatement se cierran automáticamente
+            // El ResultSet y PreparedStatement se cierran automáticamente
+            }
 
             // Preparar el statement de insercion una vez y reutilizarlo para cada rol
-            try (PreparedStatement consulta = conexion.prepareStatement(SQL_INSERT)) { // Preparar inserción
-                int filas = 0; // Contador de filas insertadas
+            // Preparar inserción
+            try (PreparedStatement consulta = conexion.prepareStatement(SQL_INSERT)) {
+                // Contador de filas insertadas
+                int filas = 0;
                 // Iterar sobre cada rol definido en el arreglo
-                for (String[] rol : roles) { // Recorrer roles predefinidos
-                    consulta.setString(1, rol[0]); // Nombre del rol (ej: "SUPER_ADMIN")
-                    consulta.setString(2, rol[1]); // Descripcion del rol
-                    filas += consulta.executeUpdate(); // Ejecutar INSERT y acumular filas insertadas
+                // Recorrer roles predefinidos
+                for (String[] rol : roles) {
+                    // Nombre del rol (ej: "SUPER_ADMIN")
+                    consulta.setString(1, rol[0]);
+                    // Descripcion del rol
+                    consulta.setString(2, rol[1]);
+                    // Ejecutar INSERT y acumular filas insertadas
+                    filas += consulta.executeUpdate();
                 }
-                System.out.println("  [Roles] Insertados: " + filas); // Log de resultados
-            } // El PreparedStatement se cierra automáticamente
+                // Log de resultados
+                System.out.println("  [Roles] Insertados: " + filas);
+            // El PreparedStatement se cierra automáticamente
+            }
 
-        } catch (Exception excepcion) { // Capturar errores generales
-            System.err.println("Error SeedRoles: " + excepcion.getMessage()); // Log de error
-        } // La Connection se cierra automáticamente
+        // Capturar errores generales
+        } catch (Exception excepcion) {
+            // Log de error
+            System.err.println("Error SeedRoles: " + excepcion.getMessage());
+        // La Connection se cierra automáticamente
+        }
     }
 }
