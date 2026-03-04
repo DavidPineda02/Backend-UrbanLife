@@ -13,10 +13,17 @@ import com.google.gson.JsonObject;
 // Interfaz del manejador HTTP de Java
 import com.sun.net.httpserver.HttpHandler;
 
-// Controller que maneja los tres endpoints del flujo de recuperacion de contrasena
+/**
+ * Controller que maneja los tres endpoints del flujo de recuperación de contraseña.
+ * Proporciona endpoints para solicitar, validar y cambiar contraseñas.
+ */
 public class PasswordResetController {
 
-    // Handler para POST /api/auth/forgot-password: solicita el enlace de recuperacion por correo
+    /**
+     * Handler para POST /api/auth/forgot-password.
+     * Solicita el enlace de recuperación por correo.
+     * @return HttpHandler que procesa la solicitud de recuperación
+     */
     public static HttpHandler solicitarRecuperacion() {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/forgot-password");
@@ -50,7 +57,11 @@ public class PasswordResetController {
         };
     }
 
-    // Handler para GET /api/auth/reset-password/validate?token=X: verifica que el token sea valido y no haya expirado
+    /**
+     * Handler para GET /api/auth/reset-password/validate?token=X.
+     * Verifica que el token sea válido y no haya expirado.
+     * @return HttpHandler que procesa la validación del token
+     */
     public static HttpHandler validarToken() {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/reset-password/validate");
@@ -72,7 +83,11 @@ public class PasswordResetController {
         };
     }
 
-    // Handler para POST /api/auth/reset-password: cambia la contrasena usando el token de recuperacion
+    /**
+     * Handler para POST /api/auth/reset-password.
+     * Cambia la contraseña usando el token de recuperación.
+     * @return HttpHandler que procesa el cambio de contraseña
+     */
     public static HttpHandler cambiarContrasena() {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/reset-password");
