@@ -26,26 +26,25 @@ public class Routes {
         router.post("/api/auth/reset-password", PasswordResetController.cambiarContrasena());
 
         // ========== RUTAS DE USUARIOS ==========
-        router.get("/api/users", UserController.listAll());
-        router.post("/api/users", UserController.create());
-        router.get("/api/users/id", UserController.getById());
-        router.put("/api/users/id", UserController.update());
-        router.patch("/api/users/id", UserController.patch());
-        // router.delete("/api/users/id", UserController.delete());
+        router.get("/api/users",    auth.protect(UserController.listAll(), "SUPER_ADMIN", "ADMIN"));
+        router.post("/api/users",   auth.protect(UserController.create(),  "SUPER_ADMIN", "ADMIN"));
+        router.get("/api/users/id", auth.protect(UserController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        router.put("/api/users/id", auth.protect(UserController.update(),  "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        router.patch("/api/users/id", auth.protect(UserController.patch(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // router.delete("/api/users/id", auth.protect(UserController.delete(), "SUPER_ADMIN"));
 
         System.out.println("Rutas registradas:");
-        System.out.println("  POST   /api/auth/login       (publico)");
-        System.out.println("  POST   /api/auth/google      (publico)");
-        System.out.println("  GET    /api/auth/me           (protegido)");
-        System.out.println("  POST   /api/auth/forgot-password        (publico)");
-        System.out.println("  GET    /api/auth/reset-password/validate?token=X (publico)");
-        System.out.println("  POST   /api/auth/reset-password         (publico)");
-        System.out.println("  GET    /api/users             (publico)");
-        System.out.println("  POST   /api/users             (publico)");
-        System.out.println("  GET    /api/users/id?id=X     (publico)");
-        System.out.println("  PUT    /api/users/id?id=X     (publico)");
-        System.out.println("  PATCH  /api/users/id?id=X     (publico)");
-        // System.out.println("  DELETE /api/users/id?id=X     (publico)");
+        System.out.println("  POST   /api/auth/login                      (publico)");
+        System.out.println("  POST   /api/auth/google                     (publico)");
+        System.out.println("  GET    /api/auth/me                         (autenticado)");
+        System.out.println("  POST   /api/auth/forgot-password            (publico)");
+        System.out.println("  GET    /api/auth/reset-password/validate    (publico)");
+        System.out.println("  POST   /api/auth/reset-password             (publico)");
+        System.out.println("  GET    /api/users                           (SUPER_ADMIN, ADMIN)");
+        System.out.println("  POST   /api/users                           (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
+        System.out.println("  PUT    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
+        System.out.println("  PATCH  /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
 
         return router;
     }

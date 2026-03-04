@@ -1,6 +1,7 @@
 package com.backend.controllers;
 
 import com.backend.dao.UsuarioDAO;
+import com.backend.dto.CreateUserRequest;
 import com.backend.models.Usuario;
 import com.backend.server.http.ApiRequest;
 import com.backend.server.http.ApiResponse;
@@ -35,6 +36,13 @@ public class UserController {
             }
             int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
+            String rolUsuario = (String) exchange.getAttribute("rol");
+            String idUsuarioToken = (String) exchange.getAttribute("userId");
+            if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) {
+                ApiResponse.error(exchange, 403, "No tiene permiso para acceder a este recurso");
+                return;
+            }
+
             Usuario usuario = UsuarioDAO.findById(id);
             if (usuario == null) {
                 ApiResponse.error(exchange, 404, "Usuario no encontrado");
@@ -57,14 +65,16 @@ public class UserController {
                 return;
             }
 
-            Gson gson = new Gson();
-            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
+            CreateUserRequest request;
+            try {
+                request = new Gson().fromJson(cuerpo, CreateUserRequest.class);
+            } catch (Exception e) {
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                return;
+            }
 
-            String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : "";
-            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
-            String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
-
-            JsonObject respuesta = UserService.validateAndCreate(nombre, correo, contrasena);
+            JsonObject respuesta = UserService.validateAndCreate(
+                    request.getNombre(), request.getCorreo(), request.getContrasena());
             int codigoHttp = respuesta.get("status").getAsInt();
             respuesta.remove("status");
 
@@ -83,6 +93,13 @@ public class UserController {
             }
             int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
+            String rolUsuario = (String) exchange.getAttribute("rol");
+            String idUsuarioToken = (String) exchange.getAttribute("userId");
+            if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) {
+                ApiResponse.error(exchange, 403, "No tiene permiso para modificar este recurso");
+                return;
+            }
+
             ApiRequest peticion = new ApiRequest(exchange);
             String cuerpo = peticion.readBody();
 
@@ -91,8 +108,13 @@ public class UserController {
                 return;
             }
 
-            Gson gson = new Gson();
-            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
+            JsonObject datosJson;
+            try {
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            } catch (Exception e) {
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                return;
+            }
 
             String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : "";
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
@@ -118,6 +140,13 @@ public class UserController {
             }
             int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
+            String rolUsuario = (String) exchange.getAttribute("rol");
+            String idUsuarioToken = (String) exchange.getAttribute("userId");
+            if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) {
+                ApiResponse.error(exchange, 403, "No tiene permiso para modificar este recurso");
+                return;
+            }
+
             ApiRequest peticion = new ApiRequest(exchange);
             String cuerpo = peticion.readBody();
 
@@ -126,8 +155,13 @@ public class UserController {
                 return;
             }
 
-            Gson gson = new Gson();
-            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
+            JsonObject datosJson;
+            try {
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            } catch (Exception e) {
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                return;
+            }
 
             String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : null;
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : null;
