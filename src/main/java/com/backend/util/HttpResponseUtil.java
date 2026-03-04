@@ -14,10 +14,19 @@ import java.nio.charset.StandardCharsets;
 // Para crear mapas literales con Map.of()
 import java.util.Map;
 
-// Clase utilitaria alternativa para enviar respuestas HTTP (usa JsonHelper internamente)
+/**
+ * Clase utilitaria alternativa para enviar respuestas HTTP.
+ * Usa JsonHelper internamente y proporciona métodos para manejo de CORS.
+ */
 public class HttpResponseUtil {
 
-    // Envia un objeto Java serializado como JSON con el codigo HTTP indicado
+    /**
+     * Envía un objeto Java serializado como JSON con el código HTTP indicado.
+     * @param exchange Objeto HttpExchange para la respuesta
+     * @param statusCode Código de estado HTTP
+     * @param data Objeto Java a serializar como JSON
+     * @throws IOException Si ocurre un error al enviar la respuesta
+     */
     public static void sendJson(HttpExchange exchange, int statusCode, Object data) throws IOException {
         // Convertir el objeto a JSON y luego a bytes en UTF-8
         byte[] cuerpoBytes = JsonHelper.toJson(data).getBytes(StandardCharsets.UTF_8);
@@ -35,13 +44,23 @@ public class HttpResponseUtil {
         }
     }
 
-    // Envia una respuesta de error estandar con success=false y el mensaje indicado
+    /**
+     * Envía una respuesta de error estándar con success=false y el mensaje indicado.
+     * @param exchange Objeto HttpExchange para la respuesta
+     * @param statusCode Código de estado HTTP de error
+     * @param message Mensaje de error a incluir
+     * @throws IOException Si ocurre un error al enviar la respuesta
+     */
     public static void sendError(HttpExchange exchange, int statusCode, String message) throws IOException {
         // Crear un mapa con los campos de error y delegarlo a sendJson
         sendJson(exchange, statusCode, Map.of("success", false, "message", message));
     }
 
-    // Responde a peticiones OPTIONS (preflight CORS) con 204 No Content
+    /**
+     * Responde a peticiones OPTIONS (preflight CORS) con 204 No Content.
+     * @param exchange Objeto HttpExchange para la respuesta
+     * @throws IOException Si ocurre un error al enviar la respuesta
+     */
     public static void handleCors(HttpExchange exchange) throws IOException {
         // Agregar encabezados CORS necesarios para el preflight
         setCorsHeaders(exchange);
@@ -49,7 +68,10 @@ public class HttpResponseUtil {
         exchange.sendResponseHeaders(204, -1);
     }
 
-    // Metodo privado que agrega los tres encabezados CORS estandar a la respuesta
+    /**
+     * Método privado que agrega los tres encabezados CORS estándar a la respuesta.
+     * @param exchange Objeto HttpExchange para configurar los encabezados
+     */
     private static void setCorsHeaders(HttpExchange exchange) {
         // Permitir solicitudes desde cualquier origen
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");

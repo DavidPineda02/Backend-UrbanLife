@@ -10,13 +10,19 @@ import com.backend.middlewares.AuthMiddleware;
 // Interfaz del manejador HTTP de Java
 import com.sun.net.httpserver.HttpHandler;
 
-// Clase que registra todas las rutas de la API en el Router
+/**
+ * Clase que registra todas las rutas de la API en el Router.
+ * Configura endpoints de autenticación, usuarios y recuperación de contraseña.
+ */
 public class Routes {
 
-    // Instancia del dispatcher que mapea metodo+path a sus handlers
+    /** Instancia del dispatcher que mapea metodo+path a sus handlers */
     Router router = new Router();
 
-    // Registra todas las rutas y retorna el router configurado para el servidor
+    /**
+     * Registra todas las rutas y retorna el router configurado para el servidor.
+     * @return HttpHandler configurado con todas las rutas de la API
+     */
     public HttpHandler configureRoutes() {
 
         // Instancia del middleware de autenticacion para proteger rutas
