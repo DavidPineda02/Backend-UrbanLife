@@ -21,18 +21,27 @@ import com.google.gson.Gson;
 // Para construir el objeto JSON de respuesta
 import com.google.gson.JsonObject;
 
-// Servicio con la logica de negocio para el CRUD de usuarios
+/**
+ * Servicio con la lógica de negocio para el CRUD de usuarios.
+ * Maneja la creación, actualización y gestión de usuarios con sus roles.
+ */
 public class UserService {
 
-    // Gson compartido para serializar objetos Usuario en la respuesta
+    /** Gson compartido para serializar objetos Usuario en la respuesta */
     private static final Gson gson = new Gson();
 
-    // Expresion regular para validar el formato del correo electronico
+    /** Expresión regular para validar el formato del correo electrónico */
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
-    // Politica de contrasena: min 8 chars, al menos una mayuscula, una minuscula y un numero
+    /** Política de contraseña: min 8 chars, al menos una mayúscula, una minúscula y un número */
     private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$";
 
-    // Valida, crea el usuario, le asigna rol EMPLEADO y retorna JWT (auto-login)
+    /**
+     * Valida, crea el usuario, le asigna rol EMPLEADO y retorna JWT (auto-login).
+     * @param nombre Nombre del usuario
+     * @param correo Correo electrónico del usuario
+     * @param contrasena Contraseña del usuario
+     * @return JsonObject con el resultado de la creación y JWT si es exitoso
+     */
     public static JsonObject validateAndCreate(String nombre, String correo, String contrasena) {
         JsonObject respuesta = new JsonObject();
 

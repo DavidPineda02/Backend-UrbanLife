@@ -11,13 +11,21 @@ import com.backend.models.Usuario;
 // Para construir el objeto JSON de respuesta
 import com.google.gson.JsonObject;
 
-// Servicio que contiene la logica de validacion y autenticacion del login
+/**
+ * Servicio que contiene la lógica de validación y autenticación del login.
+ * Maneja la validación de credenciales y generación de tokens JWT.
+ */
 public class AuthService {
 
-    // Expresion regular para validar el formato del correo electronico
+    /** Expresión regular para validar el formato del correo electrónico */
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
 
-    // Valida las credenciales y retorna un JWT si el login es exitoso
+    /**
+     * Valida las credenciales y retorna un JWT si el login es exitoso.
+     * @param correo Correo electrónico del usuario
+     * @param contrasena Contraseña del usuario
+     * @return JsonObject con el resultado de la autenticación y JWT si es exitoso
+     */
     public static JsonObject validateLogin(String correo, String contrasena) {
         JsonObject respuesta = new JsonObject();
 
