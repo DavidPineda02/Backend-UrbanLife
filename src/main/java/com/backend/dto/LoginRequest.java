@@ -1,4 +1,5 @@
-package com.backend.dto; // Paquete de Data Transfer Objects
+// Paquete de Data Transfer Objects
+package com.backend.dto;
 
 /**
  * DTO que representa los datos del body para el endpoint POST /api/auth/login.
@@ -8,15 +9,15 @@ package com.backend.dto; // Paquete de Data Transfer Objects
 public class LoginRequest {
 
     /** Correo electrónico del usuario que intenta iniciar sesión */
-    private String correo; // Campo para email del usuario
+    private String correo;
     /** Contraseña en texto plano (se compara con el hash almacenado en BD) */
-    private String contrasena; // Campo para contraseña del usuario
+    private String contrasena;
 
     /**
      * Constructor vacío requerido por Gson para la deserialización.
      * Permite que Gson cree instancias sin parámetros.
      */
-    public LoginRequest() {} // Constructor por defecto para Gson
+    public LoginRequest() {}
 
     /**
      * Constructor con ambos campos para crear instancias de forma directa.
@@ -24,9 +25,11 @@ public class LoginRequest {
      * @param correo Correo electrónico del usuario
      * @param contrasena Contraseña del usuario
      */
-    public LoginRequest(String correo, String contrasena) { // Constructor con parámetros
-        this.correo = correo; // Asignar correo
-        this.contrasena = contrasena; // Asignar contraseña
+    public LoginRequest(String correo, String contrasena) {
+        // Asignar correo
+        this.correo = correo;
+        // Asignar contraseña
+        this.contrasena = contrasena;
     }
 
     /**
@@ -34,18 +37,20 @@ public class LoginRequest {
      * Realiza validación básica de los campos requeridos.
      * @return true si ambos campos son válidos, false si alguno es inválido
      */
-    public boolean isValid() { // Método de validación
-        return correo != null && !correo.trim().isEmpty() // Validar correo no vacío
-                && contrasena != null && !contrasena.trim().isEmpty(); // Validar contraseña no vacía
+    public boolean isValid() {
+        // Validar correo no vacío
+        return correo != null && !correo.trim().isEmpty()
+                // Validar contraseña no vacía
+                && contrasena != null && !contrasena.trim().isEmpty();
     }
 
     /** @return Correo electrónico del usuario */
-    public String getCorreo() { return correo; } // Getter para correo
+    public String getCorreo() { return correo; }
     /** @param correo Correo electrónico a establecer */
-    public void setCorreo(String correo) { this.correo = correo; } // Setter para correo
+    public void setCorreo(String correo) { this.correo = correo; }
 
     /** @return Contraseña del usuario */
-    public String getContrasena() { return contrasena; } // Getter para contraseña
+    public String getContrasena() { return contrasena; }
     /** @param contrasena Contraseña a establecer */
-    public void setContrasena(String contrasena) { this.contrasena = contrasena; } // Setter para contraseña
+    public void setContrasena(String contrasena) { this.contrasena = contrasena; }
 }
