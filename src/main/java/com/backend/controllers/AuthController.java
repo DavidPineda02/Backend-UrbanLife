@@ -13,10 +13,17 @@ import com.google.gson.JsonObject;
 // Interfaz del manejador HTTP de Java
 import com.sun.net.httpserver.HttpHandler;
 
-// Controller que maneja los endpoints de autenticacion basica (/api/auth/login y /api/auth/me)
+/**
+ * Controller que maneja los endpoints de autenticación básica.
+ * Proporciona endpoints para login y verificación de usuario autenticado.
+ */
 public class AuthController {
 
-    // Handler para POST /api/auth/login: autentica al usuario con correo y contrasena
+    /**
+     * Handler para POST /api/auth/login.
+     * Autentica al usuario con correo y contraseña.
+     * @return HttpHandler que procesa la solicitud de login
+     */
     public static HttpHandler login() {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/login");
@@ -54,8 +61,12 @@ public class AuthController {
         };
     }
 
-    // Handler para GET /api/auth/me: retorna los datos del usuario autenticado via JWT
-    // Este endpoint es protegido por AuthMiddleware que inyecta los atributos userId, correo y rol
+    /**
+     * Handler para GET /api/auth/me.
+     * Retorna los datos del usuario autenticado via JWT.
+     * Este endpoint es protegido por AuthMiddleware que inyecta los atributos userId, correo y rol.
+     * @return HttpHandler que procesa la solicitud de verificación de usuario
+     */
     public static HttpHandler me() {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/me");
