@@ -16,7 +16,8 @@ public class UserService {
     private static final Gson gson = new Gson();
 
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
-    private static final int PASSWORD_MIN_LENGTH = 8;
+    // Mínimo 8 caracteres, al menos una mayúscula, una minúscula y un número
+    private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$";
 
     public static JsonObject validateAndCreate(String nombre, String correo, String contrasena) {
         JsonObject respuesta = new JsonObject();
@@ -36,9 +37,9 @@ public class UserService {
             return respuesta;
         }
 
-        if (contrasena.length() < PASSWORD_MIN_LENGTH) {
+        if (!contrasena.matches(PASSWORD_REGEX)) {
             respuesta.addProperty("success", false);
-            respuesta.addProperty("message", "La contraseña debe tener al menos " + PASSWORD_MIN_LENGTH + " caracteres");
+            respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
             respuesta.addProperty("status", 400);
             return respuesta;
         }
@@ -103,6 +104,13 @@ public class UserService {
             return respuesta;
         }
 
+        if (!correo.matches(EMAIL_REGEX)) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El formato del correo no es válido");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+
         if (!correo.equals(usuario.getCorreo())) {
             if (UsuarioDAO.findByCorreo(correo) != null) {
                 respuesta.addProperty("success", false);
@@ -149,8 +157,14 @@ public class UserService {
             return respuesta;
         }
 
-        if (correo != null && !correo.isBlank() && !correo.equals(usuario.getCorreo())) {
-            if (UsuarioDAO.findByCorreo(correo) != null) {
+        if (correo != null && !correo.isBlank()) {
+            if (!correo.matches(EMAIL_REGEX)) {
+                respuesta.addProperty("success", false);
+                respuesta.addProperty("message", "El formato del correo no es válido");
+                respuesta.addProperty("status", 400);
+                return respuesta;
+            }
+            if (!correo.equals(usuario.getCorreo()) && UsuarioDAO.findByCorreo(correo) != null) {
                 respuesta.addProperty("success", false);
                 respuesta.addProperty("message", "El correo ya está en uso por otro usuario");
                 respuesta.addProperty("status", 409);
