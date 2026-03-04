@@ -1,13 +1,14 @@
-package com.backend.server.http; // Paquete de utilidades HTTP del servidor
+// Paquete de utilidades HTTP del servidor
+package com.backend.server.http;
 
 // Clase que representa el intercambio HTTP (peticion + respuesta)
-import com.sun.net.httpserver.HttpExchange; // Clase para intercambio HTTP
+import com.sun.net.httpserver.HttpExchange;
 // Para el manejo de excepciones de entrada/salida
-import java.io.IOException; // Clase para excepciones IO
+import java.io.IOException;
 // Para leer el cuerpo de la peticion como flujo de bytes
-import java.io.InputStream; // Clase para flujo de entrada
+import java.io.InputStream;
 // Para convertir los bytes a texto con codificacion UTF-8
-import java.nio.charset.StandardCharsets; // Clase para codificación de caracteres
+import java.nio.charset.StandardCharsets;
 
 /**
  * Clase auxiliar que encapsula la lectura del cuerpo de la petición HTTP entrante.
@@ -17,15 +18,16 @@ import java.nio.charset.StandardCharsets; // Clase para codificación de caracte
 public class ApiRequest {
 
     /** Referencia al exchange HTTP para acceder a los datos de la petición */
-    public HttpExchange exchange; // Campo para el intercambio HTTP
+    public HttpExchange exchange;
 
     /**
      * Constructor que recibe el exchange de la petición actual.
      * Inicializa el objeto con el contexto de la solicitud HTTP.
      * @param exchange Objeto HttpExchange con la información de la solicitud
      */
-    public ApiRequest(HttpExchange exchange) { // Constructor con exchange
-        this.exchange = exchange; // Asignar exchange
+    public ApiRequest(HttpExchange exchange) {
+        // Asignar exchange
+        this.exchange = exchange;
     }
 
     /**
@@ -34,10 +36,10 @@ public class ApiRequest {
      * @return String con el contenido del cuerpo de la petición
      * @throws IOException Si ocurre un error al leer el flujo de entrada
      */
-    public String readBody() throws IOException { // Método para leer cuerpo
+    public String readBody() throws IOException {
         // Obtener el flujo de entrada del cuerpo de la peticion
-        InputStream flujoEntrada = exchange.getRequestBody(); // Obtener input stream
+        InputStream flujoEntrada = exchange.getRequestBody();
         // Leer todos los bytes del cuerpo y convertirlos a String con UTF-8
-        return new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8); // Convertir a string UTF-8
+        return new String(flujoEntrada.readAllBytes(), StandardCharsets.UTF_8);
     }
 }
