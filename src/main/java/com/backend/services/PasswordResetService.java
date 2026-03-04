@@ -146,8 +146,9 @@ public class PasswordResetService {
         }
 
         // Extraer el id del usuario y del token desde la respuesta del DAO
-        int usuarioId = validacion.get("usuarioId").getAsInt(); // Para actualizar su contrasena
-        int idToken   = validacion.get("idToken").getAsInt();   // Para marcarlo como usado
+        int usuarioId = validacion.get("usuarioId").getAsInt();
+        // Para marcarlo como usado
+        int idToken   = validacion.get("idToken").getAsInt();
 
         // Hashear la nueva contrasena con BCrypt antes de guardarla
         String hashNuevaContrasena = PasswordHelper.hashPassword(nuevaContrasena);

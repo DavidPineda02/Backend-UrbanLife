@@ -28,10 +28,14 @@ public class EmailService {
     private static Session crearSesion() {
         // Configurar propiedades del servidor SMTP de Gmail
         Properties propiedades = new Properties();
-        propiedades.put("mail.smtp.host", "smtp.gmail.com");     // Servidor SMTP de Gmail
-        propiedades.put("mail.smtp.port", "587");                 // Puerto TLS de Gmail
-        propiedades.put("mail.smtp.auth", "true");                // Requerir autenticacion
-        propiedades.put("mail.smtp.starttls.enable", "true");     // Habilitar cifrado TLS
+        // Servidor SMTP de Gmail
+        propiedades.put("mail.smtp.host", "smtp.gmail.com");
+        // Puerto TLS de Gmail
+        propiedades.put("mail.smtp.port", "587");
+        // Requerir autenticacion
+        propiedades.put("mail.smtp.auth", "true");
+        // Habilitar cifrado TLS
+        propiedades.put("mail.smtp.starttls.enable", "true");
 
         // Crear sesion con autenticador que provee las credenciales al conectar
         return Session.getInstance(propiedades, new Authenticator() {
@@ -72,7 +76,13 @@ public class EmailService {
         }
     }
 
-    // Genera y envia el correo de recuperacion de contrasena con el enlace de restablecimiento
+    /**
+     * Genera y envía el correo de recuperación de contraseña con el enlace de restablecimiento.
+     * Construye una plantilla HTML con un botón de acceso directo al formulario de reset.
+     * @param correoDestino Correo electrónico del usuario que solicitó la recuperación
+     * @param token Token UUID único para validar el restablecimiento de contraseña
+     * @return true si el correo fue enviado exitosamente, false si ocurrió un error
+     */
     public static boolean enviarCorreoRecuperacion(String correoDestino, String token) {
         // Construir el link de recuperacion con el token UUID como parametro
         String link = "http://localhost:5500/reset-password.html?token=" + token;

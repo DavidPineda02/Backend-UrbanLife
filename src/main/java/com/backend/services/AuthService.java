@@ -1,15 +1,16 @@
-package com.backend.services; // Paquete de servicios de lógica de negocio
+// Paquete de servicios de lógica de negocio
+package com.backend.services;
 
 // Para consultar usuarios por correo e id
-import com.backend.dao.UsuarioDAO; // DAO para operaciones de base de datos de usuarios
+import com.backend.dao.UsuarioDAO;
 // Para generar el JWT una vez autenticado el usuario
-import com.backend.helpers.JwtHelper; // Helper para generación de tokens JWT
+import com.backend.helpers.JwtHelper;
 // Para verificar la contrasena contra el hash BCrypt almacenado
-import com.backend.helpers.PasswordHelper; // Helper para validación de contraseñas
+import com.backend.helpers.PasswordHelper;
 // Entidad que representa al usuario encontrado en la BD
-import com.backend.models.Usuario; // Modelo de datos de usuario
+import com.backend.models.Usuario;
 // Para construir el objeto JSON de respuesta
-import com.google.gson.JsonObject; // Clase para objetos JSON
+import com.google.gson.JsonObject;
 
 /**
  * Servicio que contiene la lógica de validación y autenticación del login.
@@ -19,7 +20,7 @@ import com.google.gson.JsonObject; // Clase para objetos JSON
 public class AuthService {
 
     /** Expresión regular para validar el formato del correo electrónico */
-    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$"; // Regex para email
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
 
     /**
      * Valida las credenciales y retorna un JWT si el login es exitoso.
@@ -29,76 +30,107 @@ public class AuthService {
      * @return JsonObject con el resultado de la autenticación y JWT si es exitoso
      */
     public static JsonObject validateLogin(String correo, String contrasena) {
-        JsonObject respuesta = new JsonObject(); // Crear objeto de respuesta
+        // Crear objeto de respuesta
+        JsonObject respuesta = new JsonObject();
 
         // Verificar que correo y contrasena no sean nulos ni vacios
-        if (correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) { // Validar campos vacíos
-            respuesta.addProperty("success", false); // Indicar fallo
-            respuesta.addProperty("message", "Correo y contraseña son requeridos"); // Mensaje de error
-            respuesta.addProperty("status", 400); // Código HTTP 400
-            return respuesta; // Retornar respuesta de error
+        if (correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
+            // Indicar fallo
+            respuesta.addProperty("success", false);
+            // Mensaje de error
+            respuesta.addProperty("message", "Correo y contraseña son requeridos");
+            // Código HTTP 400
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
         }
 
         // Validar el formato del correo con la expresion regular
-        if (!correo.matches(EMAIL_REGEX)) { // Validar formato de email
-            respuesta.addProperty("success", false); // Indicar fallo
-            respuesta.addProperty("message", "El formato del correo no es válido"); // Mensaje de error
-            respuesta.addProperty("status", 400); // Código HTTP 400
-            return respuesta; // Retornar respuesta de error
+        if (!correo.matches(EMAIL_REGEX)) {
+            // Indicar fallo
+            respuesta.addProperty("success", false);
+            // Mensaje de error
+            respuesta.addProperty("message", "El formato del correo no es válido");
+            // Código HTTP 400
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
         }
 
         // Buscar el usuario en la BD por correo
-        Usuario usuario = UsuarioDAO.findByCorreo(correo); // Buscar usuario por correo
+        Usuario usuario = UsuarioDAO.findByCorreo(correo);
         // Respuesta generica para no revelar si el correo existe o no
-        if (usuario == null) { // Validar que exista el usuario
-            respuesta.addProperty("success", false); // Indicar fallo
-            respuesta.addProperty("message", "Credenciales inválidas"); // Mensaje genérico de seguridad
-            respuesta.addProperty("status", 401); // Código HTTP 401
-            return respuesta; // Retornar respuesta de error
+        if (usuario == null) {
+            // Indicar fallo
+            respuesta.addProperty("success", false);
+            // Mensaje genérico de seguridad
+            respuesta.addProperty("message", "Credenciales inválidas");
+            // Código HTTP 401
+            respuesta.addProperty("status", 401);
+            // Retornar respuesta de error
+            return respuesta;
         }
 
         // Si la contrasena es null, la cuenta fue creada con Google (no tiene contrasena)
-        if (usuario.getContrasena() == null) { // Validar cuenta de Google
-            respuesta.addProperty("success", false); // Indicar fallo
-            respuesta.addProperty("message", "Esta cuenta usa inicio de sesión con Google"); // Mensaje específico
-            respuesta.addProperty("status", 401); // Código HTTP 401
-            return respuesta; // Retornar respuesta de error
+        if (usuario.getContrasena() == null) {
+            // Indicar fallo
+            respuesta.addProperty("success", false);
+            // Mensaje específico
+            respuesta.addProperty("message", "Esta cuenta usa inicio de sesión con Google");
+            // Código HTTP 401
+            respuesta.addProperty("status", 401);
+            // Retornar respuesta de error
+            return respuesta;
         }
 
         // Verificar que la contrasena ingresada coincida con el hash BCrypt almacenado
-        if (!PasswordHelper.checkPassword(contrasena, usuario.getContrasena())) { // Validar contraseña
+        if (!PasswordHelper.checkPassword(contrasena, usuario.getContrasena())) {
             // Respuesta generica para no revelar cual de los dos campos es incorrecto
-            respuesta.addProperty("success", false); // Indicar fallo
-            respuesta.addProperty("message", "Credenciales inválidas"); // Mensaje genérico de seguridad
-            respuesta.addProperty("status", 401); // Código HTTP 401
-            return respuesta; // Retornar respuesta de error
+            respuesta.addProperty("success", false);
+            // Mensaje genérico de seguridad
+            respuesta.addProperty("message", "Credenciales inválidas");
+            // Código HTTP 401
+            respuesta.addProperty("status", 401);
+            // Retornar respuesta de error
+            return respuesta;
         }
 
         // Verificar que el usuario este activo en el sistema
-        if (!usuario.isEstado()) { // Validar estado del usuario
-            respuesta.addProperty("success", false); // Indicar fallo
-            respuesta.addProperty("message", "Usuario inactivo. Contacte al administrador"); // Mensaje de inactividad
-            respuesta.addProperty("status", 403); // Código HTTP 403
-            return respuesta; // Retornar respuesta de error
+        if (!usuario.isEstado()) {
+            // Indicar fallo
+            respuesta.addProperty("success", false);
+            // Mensaje de inactividad
+            respuesta.addProperty("message", "Usuario inactivo. Contacte al administrador");
+            // Código HTTP 403
+            respuesta.addProperty("status", 403);
+            // Retornar respuesta de error
+            return respuesta;
         }
 
         // Obtener el rol del usuario desde la tabla de relacion usuarios_roles
-        String rol = UsuarioDAO.findRolByUsuarioId(usuario.getIdUsuario()); // Buscar rol del usuario
+        String rol = UsuarioDAO.findRolByUsuarioId(usuario.getIdUsuario());
         // Si por alguna razon no tiene rol asignado, usar "Sin rol" como fallback
-        if (rol == null) rol = "Sin rol"; // Asignar rol por defecto
+        if (rol == null) rol = "Sin rol";
 
         // Generar el JWT con el id, correo y rol del usuario autenticado
-        String token = JwtHelper.generateToken(usuario.getIdUsuario(), usuario.getCorreo(), rol); // Generar token
+        String token = JwtHelper.generateToken(usuario.getIdUsuario(), usuario.getCorreo(), rol);
 
         // Construir la respuesta exitosa con el token y datos del usuario
-        respuesta.addProperty("success", true); // Indicar éxito
-        respuesta.addProperty("message", "Login exitoso"); // Mensaje de éxito
-        respuesta.addProperty("token", token); // Token JWT
-        respuesta.addProperty("nombre", usuario.getNombre()); // Nombre del usuario
-        respuesta.addProperty("correo", usuario.getCorreo()); // Correo del usuario
-        respuesta.addProperty("rol", rol); // Rol del usuario
-        respuesta.addProperty("status", 200); // Código HTTP 200
+        respuesta.addProperty("success", true);
+        // Mensaje de éxito
+        respuesta.addProperty("message", "Login exitoso");
+        // Token JWT
+        respuesta.addProperty("token", token);
+        // Nombre del usuario
+        respuesta.addProperty("nombre", usuario.getNombre());
+        // Correo del usuario
+        respuesta.addProperty("correo", usuario.getCorreo());
+        // Rol del usuario
+        respuesta.addProperty("rol", rol);
+        // Código HTTP 200
+        respuesta.addProperty("status", 200);
 
-        return respuesta; // Retornar respuesta exitosa
+        // Retornar respuesta exitosa
+        return respuesta;
     }
 }

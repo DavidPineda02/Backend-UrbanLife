@@ -1,25 +1,26 @@
-package com.backend.services; // Paquete de servicios de lógica de negocio
+// Paquete de servicios de lógica de negocio
+package com.backend.services;
 
 // Para buscar el rol EMPLEADO y asignarlo al nuevo usuario
-import com.backend.dao.RolDAO; // DAO para operaciones de roles
+import com.backend.dao.RolDAO;
 // Para operaciones CRUD de usuarios en la base de datos
-import com.backend.dao.UsuarioDAO; // DAO para operaciones de usuarios
+import com.backend.dao.UsuarioDAO;
 // Para crear el registro en la tabla de relacion usuario-rol
-import com.backend.dao.UsuarioRolDAO; // DAO para relación usuario-rol
+import com.backend.dao.UsuarioRolDAO;
 // Para generar el JWT al crear un usuario (auto-login)
-import com.backend.helpers.JwtHelper; // Helper para generación de tokens JWT
+import com.backend.helpers.JwtHelper;
 // Para hashear la contrasena con BCrypt
-import com.backend.helpers.PasswordHelper; // Helper para encriptación de contraseñas
+import com.backend.helpers.PasswordHelper;
 // Entidad del rol del sistema
-import com.backend.models.Rol; // Modelo de datos de rol
+import com.backend.models.Rol;
 // Entidad del usuario del sistema
-import com.backend.models.Usuario; // Modelo de datos de usuario
+import com.backend.models.Usuario;
 // Entidad de la relacion usuario-rol
-import com.backend.models.UsuarioRol; // Modelo de datos de relación usuario-rol
+import com.backend.models.UsuarioRol;
 // Para serializar objetos Java a JSON (respuesta con data)
-import com.google.gson.Gson; // Biblioteca para manejo de JSON
+import com.google.gson.Gson;
 // Para construir el objeto JSON de respuesta
-import com.google.gson.JsonObject; // Clase para objetos JSON
+import com.google.gson.JsonObject;
 
 /**
  * Servicio con la lógica de negocio para el CRUD de usuarios.
@@ -29,12 +30,12 @@ import com.google.gson.JsonObject; // Clase para objetos JSON
 public class UserService {
 
     /** Gson compartido para serializar objetos Usuario en la respuesta */
-    private static final Gson gson = new Gson(); // Instancia para serialización JSON
+    private static final Gson gson = new Gson();
 
     /** Expresión regular para validar el formato del correo electrónico */
-    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$"; // Regex para email
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
     /** Política de contraseña: min 8 chars, al menos una mayúscula, una minúscula y un número */
-    private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"; // Regex para contraseña segura
+    private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$";
 
     /**
      * Valida, crea el usuario, le asigna rol EMPLEADO y retorna JWT (auto-login).
@@ -45,21 +46,28 @@ public class UserService {
      * @return JsonObject con el resultado de la creación y JWT si es exitoso
      */
     public static JsonObject validateAndCreate(String nombre, String correo, String contrasena) {
-        JsonObject respuesta = new JsonObject(); // Crear objeto de respuesta
+        // Crear objeto de respuesta
+        JsonObject respuesta = new JsonObject();
 
         // Validar que los tres campos obligatorios no sean nulos ni vacios
         if (nombre == null || nombre.isBlank() || correo == null || correo.isBlank()
-                || contrasena == null || contrasena.isBlank()) { // Validar campos obligatorios
-            respuesta.addProperty("success", false); // Indicar fallo
-            respuesta.addProperty("message", "Nombre, correo y contraseña son requeridos"); // Mensaje de error
-            respuesta.addProperty("status", 400); // Código HTTP 400
-            return respuesta; // Retornar respuesta de error
+                || contrasena == null || contrasena.isBlank()) {
+            // Indicar fallo
+            respuesta.addProperty("success", false);
+            // Mensaje de error
+            respuesta.addProperty("message", "Nombre, correo y contraseña son requeridos");
+            // Código HTTP 400
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
         }
 
         // Validar el formato del correo con regex
-        if (!correo.matches(EMAIL_REGEX)) { // Validar formato de email
-            respuesta.addProperty("success", false); // Indicar fallo
-            respuesta.addProperty("message", "El formato del correo no es válido"); // Mensaje de error
+        if (!correo.matches(EMAIL_REGEX)) {
+            // Indicar fallo
+            respuesta.addProperty("success", false);
+            // Mensaje de error
+            respuesta.addProperty("message", "El formato del correo no es válido");
             respuesta.addProperty("status", 400);
             return respuesta;
         }
@@ -120,7 +128,16 @@ public class UserService {
         return respuesta;
     }
 
-    // PUT - Reemplazo completo: nombre, correo y estado son obligatorios
+    /**
+     * Valida y ejecuta la actualización completa de un usuario (PUT).
+     * Nombre y correo son obligatorios; contraseña es opcional (se hashea si se proporciona).
+     * @param id Identificador del usuario a actualizar
+     * @param nombre Nuevo nombre completo del usuario (obligatorio)
+     * @param correo Nuevo correo electrónico del usuario (obligatorio, debe ser único)
+     * @param contrasena Nueva contraseña en texto plano (opcional, se hashea antes de guardar)
+     * @param estado Nuevo estado activo/inactivo del usuario
+     * @return JsonObject con success, message y status del resultado de la operación
+     */
     public static JsonObject validateAndUpdate(int id, String nombre, String correo, String contrasena, boolean estado) {
         JsonObject respuesta = new JsonObject();
 
