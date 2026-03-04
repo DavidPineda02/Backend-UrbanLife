@@ -6,10 +6,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+/**
+ * Seeder que inserta los tipos de gasto del sistema si la tabla está vacía.
+ * Es idempotente: solo inserta datos si no existen previamente.
+ */
 public class SeedTipoGasto {
 
+    /** SQL para insertar un tipo de gasto con su nombre y descripcion */
     private static final String SQL_INSERT = "INSERT INTO Tipo_Gasto (NOMBRE, DESCRIPCION) VALUES (?, ?)";
 
+    /** Catálogo de tipos de gasto del sistema: [nombre, descripcion] */
     private static final String[][] tipos = {
             {"Transporte", "Gastos de envio y transporte de mercancia"},
             {"Impuestos", "Impuestos aplicados a compras o importaciones"},
@@ -18,6 +24,10 @@ public class SeedTipoGasto {
             {"Otros", "Gastos adicionales no clasificados"}
     };
 
+    /**
+     * Inserta los tipos de gasto iniciales solo si la tabla Tipo_Gasto está vacía (idempotente).
+     * Verifica primero si existen datos antes de insertar para evitar duplicados.
+     */
     public static void insertTipoGasto() {
         try (Connection conexion = dbConnection.getConnection()) {
 

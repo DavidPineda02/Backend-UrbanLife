@@ -10,20 +10,26 @@ import java.sql.PreparedStatement;
 // Para leer el resultado de la consulta de verificacion
 import java.sql.ResultSet;
 
-// Seeder que inserta los roles iniciales del sistema si la tabla esta vacia
+/**
+ * Seeder que inserta los roles iniciales del sistema si la tabla está vacía.
+ * Es idempotente: solo inserta datos si no existen previamente.
+ */
 public class SeedRoles {
 
-    // SQL para insertar un rol con su nombre y descripcion
+    /** SQL para insertar un rol con su nombre y descripcion */
     private static final String SQL_INSERT = "INSERT INTO Roles (NOMBRE, DESCRIPCION) VALUES (?, ?)";
 
-    // Datos de los 3 roles del sistema: [nombre, descripcion]
+    /** Datos de los 3 roles del sistema: [nombre, descripcion] */
     private static final String[][] roles = {
             {"SUPER_ADMIN", "Acceso total al sistema incluyendo configuracion tecnica"},
             {"ADMIN", "Gestion completa del negocio: ventas, inventario, compras y reportes"},
             {"EMPLEADO", "Acceso operativo limitado a funciones del dia a dia"}
     };
 
-    // Inserta los roles iniciales solo si la tabla Roles esta vacia (idempotente)
+    /**
+     * Inserta los roles iniciales solo si la tabla Roles está vacía (idempotente).
+     * Verifica primero si existen datos antes de insertar para evitar duplicados.
+     */
     public static void insertRoles() {
         try (Connection conexion = dbConnection.getConnection()) {
 
