@@ -14,13 +14,22 @@ import java.io.OutputStream;
 // Para la codificacion UTF-8 al convertir texto a bytes
 import java.nio.charset.StandardCharsets;
 
-// Clase utilitaria centralizada para enviar respuestas HTTP estandarizadas
+/**
+ * Clase utilitaria centralizada para enviar respuestas HTTP estandarizadas.
+ * Proporciona métodos para enviar respuestas JSON con encabezados CORS.
+ */
 public class ApiResponse {
 
-    // Instancia compartida de Gson para serializar objetos a JSON
+    /** Instancia compartida de Gson para serializar objetos a JSON */
     private static final Gson gson = new Gson();
 
-    // Metodo base que envia cualquier String como respuesta con un codigo HTTP dado
+    /**
+     * Método base que envía cualquier String como respuesta con un código HTTP dado.
+     * @param exchange Objeto HttpExchange para la respuesta
+     * @param body Cuerpo de la respuesta como String
+     * @param statusCode Código de estado HTTP
+     * @throws IOException Si ocurre un error al enviar la respuesta
+     */
     public static void send(HttpExchange exchange, String body, int statusCode) throws IOException {
         // Convertir el texto de la respuesta a bytes en UTF-8
         byte[] cuerpoBytes = body.getBytes(StandardCharsets.UTF_8);
@@ -43,13 +52,24 @@ public class ApiResponse {
         }
     }
 
-    // Convierte cualquier objeto Java a JSON y lo envia como respuesta
+    /**
+     * Convierte cualquier objeto Java a JSON y lo envía como respuesta.
+     * @param exchange Objeto HttpExchange para la respuesta
+     * @param statusCode Código de estado HTTP
+     * @param data Objeto Java a serializar como JSON
+     * @throws IOException Si ocurre un error al enviar la respuesta
+     */
     public static void sendJson(HttpExchange exchange, int statusCode, Object data) throws IOException {
         // Serializar el objeto a JSON y delegar al metodo base send()
         send(exchange, gson.toJson(data), statusCode);
     }
 
-    // Envia una respuesta exitosa estandar con codigo 200 y un mensaje
+    /**
+     * Envía una respuesta exitosa estándar con código 200 y un mensaje.
+     * @param exchange Objeto HttpExchange para la respuesta
+     * @param message Mensaje de éxito a incluir en la respuesta
+     * @throws IOException Si ocurre un error al enviar la respuesta
+     */
     public static void success(HttpExchange exchange, String message) throws IOException {
         // Construir el objeto JSON con success=true y el mensaje
         JsonObject respuestaJson = new JsonObject();
@@ -59,7 +79,13 @@ public class ApiResponse {
         send(exchange, respuestaJson.toString(), 200);
     }
 
-    // Envia una respuesta de error con el codigo HTTP y mensaje indicados
+    /**
+     * Envía una respuesta de error con el código HTTP y mensaje indicados.
+     * @param exchange Objeto HttpExchange para la respuesta
+     * @param code Código de estado HTTP de error
+     * @param message Mensaje de error a incluir en la respuesta
+     * @throws IOException Si ocurre un error al enviar la respuesta
+     */
     public static void error(HttpExchange exchange, int code, String message) throws IOException {
         // Construir el objeto JSON con success=false y el mensaje de error
         JsonObject respuestaJson = new JsonObject();
@@ -69,7 +95,11 @@ public class ApiResponse {
         send(exchange, respuestaJson.toString(), code);
     }
 
-    // Responde a peticiones OPTIONS (preflight CORS) con los encabezados permitidos
+    /**
+     * Responde a peticiones OPTIONS (preflight CORS) con los encabezados permitidos.
+     * @param exchange Objeto HttpExchange para la respuesta
+     * @throws IOException Si ocurre un error al enviar la respuesta
+     */
     public static void handleCors(HttpExchange exchange) throws IOException {
         // Agregar los encabezados CORS necesarios para el preflight del navegador
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
