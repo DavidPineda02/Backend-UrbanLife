@@ -1,21 +1,32 @@
 package com.backend.dto;
 
+// DTO que representa la respuesta del endpoint de login (exitosa o fallida)
+// Se puede serializar a JSON con Gson para enviarlo al cliente
 public class LoginResponse {
 
+    // Indica si el login fue exitoso (true) o fallo (false)
     private boolean success;
+    // Mensaje descriptivo del resultado (ej: "Login exitoso" o "Credenciales invalidas")
     private String message;
+    // JWT generado para el usuario autenticado (null en caso de error)
     private String token;
+    // Nombre del usuario autenticado
     private String nombre;
+    // Correo del usuario autenticado
     private String correo;
+    // Rol del usuario en el sistema (SUPER_ADMIN, ADMIN, EMPLEADO)
     private String rol;
 
+    // Constructor vacio para instanciacion sin argumentos
     public LoginResponse() {}
 
+    // Constructor para respuestas de error (solo necesita success y message)
     public LoginResponse(boolean success, String message) {
         this.success = success;
         this.message = message;
     }
 
+    // Constructor completo para respuestas exitosas con todos los datos del usuario
     public LoginResponse(boolean success, String message, String token, String nombre, String correo, String rol) {
         this.success = success;
         this.message = message;
