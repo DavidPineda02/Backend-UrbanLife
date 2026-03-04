@@ -1,50 +1,73 @@
 package com.backend.services;
 
+// Para leer EMAIL_USER y EMAIL_PASS del archivo .env
 import io.github.cdimascio.dotenv.Dotenv;
 
+// Clases de la API JavaMail para envio de correos SMTP
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+// Para las propiedades de configuracion SMTP
 import java.util.Properties;
 
+// Servicio responsable del envio de correos electronicos via Gmail SMTP
 public class EmailService {
 
+    // Correo remitente leido desde .env (ej: urbanlife@gmail.com)
     private static final String CORREO_REMITENTE = Dotenv.load().get("EMAIL_USER");
+    // Contrasena de aplicacion de Gmail (no es la contrasena normal, es una app password)
     private static final String CONTRASENA_APP   = Dotenv.load().get("EMAIL_PASS");
 
+    // Crea y retorna una sesion SMTP autenticada con Gmail
     private static Session crearSesion() {
+        // Configurar propiedades del servidor SMTP de Gmail
         Properties propiedades = new Properties();
-        propiedades.put("mail.smtp.host", "smtp.gmail.com");
-        propiedades.put("mail.smtp.port", "587");
-        propiedades.put("mail.smtp.auth", "true");
-        propiedades.put("mail.smtp.starttls.enable", "true");
+        propiedades.put("mail.smtp.host", "smtp.gmail.com");     // Servidor SMTP de Gmail
+        propiedades.put("mail.smtp.port", "587");                 // Puerto TLS de Gmail
+        propiedades.put("mail.smtp.auth", "true");                // Requerir autenticacion
+        propiedades.put("mail.smtp.starttls.enable", "true");     // Habilitar cifrado TLS
 
+        // Crear sesion con autenticador que provee las credenciales al conectar
         return Session.getInstance(propiedades, new Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
+                // Retornar el correo y contrasena de aplicacion para autenticar con Gmail
                 return new PasswordAuthentication(CORREO_REMITENTE, CONTRASENA_APP);
             }
         });
     }
 
+    // Envia un correo HTML generico al destinatario indicado
+    // Retorna true si se envio correctamente, false si fallo
     public static boolean enviarCorreo(String correoDestino, String asunto, String cuerpoHtml) {
         try {
+            // Crear el mensaje MIME usando la sesion SMTP autenticada
             MimeMessage mensaje = new MimeMessage(crearSesion());
+            // Establecer el remitente con nombre visible "UrbanLife"
             mensaje.setFrom(new InternetAddress(CORREO_REMITENTE, "UrbanLife"));
+            // Agregar el destinatario como receptor principal (TO)
             mensaje.addRecipient(Message.RecipientType.TO, new InternetAddress(correoDestino));
+            // Establecer el asunto del correo
             mensaje.setSubject(asunto);
+            // Establecer el cuerpo como HTML con codificacion UTF-8
             mensaje.setText(cuerpoHtml, "utf-8", "html");
+            // Enviar el mensaje a traves del servidor SMTP configurado
             Transport.send(mensaje);
             System.out.println("Correo enviado a: " + correoDestino);
             return true;
         } catch (Exception excepcion) {
+            // Si falla el envio, registrar el error y retornar false
             System.out.println("Error EmailService.enviarCorreo: " + excepcion.getMessage());
             return false;
         }
     }
 
+    // Genera y envia el correo de recuperacion de contrasena con el enlace de restablecimiento
     public static boolean enviarCorreoRecuperacion(String correoDestino, String token) {
+        // Construir el link de recuperacion con el token UUID como parametro
         String link = "http://localhost:5500/reset-password.html?token=" + token;
         String asunto = "Recuperacion de contrasena - UrbanLife";
+        // Plantilla HTML del correo con el boton de restablecimiento y el link alternativo
+        // .formatted(link, link) reemplaza los dos %s con el link: uno en el boton y otro como texto
         String cuerpo = """
                 <html>
                 <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 30px;">
@@ -79,6 +102,7 @@ public class EmailService {
                 </html>
                 """.formatted(link, link);
 
+        // Delegar el envio del correo HTML al metodo generico
         return enviarCorreo(correoDestino, asunto, cuerpo);
     }
 }
