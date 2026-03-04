@@ -1,32 +1,34 @@
-package com.backend.routes;
+package com.backend.routes; // Paquete de rutas de la API
 
 // Importar todos los controllers que manejan las rutas registradas
-import com.backend.controllers.AuthController;
-import com.backend.controllers.GoogleAuthController;
-import com.backend.controllers.PasswordResetController;
-import com.backend.controllers.UserController;
+import com.backend.controllers.AuthController; // Controller de autenticación
+import com.backend.controllers.GoogleAuthController; // Controller de Google Auth
+import com.backend.controllers.PasswordResetController; // Controller de recuperación de contraseña
+import com.backend.controllers.UserController; // Controller de usuarios
 // Middleware para proteger rutas con autenticacion JWT y control de roles
-import com.backend.middlewares.AuthMiddleware;
+import com.backend.middlewares.AuthMiddleware; // Middleware de autenticación
 // Interfaz del manejador HTTP de Java
-import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpHandler; // Interfaz para handlers HTTP
 
 /**
  * Clase que registra todas las rutas de la API en el Router.
  * Configura endpoints de autenticación, usuarios y recuperación de contraseña.
+ * Centraliza la configuración de todas las rutas del sistema.
  */
 public class Routes {
 
     /** Instancia del dispatcher que mapea metodo+path a sus handlers */
-    Router router = new Router();
+    Router router = new Router(); // Router para manejar rutas
 
     /**
      * Registra todas las rutas y retorna el router configurado para el servidor.
+     * Configura autenticación, autorización y endpoints de la API.
      * @return HttpHandler configurado con todas las rutas de la API
      */
-    public HttpHandler configureRoutes() {
+    public HttpHandler configureRoutes() { // Método principal de configuración
 
         // Instancia del middleware de autenticacion para proteger rutas
-        AuthMiddleware auth = new AuthMiddleware();
+        AuthMiddleware auth = new AuthMiddleware(); // Crear middleware de auth
 
         // ========== RUTAS DE AUTH ==========
         router.post("/api/auth/login", AuthController.login());                    // Login con correo y contrasena (publico)
@@ -47,21 +49,21 @@ public class Routes {
         // router.delete("/api/users/id", auth.protect(UserController.delete(), "SUPER_ADMIN", "ADMIN"));                   // Desactivar usuario (soft delete) - pendiente de habilitar
 
         // Imprimir en consola las rutas activas al iniciar el servidor
-        System.out.println("Rutas registradas:");
-        System.out.println("  POST   /api/auth/login                      (publico)");
-        System.out.println("  POST   /api/auth/google                     (publico)");
-        System.out.println("  GET    /api/auth/me                         (autenticado)");
-        System.out.println("  POST   /api/auth/forgot-password            (publico)");
-        System.out.println("  GET    /api/auth/reset-password/validate    (publico)");
-        System.out.println("  POST   /api/auth/reset-password             (publico)");
-        System.out.println("  GET    /api/users                           (SUPER_ADMIN, ADMIN)");
-        System.out.println("  POST   /api/users                           (SUPER_ADMIN, ADMIN)");
-        System.out.println("  GET    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
-        System.out.println("  PUT    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
-        System.out.println("  PATCH  /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
-        // System.out.println("  DELETE /api/users/id?id=X                   (SUPER_ADMIN, ADMIN)");
+        System.out.println("Rutas registradas:"); // Header de rutas
+        System.out.println("  POST   /api/auth/login                      (publico)"); // Ruta login
+        System.out.println("  POST   /api/auth/google                     (publico)"); // Ruta Google login
+        System.out.println("  GET    /api/auth/me                         (autenticado)"); // Ruta perfil
+        System.out.println("  POST   /api/auth/forgot-password            (publico)"); // Ruta forgot password
+        System.out.println("  GET    /api/auth/reset-password/validate    (publico)"); // Ruta validate token
+        System.out.println("  POST   /api/auth/reset-password             (publico)"); // Ruta reset password
+        System.out.println("  GET    /api/users                           (SUPER_ADMIN, ADMIN)"); // Ruta listar usuarios
+        System.out.println("  POST   /api/users                           (SUPER_ADMIN, ADMIN)"); // Ruta crear usuario
+        System.out.println("  GET    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)"); // Ruta obtener usuario
+        System.out.println("  PUT    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)"); // Ruta actualizar usuario
+        System.out.println("  PATCH  /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)"); // Ruta actualizar parcial
+        // System.out.println("  DELETE /api/users/id?id=X                   (SUPER_ADMIN, ADMIN)"); // Ruta eliminar (comentada)
 
         // Retornar el router ya configurado para registrarlo en el servidor HTTP
-        return router;
+        return router; // Retornar router configurado
     }
 }
