@@ -1,9 +1,10 @@
-package com.backend.config; // Paquete de configuración de la aplicación
+// Paquete de configuración de la aplicación
+package com.backend.config;
 
 // Libreria para cargar variables de entorno desde el archivo .env
-import io.github.cdimascio.dotenv.Dotenv; // Manejo de variables de entorno
+import io.github.cdimascio.dotenv.Dotenv;
 // Clases necesarias para la conexion JDBC con MySQL
-import java.sql.*; // Todas las clases SQL para conexión y manejo de BD
+import java.sql.*;
 
 /**
  * Clase de configuración para la conexión a la base de datos MySQL.
@@ -13,13 +14,13 @@ import java.sql.*; // Todas las clases SQL para conexión y manejo de BD
 public class dbConnection {
 
     // Cargar todas las variables del archivo .env al iniciar la clase
-    private static final Dotenv dotenv = Dotenv.load(); // Instancia para leer .env
+    private static final Dotenv dotenv = Dotenv.load();
     // URL de conexion a la BD (ej: jdbc:mysql://localhost:3306/urbanlife)
-    private static final String URL = dotenv.get("DB_URL"); // URL completa de conexión
+    private static final String URL = dotenv.get("DB_URL");
     // Usuario de la base de datos
-    private static final String USER = dotenv.get("DB_USER"); // Nombre de usuario de BD
+    private static final String USER = dotenv.get("DB_USER");
     // Contrasena de la base de datos
-    private static final String PASSWD = dotenv.get("DB_PASSWD"); // Contraseña de BD
+    private static final String PASSWD = dotenv.get("DB_PASSWD");
 
     /**
      * Retorna una nueva conexión a la BD cada vez que se invoca.
@@ -32,9 +33,10 @@ public class dbConnection {
         if (URL == null || USER == null || PASSWD == null) {
             // Mostrar error descriptivo si falta alguna variable y no conectar
             System.err.println("ERROR: Faltan variables de entorno (DB_URL, DB_USER, DB_PASSWD)");
-            return null; // Retornar null si faltan credenciales
+            // Retornar null si faltan credenciales
+            return null;
         }
         // Crear y retornar la conexion usando el driver JDBC de MySQL
-        return DriverManager.getConnection(URL, USER, PASSWD); // Establecer conexión
+        return DriverManager.getConnection(URL, USER, PASSWD);
     }
 }
