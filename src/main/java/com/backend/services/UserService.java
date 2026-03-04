@@ -186,7 +186,16 @@ public class UserService {
         return respuesta;
     }
 
-    // PATCH - Actualizacion parcial: solo se actualizan los campos que vengan (no nulos)
+    /**
+     * Actualización parcial: solo se actualizan los campos que vengan (no nulos).
+     * Permite modificar nombre, correo, contraseña y estado de forma independiente.
+     * @param id ID del usuario a actualizar
+     * @param nombre Nuevo nombre (opcional)
+     * @param correo Nuevo correo (opcional)
+     * @param contrasena Nueva contraseña (opcional)
+     * @param estado Nuevo estado (opcional)
+     * @return JsonObject con el resultado de la actualización parcial
+     */
     public static JsonObject partialUpdate(int id, String nombre, String correo, String contrasena, Boolean estado) {
         JsonObject respuesta = new JsonObject();
 
