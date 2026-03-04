@@ -7,8 +7,18 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * DAO (Data Access Object) para gestionar operaciones CRUD y consultas
+ * relacionadas con tokens de recuperación de contraseña en la base de datos.
+ */
 public class TokenRecuperacionDAO {
 
+    /**
+     * Genera y guarda un nuevo token de recuperación para un usuario.
+     * @param usuarioId ID del usuario que solicita la recuperación
+     * @param fechaExpiracion Fecha y hora de expiración del token
+     * @return Token generado, o null si falló la inserción
+     */
     public static String guardarToken(int usuarioId, LocalDateTime fechaExpiracion) {
         String token = UUID.randomUUID().toString();
         String sql = "INSERT INTO token_recuperacion (usuario_id, token, fecha_expiracion) VALUES (?, ?, ?)";

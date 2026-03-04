@@ -7,8 +7,17 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DAO (Data Access Object) para gestionar operaciones CRUD y consultas
+ * relacionadas con usuarios en la base de datos.
+ */
 public class UsuarioDAO {
 
+    /**
+     * Busca un usuario por su correo electrónico.
+     * @param correo Correo electrónico del usuario a buscar
+     * @return Usuario encontrado o null si no existe
+     */
     public static Usuario findByCorreo(String correo) {
         String sql = "SELECT * FROM usuarios WHERE correo = ?";
         try (Connection conexion = dbConnection.getConnection();
@@ -22,6 +31,11 @@ public class UsuarioDAO {
         return null;
     }
 
+    /**
+     * Busca un usuario por su ID.
+     * @param id ID del usuario a buscar
+     * @return Usuario encontrado o null si no existe
+     */
     public static Usuario findById(int id) {
         String sql = "SELECT * FROM usuarios WHERE id_usuario = ?";
         try (Connection conexion = dbConnection.getConnection();
@@ -35,6 +49,11 @@ public class UsuarioDAO {
         return null;
     }
 
+    /**
+     * Busca un usuario por su ID de Google (autenticación OAuth2).
+     * @param googleId ID de Google del usuario a buscar
+     * @return Usuario encontrado o null si no existe
+     */
     public static Usuario findByGoogleId(String googleId) {
         String sql = "SELECT * FROM usuarios WHERE google_id = ?";
         try (Connection conexion = dbConnection.getConnection();
@@ -48,6 +67,10 @@ public class UsuarioDAO {
         return null;
     }
 
+    /**
+     * Obtiene todos los usuarios de la base de datos ordenados por ID.
+     * @return Lista de todos los usuarios
+     */
     public static List<Usuario> findAll() {
         List<Usuario> lista = new ArrayList<>();
         String sql = "SELECT * FROM usuarios ORDER BY id_usuario ASC";
@@ -61,6 +84,11 @@ public class UsuarioDAO {
         return lista;
     }
 
+    /**
+     * Crea un nuevo usuario en la base de datos.
+     * @param usuario Objeto Usuario con los datos a insertar
+     * @return Usuario creado con su ID asignado, o null si falló
+     */
     public static Usuario create(Usuario usuario) {
         String sql = "INSERT INTO usuarios (nombre, correo, contrasena, estado) VALUES (?, ?, ?, ?)";
         try (Connection conexion = dbConnection.getConnection();
