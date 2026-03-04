@@ -1,32 +1,48 @@
 package com.backend.dto;
 
-// DTO que representa la respuesta del endpoint de login (exitosa o fallida)
-// Se puede serializar a JSON con Gson para enviarlo al cliente
+/**
+ * DTO que representa la respuesta del endpoint de login (exitosa o fallida).
+ * Se puede serializar a JSON con Gson para enviarlo al cliente.
+ */
 public class LoginResponse {
 
-    // Indica si el login fue exitoso (true) o fallo (false)
+    /** Indica si el login fue exitoso (true) o falló (false) */
     private boolean success;
-    // Mensaje descriptivo del resultado (ej: "Login exitoso" o "Credenciales invalidas")
+    /** Mensaje descriptivo del resultado (ej: "Login exitoso" o "Credenciales inválidas") */
     private String message;
-    // JWT generado para el usuario autenticado (null en caso de error)
+    /** JWT generado para el usuario autenticado (null en caso de error) */
     private String token;
-    // Nombre del usuario autenticado
+    /** Nombre del usuario autenticado */
     private String nombre;
-    // Correo del usuario autenticado
+    /** Correo del usuario autenticado */
     private String correo;
-    // Rol del usuario en el sistema (SUPER_ADMIN, ADMIN, EMPLEADO)
+    /** Rol del usuario en el sistema (SUPER_ADMIN, ADMIN, EMPLEADO) */
     private String rol;
 
-    // Constructor vacio para instanciacion sin argumentos
+    /**
+     * Constructor vacío para instanciación sin argumentos.
+     */
     public LoginResponse() {}
 
-    // Constructor para respuestas de error (solo necesita success y message)
+    /**
+     * Constructor para respuestas de error (solo necesita success y message).
+     * @param success Resultado del login
+     * @param message Mensaje descriptivo
+     */
     public LoginResponse(boolean success, String message) {
         this.success = success;
         this.message = message;
     }
 
-    // Constructor completo para respuestas exitosas con todos los datos del usuario
+    /**
+     * Constructor completo para respuestas exitosas con todos los datos del usuario.
+     * @param success Resultado del login
+     * @param message Mensaje descriptivo
+     * @param token JWT generado
+     * @param nombre Nombre del usuario
+     * @param correo Correo del usuario
+     * @param rol Rol del usuario
+     */
     public LoginResponse(boolean success, String message, String token, String nombre, String correo, String rol) {
         this.success = success;
         this.message = message;
@@ -36,21 +52,33 @@ public class LoginResponse {
         this.rol = rol;
     }
 
+    /** @return true si el login fue exitoso */
     public boolean isSuccess() { return success; }
+    /** @param success Establecer resultado del login */
     public void setSuccess(boolean success) { this.success = success; }
 
+    /** @return Mensaje descriptivo del resultado */
     public String getMessage() { return message; }
+    /** @param message Establecer mensaje descriptivo */
     public void setMessage(String message) { this.message = message; }
 
+    /** @return JWT generado para el usuario */
     public String getToken() { return token; }
+    /** @param token Establecer JWT */
     public void setToken(String token) { this.token = token; }
 
+    /** @return Nombre del usuario autenticado */
     public String getNombre() { return nombre; }
+    /** @param nombre Establecer nombre del usuario */
     public void setNombre(String nombre) { this.nombre = nombre; }
 
+    /** @return Correo del usuario autenticado */
     public String getCorreo() { return correo; }
+    /** @param correo Establecer correo del usuario */
     public void setCorreo(String correo) { this.correo = correo; }
 
+    /** @return Rol del usuario en el sistema */
     public String getRol() { return rol; }
+    /** @param rol Establecer rol del usuario */
     public void setRol(String rol) { this.rol = rol; }
 }
