@@ -1,4 +1,5 @@
-package com.backend.dto; // Paquete de Data Transfer Objects
+// Paquete de Data Transfer Objects
+package com.backend.dto;
 
 /**
  * DTO que representa la respuesta del endpoint de login (exitosa o fallida).
@@ -8,23 +9,23 @@ package com.backend.dto; // Paquete de Data Transfer Objects
 public class LoginResponse {
 
     /** Indica si el login fue exitoso (true) o falló (false) */
-    private boolean success; // Campo para resultado del login
+    private boolean success;
     /** Mensaje descriptivo del resultado (ej: "Login exitoso" o "Credenciales inválidas") */
-    private String message; // Campo para mensaje descriptivo
+    private String message;
     /** JWT generado para el usuario autenticado (null en caso de error) */
-    private String token; // Campo para token JWT
+    private String token;
     /** Nombre del usuario autenticado */
-    private String nombre; // Campo para nombre del usuario
+    private String nombre;
     /** Correo del usuario autenticado */
-    private String correo; // Campo para correo del usuario
+    private String correo;
     /** Rol del usuario en el sistema (SUPER_ADMIN, ADMIN, EMPLEADO) */
-    private String rol; // Campo para rol del usuario
+    private String rol;
 
     /**
      * Constructor vacío para instanciación sin argumentos.
      * Permite creación gradual de objetos con setters.
      */
-    public LoginResponse() {} // Constructor por defecto
+    public LoginResponse() {}
 
     /**
      * Constructor para respuestas de error (solo necesita success y message).
@@ -32,9 +33,11 @@ public class LoginResponse {
      * @param success Resultado del login
      * @param message Mensaje descriptivo
      */
-    public LoginResponse(boolean success, String message) { // Constructor para errores
-        this.success = success; // Asignar resultado
-        this.message = message; // Asignar mensaje
+    public LoginResponse(boolean success, String message) {
+        // Asignar resultado
+        this.success = success;
+        // Asignar mensaje
+        this.message = message;
     }
 
     /**
@@ -47,42 +50,48 @@ public class LoginResponse {
      * @param correo Correo del usuario
      * @param rol Rol del usuario
      */
-    public LoginResponse(boolean success, String message, String token, String nombre, String correo, String rol) { // Constructor completo
-        this.success = success; // Asignar resultado
-        this.message = message; // Asignar mensaje
-        this.token = token; // Asignar token
-        this.nombre = nombre; // Asignar nombre
-        this.correo = correo; // Asignar correo
-        this.rol = rol; // Asignar rol
+    public LoginResponse(boolean success, String message, String token, String nombre, String correo, String rol) {
+        // Asignar resultado
+        this.success = success;
+        // Asignar mensaje
+        this.message = message;
+        // Asignar token
+        this.token = token;
+        // Asignar nombre
+        this.nombre = nombre;
+        // Asignar correo
+        this.correo = correo;
+        // Asignar rol
+        this.rol = rol;
     }
 
     /** @return true si el login fue exitoso */
-    public boolean isSuccess() { return success; } // Getter para success
+    public boolean isSuccess() { return success; }
     /** @param success Establecer resultado del login */
-    public void setSuccess(boolean success) { this.success = success; } // Setter para success
+    public void setSuccess(boolean success) { this.success = success; }
 
     /** @return Mensaje descriptivo del resultado */
-    public String getMessage() { return message; } // Getter para message
+    public String getMessage() { return message; }
     /** @param message Establecer mensaje descriptivo */
-    public void setMessage(String message) { this.message = message; } // Setter para message
+    public void setMessage(String message) { this.message = message; }
 
     /** @return JWT generado para el usuario */
-    public String getToken() { return token; } // Getter para token
+    public String getToken() { return token; }
     /** @param token Establecer JWT */
-    public void setToken(String token) { this.token = token; } // Setter para token
+    public void setToken(String token) { this.token = token; }
 
     /** @return Nombre del usuario autenticado */
-    public String getNombre() { return nombre; } // Getter para nombre
+    public String getNombre() { return nombre; }
     /** @param nombre Establecer nombre del usuario */
-    public void setNombre(String nombre) { this.nombre = nombre; } // Setter para nombre
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
     /** @return Correo del usuario autenticado */
-    public String getCorreo() { return correo; } // Getter para correo
+    public String getCorreo() { return correo; }
     /** @param correo Establecer correo del usuario */
-    public void setCorreo(String correo) { this.correo = correo; } // Setter para correo
+    public void setCorreo(String correo) { this.correo = correo; }
 
     /** @return Rol del usuario en el sistema */
-    public String getRol() { return rol; } // Getter para rol
+    public String getRol() { return rol; }
     /** @param rol Establecer rol del usuario */
-    public void setRol(String rol) { this.rol = rol; } // Setter para rol
+    public void setRol(String rol) { this.rol = rol; }
 }
