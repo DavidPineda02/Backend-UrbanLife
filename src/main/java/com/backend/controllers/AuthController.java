@@ -1,17 +1,18 @@
-package com.backend.controllers; // Paquete de controladores HTTP de la aplicación
+// Paquete de controladores HTTP de la aplicación
+package com.backend.controllers;
 
 // Para leer el cuerpo de la peticion HTTP
-import com.backend.server.http.ApiRequest; // Clase para leer cuerpo de peticiones
+import com.backend.server.http.ApiRequest;
 // Para enviar respuestas HTTP estandarizadas
-import com.backend.server.http.ApiResponse; // Clase para enviar respuestas HTTP
+import com.backend.server.http.ApiResponse;
 // Servicio que contiene la logica de validacion del login
-import com.backend.services.AuthService; // Lógica de negocio de autenticación
+import com.backend.services.AuthService;
 // Para parsear el JSON del body de la peticion
-import com.google.gson.Gson; // Biblioteca para manejo de JSON
+import com.google.gson.Gson;
 // Para construir y manipular objetos JSON
-import com.google.gson.JsonObject; // Clase para objetos JSON
+import com.google.gson.JsonObject;
 // Interfaz del manejador HTTP de Java
-import com.sun.net.httpserver.HttpHandler; // Interfaz para manejar peticiones HTTP
+import com.sun.net.httpserver.HttpHandler;
 
 /**
  * Controller que maneja los endpoints de autenticación básica.
@@ -28,38 +29,49 @@ public class AuthController {
      */
     public static HttpHandler login() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/login"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/login");
 
             // Leer y validar que el cuerpo de la peticion no este vacio
-            ApiRequest peticion = new ApiRequest(exchange); // Crear objeto para leer cuerpo
-            String cuerpo = peticion.readBody(); // Leer cuerpo de la petición
+            ApiRequest peticion = new ApiRequest(exchange);
+            // Leer cuerpo de la petición
+            String cuerpo = peticion.readBody();
 
-            if (cuerpo.isEmpty()) { // Validar que el cuerpo no esté vacío
-                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio"); // Error 400
-                return; // Salir del handler
+            // Validar que el cuerpo no esté vacío
+            if (cuerpo.isEmpty()) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
+                // Salir del handler
+                return;
             }
 
             // Intentar parsear el cuerpo como JSON (si falla, el body no es JSON valido)
             JsonObject datosJson;
             try {
-                datosJson = new Gson().fromJson(cuerpo, JsonObject.class); // Parsear JSON
-            } catch (Exception e) { // Capturar errores de parseo
-                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido"); // Error 400
-                return; // Salir del handler
+                // Parsear JSON
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            // Capturar errores de parseo
+            } catch (Exception e) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                // Salir del handler
+                return;
             }
 
             // Extraer correo y contrasena del JSON, usar "" si no vienen en el body
-            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : ""; // Extraer correo
-            String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : ""; // Extraer contraseña
+            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
+            // Extraer contraseña
+            String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
 
             // Delegar la validacion y autenticacion al servicio
-            JsonObject respuesta = AuthService.validateLogin(correo, contrasena); // Validar credenciales
+            JsonObject respuesta = AuthService.validateLogin(correo, contrasena);
             // Extraer el codigo HTTP interno del servicio para usarlo en la respuesta
-            int codigoHttp = respuesta.get("status").getAsInt(); // Obtener código HTTP
+            int codigoHttp = respuesta.get("status").getAsInt();
             // Eliminar el campo "status" interno antes de enviar al cliente
-            respuesta.remove("status"); // Limpiar campo interno
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, respuesta.toString(), codigoHttp); // Enviar respuesta
+            // Enviar respuesta
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -71,21 +83,29 @@ public class AuthController {
      */
     public static HttpHandler me() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/me"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/me");
 
             // Leer los datos del usuario que el AuthMiddleware extrajo del JWT y guardo como atributos
-            String idUsuario = (String) exchange.getAttribute("userId"); // ID del usuario desde JWT
-            String correo = (String) exchange.getAttribute("correo");    // Correo del usuario desde JWT
-            String rol = (String) exchange.getAttribute("rol");          // Rol del usuario desde JWT
+            String idUsuario = (String) exchange.getAttribute("userId");
+            // Correo del usuario desde JWT
+            String correo = (String) exchange.getAttribute("correo");
+            // Rol del usuario desde JWT
+            String rol = (String) exchange.getAttribute("rol");
 
             // Construir la respuesta con los datos de identidad del usuario autenticado
-            JsonObject respuesta = new JsonObject(); // Crear objeto JSON de respuesta
-            respuesta.addProperty("success", true); // Indicar éxito
-            respuesta.addProperty("userId", idUsuario); // Agregar ID del usuario
-            respuesta.addProperty("correo", correo); // Agregar correo del usuario
-            respuesta.addProperty("rol", rol); // Agregar rol del usuario
+            JsonObject respuesta = new JsonObject();
+            // Indicar éxito
+            respuesta.addProperty("success", true);
+            // Agregar ID del usuario
+            respuesta.addProperty("userId", idUsuario);
+            // Agregar correo del usuario
+            respuesta.addProperty("correo", correo);
+            // Agregar rol del usuario
+            respuesta.addProperty("rol", rol);
 
-            ApiResponse.send(exchange, respuesta.toString(), 200); // Enviar respuesta 200
+            // Enviar respuesta 200
+            ApiResponse.send(exchange, respuesta.toString(), 200);
         };
     }
 }
