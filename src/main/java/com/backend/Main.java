@@ -8,7 +8,16 @@ import com.backend.seeders.SeedTipoGasto;
 // Importar la clase que inicia el servidor HTTP
 import com.backend.server.serverConnection;
 
+/**
+ * Clase principal que inicia la aplicación UrbanLife Backend.
+ * Ejecuta los seeders para inicializar datos base y arranca el servidor HTTP.
+ */
 public class Main {
+    
+    /**
+     * Método principal que inicia la aplicación.
+     * @param args Argumentos de línea de comandos (no utilizados)
+     */
     public static void main(String[] args) {
         // Mensaje de inicio para confirmar que la aplicacion arranco
         System.out.println("Iniciando UrbanLife Backend...");

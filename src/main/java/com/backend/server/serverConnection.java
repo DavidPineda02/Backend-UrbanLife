@@ -12,13 +12,19 @@ import java.io.IOException;
 // Para vincular el servidor a una direccion IP y puerto especificos
 import java.net.InetSocketAddress;
 
-// Clase responsable de crear, iniciar y detener el servidor HTTP
+/**
+ * Clase responsable de crear, iniciar y detener el servidor HTTP.
+ * Gestiona el ciclo de vida del servidor y el registro de rutas.
+ */
 public class serverConnection {
 
-    // Referencia estatica al servidor para poder detenerlo desde stopServer()
+    /** Referencia estática al servidor para poder detenerlo desde stopServer() */
     private static HttpServer server;
 
-    // Crea e inicia el servidor HTTP escuchando en el puerto indicado
+    /**
+     * Crea e inicia el servidor HTTP escuchando en el puerto indicado.
+     * @param port Puerto en el que escuchará el servidor
+     */
     public static void startServer(int port) {
         try {
             System.out.println("\nIniciando servidor...");
@@ -45,7 +51,10 @@ public class serverConnection {
         }
     }
 
-    // Detiene el servidor de forma ordenada (espera 0 segundos antes de forzar el cierre)
+    /**
+     * Detiene el servidor de forma ordenada.
+     * Espera 0 segundos antes de forzar el cierre.
+     */
     public static void stopServer() {
         // Verificar que el servidor fue iniciado antes de intentar detenerlo
         if (server != null) {
