@@ -24,10 +24,29 @@ import java.util.List;
 // Para construir el mapa de respuesta con Map.of()
 import java.util.Map;
 
-// Controller que maneja todos los endpoints CRUD de usuarios (/api/users)
+/**
+ * Controller que maneja todos los endpoints CRUD de usuarios.
+ * Proporciona operaciones para crear, leer, actualizar y desactivar usuarios.
+ */
 public class UserController {
 
-    // Handler para GET /api/users: retorna todos los usuarios del sistema
+    /**
+     * Handler para GET /api/users.
+     * Retorna todos los usuarios del sistema.
+     * @return HttpHandler que procesa la solicitud de listar usuarios
+     */
+    public static HttpHandler findAll() {
+        return exchange -> {
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
+
+            try {
+                List<Usuario> usuarios = UsuarioDAO.findAll();
+                ApiResponse.send(exchange, new Gson().toJson(usuarios), 200);
+            } catch (Exception excepcion) {
+                ApiResponse.error(exchange, 500, "Error al obtener usuarios: " + excepcion.getMessage());
+            }
+        };
+    }
     public static HttpHandler listAll() {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
@@ -41,7 +60,11 @@ public class UserController {
         };
     }
 
-    // Handler para GET /api/users/id?id=X: retorna un usuario especifico por su ID
+    /**
+     * Handler para GET /api/users/id?id=X.
+     * Retorna un usuario específico por su ID con control de acceso.
+     * @return HttpHandler que procesa la solicitud de buscar usuario por ID
+     */
     public static HttpHandler getById() {
         return exchange -> {
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
