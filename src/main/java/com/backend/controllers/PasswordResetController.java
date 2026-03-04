@@ -1,17 +1,18 @@
-package com.backend.controllers; // Paquete de controladores HTTP de la aplicación
+// Paquete de controladores HTTP de la aplicación
+package com.backend.controllers;
 
 // Para leer el cuerpo de la peticion HTTP
-import com.backend.server.http.ApiRequest; // Clase para leer cuerpo de peticiones
+import com.backend.server.http.ApiRequest;
 // Para enviar respuestas HTTP estandarizadas
-import com.backend.server.http.ApiResponse; // Clase para enviar respuestas HTTP
+import com.backend.server.http.ApiResponse;
 // Servicio que contiene la logica de recuperacion de contrasena
-import com.backend.services.PasswordResetService; // Lógica de negocio de recuperación
+import com.backend.services.PasswordResetService;
 // Para parsear el JSON del body de la peticion
-import com.google.gson.Gson; // Biblioteca para manejo de JSON
+import com.google.gson.Gson;
 // Para manipular objetos JSON
-import com.google.gson.JsonObject; // Clase para objetos JSON
+import com.google.gson.JsonObject;
 // Interfaz del manejador HTTP de Java
-import com.sun.net.httpserver.HttpHandler; // Interfaz para manejar peticiones HTTP
+import com.sun.net.httpserver.HttpHandler;
 
 /**
  * Controller que maneja los tres endpoints del flujo de recuperación de contraseña.
@@ -28,34 +29,46 @@ public class PasswordResetController {
      */
     public static HttpHandler solicitarRecuperacion() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/forgot-password"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/forgot-password");
 
             // Leer y validar que el cuerpo no este vacio
-            ApiRequest peticion = new ApiRequest(exchange); // Crear objeto para leer cuerpo
-            String cuerpo = peticion.readBody(); // Leer cuerpo de la petición
+            ApiRequest peticion = new ApiRequest(exchange);
+            // Leer cuerpo de la petición
+            String cuerpo = peticion.readBody();
 
-            if (cuerpo.isEmpty()) { // Validar que el cuerpo no esté vacío
-                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio"); // Error 400
-                return; // Salir del handler
+            // Validar que el cuerpo no esté vacío
+            if (cuerpo.isEmpty()) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
+                // Salir del handler
+                return;
             }
 
             // Intentar parsear el body como JSON
             JsonObject datosJson;
             try {
-                datosJson = new Gson().fromJson(cuerpo, JsonObject.class); // Parsear JSON
-            } catch (Exception e) { // Capturar errores de parseo
-                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido"); // Error 400
-                return; // Salir del handler
+                // Parsear JSON
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            // Capturar errores de parseo
+            } catch (Exception e) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                // Salir del handler
+                return;
             }
             // Extraer el correo del JSON, usar "" si no viene
-            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : ""; // Extraer correo
+            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
 
             // Delegar al servicio: generar token, guardarlo y enviar correo
-            JsonObject respuesta = PasswordResetService.solicitarRecuperacion(correo); // Procesar solicitud
-            int codigoHttp = respuesta.get("status").getAsInt(); // Obtener código HTTP
-            respuesta.remove("status"); // Limpiar campo interno
+            JsonObject respuesta = PasswordResetService.solicitarRecuperacion(correo);
+            // Obtener código HTTP
+            int codigoHttp = respuesta.get("status").getAsInt();
+            // Limpiar campo interno
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, respuesta.toString(), codigoHttp); // Enviar respuesta
+            // Enviar respuesta
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -66,22 +79,28 @@ public class PasswordResetController {
      */
     public static HttpHandler validarToken() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/reset-password/validate"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/reset-password/validate");
 
             // Obtener la query string de la URL (ej: "token=abc123")
-            String query = exchange.getRequestURI().getQuery(); // Obtener parámetros URL
-            String token = ""; // Inicializar token vacío
+            String query = exchange.getRequestURI().getQuery();
+            // Inicializar token vacío
+            String token = "";
             // Extraer el valor del parametro "token" si existe en la query string
-            if (query != null && query.contains("token=")) { // Validar que exista el parámetro
-                token = query.split("token=")[1]; // Extraer valor del token
+            if (query != null && query.contains("token=")) {
+                // Extraer valor del token
+                token = query.split("token=")[1];
             }
 
             // Delegar al servicio la validacion del token contra la base de datos
-            JsonObject respuesta = PasswordResetService.validarToken(token); // Validar token
-            int codigoHttp = respuesta.get("status").getAsInt(); // Obtener código HTTP
-            respuesta.remove("status"); // Limpiar campo interno
+            JsonObject respuesta = PasswordResetService.validarToken(token);
+            // Obtener código HTTP
+            int codigoHttp = respuesta.get("status").getAsInt();
+            // Limpiar campo interno
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, respuesta.toString(), codigoHttp); // Enviar respuesta
+            // Enviar respuesta
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -93,35 +112,48 @@ public class PasswordResetController {
      */
     public static HttpHandler cambiarContrasena() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/reset-password"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/reset-password");
 
             // Leer y validar que el body no este vacio
-            ApiRequest peticion = new ApiRequest(exchange); // Crear objeto para leer cuerpo
-            String cuerpo = peticion.readBody(); // Leer cuerpo de la petición
+            ApiRequest peticion = new ApiRequest(exchange);
+            // Leer cuerpo de la petición
+            String cuerpo = peticion.readBody();
 
-            if (cuerpo.isEmpty()) { // Validar que el cuerpo no esté vacío
-                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio"); // Error 400
-                return; // Salir del handler
+            // Validar que el cuerpo no esté vacío
+            if (cuerpo.isEmpty()) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
+                // Salir del handler
+                return;
             }
 
             // Intentar parsear el body como JSON
             JsonObject datosJson;
             try {
-                datosJson = new Gson().fromJson(cuerpo, JsonObject.class); // Parsear JSON
-            } catch (Exception e) { // Capturar errores de parseo
-                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido"); // Error 400
-                return; // Salir del handler
+                // Parsear JSON
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            // Capturar errores de parseo
+            } catch (Exception e) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                // Salir del handler
+                return;
             }
             // Extraer token y nueva contrasena del JSON, usar "" si no vienen
-            String token           = datosJson.has("token")      ? datosJson.get("token").getAsString()      : ""; // Extraer token
-            String nuevaContrasena = datosJson.has("contrasena")  ? datosJson.get("contrasena").getAsString() : ""; // Extraer contraseña
+            String token           = datosJson.has("token")      ? datosJson.get("token").getAsString()      : "";
+            // Extraer contraseña
+            String nuevaContrasena = datosJson.has("contrasena")  ? datosJson.get("contrasena").getAsString() : "";
 
             // Delegar al servicio: validar token, hashear nueva contrasena y actualizarla en BD
-            JsonObject respuesta = PasswordResetService.cambiarContrasena(token, nuevaContrasena); // Cambiar contraseña
-            int codigoHttp = respuesta.get("status").getAsInt(); // Obtener código HTTP
-            respuesta.remove("status"); // Limpiar campo interno
+            JsonObject respuesta = PasswordResetService.cambiarContrasena(token, nuevaContrasena);
+            // Obtener código HTTP
+            int codigoHttp = respuesta.get("status").getAsInt();
+            // Limpiar campo interno
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, respuesta.toString(), codigoHttp); // Enviar respuesta
+            // Enviar respuesta
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 }

@@ -1,28 +1,29 @@
-package com.backend.controllers; // Paquete de controladores HTTP de la aplicación
+// Paquete de controladores HTTP de la aplicación
+package com.backend.controllers;
 
 // Para acceder directamente a la BD y listar/buscar usuarios
-import com.backend.dao.UsuarioDAO; // DAO para operaciones de base de datos de usuarios
+import com.backend.dao.UsuarioDAO;
 // DTO que mapea el JSON del body al crear un usuario
-import com.backend.dto.CreateUserRequest; // DTO para creación de usuarios
+import com.backend.dto.CreateUserRequest;
 // Entidad que representa un usuario del sistema
-import com.backend.models.Usuario; // Modelo de datos de usuario
+import com.backend.models.Usuario;
 // Para leer el cuerpo de la peticion HTTP
-import com.backend.server.http.ApiRequest; // Clase para leer cuerpo de peticiones
+import com.backend.server.http.ApiRequest;
 // Para enviar respuestas HTTP estandarizadas
-import com.backend.server.http.ApiResponse; // Clase para enviar respuestas HTTP
+import com.backend.server.http.ApiResponse;
 // Servicio con la logica de negocio de usuarios
-import com.backend.services.UserService; // Lógica de negocio de usuarios
+import com.backend.services.UserService;
 // Para parsear el JSON del body
-import com.google.gson.Gson; // Biblioteca para manejo de JSON
+import com.google.gson.Gson;
 // Para manipular objetos JSON manualmente
-import com.google.gson.JsonObject; // Clase para objetos JSON
+import com.google.gson.JsonObject;
 // Interfaz del manejador HTTP de Java
-import com.sun.net.httpserver.HttpHandler; // Interfaz para manejar peticiones HTTP
+import com.sun.net.httpserver.HttpHandler;
 
 // Para la lista de usuarios retornada por findAll
-import java.util.List; // Interfaz para listas genéricas
+import java.util.List;
 // Para construir el mapa de respuesta con Map.of()
-import java.util.Map; // Interfaz para mapas
+import java.util.Map;
 
 /**
  * Controller que maneja todos los endpoints CRUD de usuarios.
@@ -38,17 +39,22 @@ public class UserController {
      */
     public static HttpHandler findAll() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
 
             try {
-                List<Usuario> usuarios = UsuarioDAO.findAll(); // Obtener todos los usuarios
-                ApiResponse.send(exchange, new Gson().toJson(usuarios), 200); // Enviar respuesta
-            } catch (Exception excepcion) { // Capturar errores de base de datos
-                ApiResponse.error(exchange, 500, "Error al obtener usuarios: " + excepcion.getMessage()); // Error 500
+                // Obtener todos los usuarios
+                List<Usuario> usuarios = UsuarioDAO.findAll();
+                // Enviar respuesta
+                ApiResponse.send(exchange, new Gson().toJson(usuarios), 200);
+            // Capturar errores de base de datos
+            } catch (Exception excepcion) {
+                // Error 500
+                ApiResponse.error(exchange, 500, "Error al obtener usuarios: " + excepcion.getMessage());
             }
         };
     }
-    
+
     /**
      * Handler para GET /api/users (versión mejorada).
      * Retorna todos los usuarios del sistema sin contraseñas.
@@ -56,14 +62,15 @@ public class UserController {
      */
     public static HttpHandler listAll() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
 
             // Obtener la lista completa de usuarios desde la base de datos
-            List<Usuario> lista = UsuarioDAO.findAll(); // Obtener todos los usuarios
+            List<Usuario> lista = UsuarioDAO.findAll();
             // Eliminar la contrasena de cada usuario antes de enviarla al cliente
-            lista.forEach(usuario -> usuario.setContrasena(null)); // Limpiar contraseñas por seguridad
+            lista.forEach(usuario -> usuario.setContrasena(null));
             // Enviar la lista de usuarios serializada como JSON con codigo 200
-            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", lista)); // Enviar respuesta segura
+            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", lista));
         };
     }
 
@@ -74,35 +81,46 @@ public class UserController {
      */
     public static HttpHandler getById() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
 
             // Leer y validar el parametro "id" de la query string con regex
-            String parametrosUrl = exchange.getRequestURI().getQuery(); // Obtener parámetros URL
-            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) { // Validar formato id=numérico
-                ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)"); // Error 400
-                return; // Salir del handler
+            String parametrosUrl = exchange.getRequestURI().getQuery();
+            // Validar formato id=numérico
+            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
+                // Salir del handler
+                return;
             }
             // Parsear el id a entero (ej: "id=5" -> 5)
-            int id = Integer.parseInt(parametrosUrl.split("=")[1]); // Extraer ID numérico
+            int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
             // Leer el rol y el id del usuario autenticado desde los atributos del exchange (inyectados por AuthMiddleware)
-            String rolUsuario = (String) exchange.getAttribute("rol"); // Rol del usuario autenticado
-            String idUsuarioToken = (String) exchange.getAttribute("userId"); // ID del usuario autenticado
+            String rolUsuario = (String) exchange.getAttribute("rol");
+            // ID del usuario autenticado
+            String idUsuarioToken = (String) exchange.getAttribute("userId");
             // Control de recurso propio: EMPLEADO solo puede ver su propio perfil
-            if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) { // Validar permisos
-                ApiResponse.error(exchange, 403, "No tiene permiso para acceder a este recurso"); // Error 403
-                return; // Salir del handler
+            if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) {
+                // Error 403
+                ApiResponse.error(exchange, 403, "No tiene permiso para acceder a este recurso");
+                // Salir del handler
+                return;
             }
 
             // Buscar el usuario en la base de datos por su ID
-            Usuario usuario = UsuarioDAO.findById(id); // Buscar usuario por ID
-            if (usuario == null) { // Validar que exista el usuario
-                ApiResponse.error(exchange, 404, "Usuario no encontrado"); // Error 404
-                return; // Salir del handler
+            Usuario usuario = UsuarioDAO.findById(id);
+            // Validar que exista el usuario
+            if (usuario == null) {
+                // Error 404
+                ApiResponse.error(exchange, 404, "Usuario no encontrado");
+                // Salir del handler
+                return;
             }
             // Ocultar la contrasena hasheada antes de enviar el usuario al cliente
-            usuario.setContrasena(null); // Limpiar contraseña por seguridad
-            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", usuario)); // Enviar respuesta
+            usuario.setContrasena(null);
+            // Enviar respuesta
+            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", usuario));
         };
     }
 
@@ -114,33 +132,45 @@ public class UserController {
      */
     public static HttpHandler create() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
 
             // Leer y validar que el body no este vacio
-            ApiRequest peticion = new ApiRequest(exchange); // Crear objeto para leer cuerpo
-            String cuerpo = peticion.readBody(); // Leer cuerpo de la petición
+            ApiRequest peticion = new ApiRequest(exchange);
+            // Leer cuerpo de la petición
+            String cuerpo = peticion.readBody();
 
-            if (cuerpo.isEmpty()) { // Validar que el cuerpo no esté vacío
-                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio"); // Error 400
-                return; // Salir del handler
+            // Validar que el cuerpo no esté vacío
+            if (cuerpo.isEmpty()) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
+                // Salir del handler
+                return;
             }
 
             // Deserializar el JSON al DTO CreateUserRequest (nombre, correo, contrasena)
             CreateUserRequest request;
             try {
-                request = new Gson().fromJson(cuerpo, CreateUserRequest.class); // Parsear a DTO
-            } catch (Exception e) { // Capturar errores de parseo
-                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido"); // Error 400
-                return; // Salir del handler
+                // Parsear a DTO
+                request = new Gson().fromJson(cuerpo, CreateUserRequest.class);
+            // Capturar errores de parseo
+            } catch (Exception e) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                // Salir del handler
+                return;
             }
 
             // Delegar la validacion, creacion y generacion de JWT al servicio
-            JsonObject respuesta = UserService.validateAndCreate( // Delegar lógica de negocio
-                    request.getNombre(), request.getCorreo(), request.getContrasena()); // Pasar datos
-            int codigoHttp = respuesta.get("status").getAsInt(); // Obtener código HTTP
-            respuesta.remove("status"); // Limpiar campo interno
+            JsonObject respuesta = UserService.validateAndCreate(
+                    request.getNombre(), request.getCorreo(), request.getContrasena());
+            // Obtener código HTTP
+            int codigoHttp = respuesta.get("status").getAsInt();
+            // Limpiar campo interno
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, respuesta.toString(), codigoHttp); // Enviar respuesta
+            // Enviar respuesta
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -152,40 +182,57 @@ public class UserController {
      */
     public static HttpHandler update() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
 
             // Validar el parametro id en la query string
-            String parametrosUrl = exchange.getRequestURI().getQuery(); // Obtener parámetros URL
-            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) { // Validar formato
-                ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)"); // Error 400
-                return; // Salir del handler
+            String parametrosUrl = exchange.getRequestURI().getQuery();
+            // Validar formato
+            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
+                // Salir del handler
+                return;
             }
-            int id = Integer.parseInt(parametrosUrl.split("=")[1]); // Extraer ID numérico
+            // Extraer ID numérico
+            int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
             // Control de recurso propio: EMPLEADO solo puede modificar su propio perfil
-            String rolUsuario = (String) exchange.getAttribute("rol"); // Rol del usuario autenticado
-            String idUsuarioToken = (String) exchange.getAttribute("userId"); // ID del usuario autenticado
-            if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) { // Validar permisos
-                ApiResponse.error(exchange, 403, "No tiene permiso para modificar este recurso"); // Error 403
-                return; // Salir del handler
+            String rolUsuario = (String) exchange.getAttribute("rol");
+            // ID del usuario autenticado
+            String idUsuarioToken = (String) exchange.getAttribute("userId");
+            // Validar permisos
+            if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) {
+                // Error 403
+                ApiResponse.error(exchange, 403, "No tiene permiso para modificar este recurso");
+                // Salir del handler
+                return;
             }
 
             // Leer el body de la peticion
-            ApiRequest peticion = new ApiRequest(exchange); // Crear objeto para leer cuerpo
-            String cuerpo = peticion.readBody(); // Leer cuerpo de la petición
+            ApiRequest peticion = new ApiRequest(exchange);
+            // Leer cuerpo de la petición
+            String cuerpo = peticion.readBody();
 
-            if (cuerpo.isEmpty()) { // Validar que el cuerpo no esté vacío
-                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio"); // Error 400
-                return; // Salir del handler
+            // Validar que el cuerpo no esté vacío
+            if (cuerpo.isEmpty()) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
+                // Salir del handler
+                return;
             }
 
             // Parsear el body como JsonObject para acceder a cada campo individualmente
             JsonObject datosJson;
             try {
-                datosJson = new Gson().fromJson(cuerpo, JsonObject.class); // Parsear JSON
-            } catch (Exception e) { // Capturar errores de parseo
-                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido"); // Error 400
-                return; // Salir del handler
+                // Parsear JSON
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            // Capturar errores de parseo
+            } catch (Exception e) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                // Salir del handler
+                return;
             }
 
             // Extraer cada campo del JSON, usando "" como valor por defecto si no vienen
@@ -193,14 +240,17 @@ public class UserController {
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
             String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
             // En PUT el estado tiene valor por defecto true si no se envia
-            boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : true; // Estado por defecto
+            boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : true;
 
             // Delegar al servicio la validacion y actualizacion completa del usuario
-            JsonObject respuesta = UserService.validateAndUpdate(id, nombre, correo, contrasena, estado); // Actualizar completo
-            int codigoHttp = respuesta.get("status").getAsInt(); // Obtener código HTTP
-            respuesta.remove("status"); // Limpiar campo interno
+            JsonObject respuesta = UserService.validateAndUpdate(id, nombre, correo, contrasena, estado);
+            // Obtener código HTTP
+            int codigoHttp = respuesta.get("status").getAsInt();
+            // Limpiar campo interno
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, respuesta.toString(), codigoHttp); // Enviar respuesta
+            // Enviar respuesta
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -212,55 +262,77 @@ public class UserController {
      */
     public static HttpHandler patch() {
         return exchange -> {
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id"); // Log de petición
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
 
             // Validar el parametro id en la query string
-            String parametrosUrl = exchange.getRequestURI().getQuery(); // Obtener parámetros URL
-            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) { // Validar formato
-                ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)"); // Error 400
-                return; // Salir del handler
+            String parametrosUrl = exchange.getRequestURI().getQuery();
+            // Validar formato
+            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
+                // Salir del handler
+                return;
             }
-            int id = Integer.parseInt(parametrosUrl.split("=")[1]); // Extraer ID numérico
+            // Extraer ID numérico
+            int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
             // Control de recurso propio: EMPLEADO solo puede modificar su propio perfil
-            String rolUsuario = (String) exchange.getAttribute("rol"); // Rol del usuario autenticado
-            String idUsuarioToken = (String) exchange.getAttribute("userId"); // ID del usuario autenticado
-            if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) { // Validar permisos
-                ApiResponse.error(exchange, 403, "No tiene permiso para modificar este recurso"); // Error 403
-                return; // Salir del handler
+            String rolUsuario = (String) exchange.getAttribute("rol");
+            // ID del usuario autenticado
+            String idUsuarioToken = (String) exchange.getAttribute("userId");
+            // Validar permisos
+            if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) {
+                // Error 403
+                ApiResponse.error(exchange, 403, "No tiene permiso para modificar este recurso");
+                // Salir del handler
+                return;
             }
 
             // Leer el body de la peticion
-            ApiRequest peticion = new ApiRequest(exchange); // Crear objeto para leer cuerpo
-            String cuerpo = peticion.readBody(); // Leer cuerpo de la petición
+            ApiRequest peticion = new ApiRequest(exchange);
+            // Leer cuerpo de la petición
+            String cuerpo = peticion.readBody();
 
-            if (cuerpo.isEmpty()) { // Validar que el cuerpo no esté vacío
-                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio"); // Error 400
-                return; // Salir del handler
+            // Validar que el cuerpo no esté vacío
+            if (cuerpo.isEmpty()) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
+                // Salir del handler
+                return;
             }
 
             // Parsear el body como JsonObject
             JsonObject datosJson;
             try {
-                datosJson = new Gson().fromJson(cuerpo, JsonObject.class); // Parsear JSON
-            } catch (Exception e) { // Capturar errores de parseo
-                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido"); // Error 400
-                return; // Salir del handler
+                // Parsear JSON
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            // Capturar errores de parseo
+            } catch (Exception e) {
+                // Error 400
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                // Salir del handler
+                return;
             }
 
             // Extraer cada campo, usando null como valor por defecto (null = no actualizar ese campo)
-            String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : null; // Nombre opcional
-            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : null; // Correo opcional
-            String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : null; // Contraseña opcional
+            String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : null;
+            // Correo opcional
+            String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : null;
+            // Contraseña opcional
+            String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : null;
             // Boolean (objeto) en lugar de boolean primitivo para poder diferenciar null de false
-            Boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : null; // Estado opcional
+            Boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : null;
 
             // Delegar al servicio la actualizacion parcial (solo se actualizan los campos no nulos)
-            JsonObject respuesta = UserService.partialUpdate(id, nombre, correo, contrasena, estado); // Actualización parcial
-            int codigoHttp = respuesta.get("status").getAsInt(); // Obtener código HTTP
-            respuesta.remove("status"); // Limpiar campo interno
+            JsonObject respuesta = UserService.partialUpdate(id, nombre, correo, contrasena, estado);
+            // Obtener código HTTP
+            int codigoHttp = respuesta.get("status").getAsInt();
+            // Limpiar campo interno
+            respuesta.remove("status");
 
-            ApiResponse.send(exchange, respuesta.toString(), codigoHttp); // Enviar respuesta
+            // Enviar respuesta
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 
@@ -271,15 +343,15 @@ public class UserController {
     // ============================================================
     // public static HttpHandler delete() {
     //     return exchange -> {
-    //         System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id"); // Log de petición
+    //         System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
     //
     //         // Validar que el parametro id este presente y sea un numero entero
-    //         String parametrosUrl = exchange.getRequestURI().getQuery(); // Obtener parámetros URL
-    //         if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) { // Validar formato
-    //             ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)"); // Error 400
-    //             return; // Salir del handler
+    //         String parametrosUrl = exchange.getRequestURI().getQuery();
+    //         if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
+    //             ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
+    //             return;
     //         }
-    //         int id = Integer.parseInt(parametrosUrl.split("=")[1]); // Extraer ID numérico
+    //         int id = Integer.parseInt(parametrosUrl.split("=")[1]);
     //
     //         // Leer el id del usuario autenticado para validar que no se desactive a si mismo
     //         String idUsuarioToken = (String) exchange.getAttribute("userId");
