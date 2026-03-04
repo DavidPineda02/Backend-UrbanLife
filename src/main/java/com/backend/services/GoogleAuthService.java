@@ -28,15 +28,22 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-// Servicio que maneja la autenticacion con Google OAuth 2.0
+/**
+ * Servicio que maneja la autenticación con Google OAuth 2.0.
+ * Verifica tokens de Google, crea usuarios y genera JWTs.
+ */
 public class GoogleAuthService {
 
-    // Client ID de la aplicacion en Google Cloud Console (para validar el token)
+    /** Client ID de la aplicación en Google Cloud Console (para validar el token) */
     private static final String CLIENT_ID = Dotenv.load().get("GOOGLE_CLIENT_ID");
-    // Instancia compartida de Gson para deserializar respuestas JSON
+    /** Instancia compartida de Gson para deserializar respuestas JSON */
     private static final Gson gson = new Gson();
 
-    // Verifica el token de Google, y autentica o crea al usuario en el sistema
+    /**
+     * Verifica el token de Google, y autentica o crea al usuario en el sistema.
+     * @param idToken Token JWT de Google Sign-In
+     * @return JsonObject con el resultado de la autenticación y JWT si es exitoso
+     */
     public static JsonObject loginWithGoogle(String idToken) {
         JsonObject respuesta = new JsonObject();
 
