@@ -10,15 +10,21 @@ import javax.mail.internet.MimeMessage;
 // Para las propiedades de configuracion SMTP
 import java.util.Properties;
 
-// Servicio responsable del envio de correos electronicos via Gmail SMTP
+/**
+ * Servicio responsable del envío de correos electrónicos via Gmail SMTP.
+ * Utiliza JavaMail para enviar correos HTML con autenticación OAuth2.
+ */
 public class EmailService {
 
-    // Correo remitente leido desde .env (ej: urbanlife@gmail.com)
+    /** Correo remitente leído desde .env (ej: urbanlife@gmail.com) */
     private static final String CORREO_REMITENTE = Dotenv.load().get("EMAIL_USER");
-    // Contrasena de aplicacion de Gmail (no es la contrasena normal, es una app password)
+    /** Contraseña de aplicación de Gmail (no es la contraseña normal, es una app password) */
     private static final String CONTRASENA_APP   = Dotenv.load().get("EMAIL_PASS");
 
-    // Crea y retorna una sesion SMTP autenticada con Gmail
+    /**
+     * Crea y retorna una sesión SMTP autenticada con Gmail.
+     * @return Session configurada para enviar correos
+     */
     private static Session crearSesion() {
         // Configurar propiedades del servidor SMTP de Gmail
         Properties propiedades = new Properties();
@@ -36,8 +42,13 @@ public class EmailService {
         });
     }
 
-    // Envia un correo HTML generico al destinatario indicado
-    // Retorna true si se envio correctamente, false si fallo
+    /**
+     * Envía un correo HTML genérico al destinatario indicado.
+     * @param correoDestino Correo electrónico del destinatario
+     * @param asunto Asunto del correo
+     * @param cuerpoHtml Contenido HTML del correo
+     * @return true si se envió correctamente, false si falló
+     */
     public static boolean enviarCorreo(String correoDestino, String asunto, String cuerpoHtml) {
         try {
             // Crear el mensaje MIME usando la sesion SMTP autenticada

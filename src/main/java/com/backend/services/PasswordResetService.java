@@ -14,10 +14,17 @@ import com.google.gson.JsonObject;
 // Para calcular la fecha de expiracion del token (1 hora desde ahora)
 import java.time.LocalDateTime;
 
-// Servicio que implementa el flujo completo de recuperacion de contrasena
+/**
+ * Servicio que implementa el flujo completo de recuperación de contraseña.
+ * Genera tokens, valida y cambia contraseñas de forma segura.
+ */
 public class PasswordResetService {
 
-    // Primer paso del flujo: genera un token UUID, lo guarda y envia el correo con el link
+    /**
+     * Primer paso del flujo: genera un token UUID, lo guarda y envía el correo con el link.
+     * @param correo Correo electrónico del usuario que solicita la recuperación
+     * @return JsonObject con el resultado de la solicitud
+     */
     public static JsonObject solicitarRecuperacion(String correo) {
         JsonObject respuesta = new JsonObject();
 
@@ -86,7 +93,11 @@ public class PasswordResetService {
         return respuesta;
     }
 
-    // Segundo paso del flujo: verifica que el token sea valido y no haya expirado
+    /**
+     * Segundo paso del flujo: verifica que el token sea válido y no haya expirado.
+     * @param token Token de recuperación a validar
+     * @return JsonObject con el resultado de la validación
+     */
     public static JsonObject validarToken(String token) {
         JsonObject respuesta = new JsonObject();
 
@@ -102,7 +113,12 @@ public class PasswordResetService {
         return TokenRecuperacionDAO.validarToken(token);
     }
 
-    // Tercer paso del flujo: cambia la contrasena usando el token de recuperacion
+    /**
+     * Tercer paso del flujo: cambia la contraseña usando el token de recuperación.
+     * @param token Token de recuperación válido
+     * @param nuevaContrasena Nueva contraseña a establecer
+     * @return JsonObject con el resultado del cambio de contraseña
+     */
     public static JsonObject cambiarContrasena(String token, String nuevaContrasena) {
         JsonObject respuesta = new JsonObject();
 
