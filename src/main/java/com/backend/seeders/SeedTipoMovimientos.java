@@ -6,16 +6,26 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+/**
+ * Seeder que inserta los tipos de movimientos del sistema si la tabla está vacía.
+ * Es idempotente: solo inserta datos si no existen previamente.
+ */
 public class SeedTipoMovimientos {
 
+    /** SQL para insertar un tipo de movimiento con su nombre y naturaleza */
     private static final String SQL_INSERT = "INSERT INTO Tipo_Movimientos (MOVIMIENTO, NATURALEZA) VALUES (?, ?)";
 
+    /** Catálogo de tipos de movimientos del sistema: [movimiento, naturaleza] */
     private static final String[][] tipos = {
             {"Venta", "Ingreso"},
             {"Compra", "Egreso"},
             {"Gasto Adicional", "Egreso"}
     };
 
+    /**
+     * Inserta los tipos de movimientos iniciales solo si la tabla Tipo_Movimientos está vacía (idempotente).
+     * Verifica primero si existen datos antes de insertar para evitar duplicados.
+     */
     public static void insertTipoMovimientos() {
         try (Connection conexion = dbConnection.getConnection()) {
 

@@ -10,13 +10,16 @@ import java.sql.PreparedStatement;
 // Para leer el resultado de la consulta de verificacion
 import java.sql.ResultSet;
 
-// Seeder que inserta los permisos del sistema si la tabla esta vacia
+/**
+ * Seeder que inserta los permisos del sistema si la tabla está vacía.
+ * Es idempotente: solo inserta datos si no existen previamente.
+ */
 public class SeedPermisos {
 
-    // SQL para insertar un permiso con su nombre y descripcion
+    /** SQL para insertar un permiso con su nombre y descripcion */
     private static final String SQL_INSERT = "INSERT INTO Permisos (NOMBRE, DESCRIPCION) VALUES (?, ?)";
 
-    // Catalogo de permisos del sistema: [nombre, descripcion]
+    /** Catálogo de permisos del sistema: [nombre, descripcion] */
     private static final String[][] permisos = {
             {"Gestionar Usuarios", "Crear, editar y eliminar usuarios del sistema"},
             {"Gestionar Roles", "Asignar y modificar roles de usuarios"},
@@ -30,7 +33,10 @@ public class SeedPermisos {
             {"Gestionar Perfil", "Editar perfil de empresa y contacto"}
     };
 
-    // Inserta los permisos iniciales solo si la tabla Permisos esta vacia (idempotente)
+    /**
+     * Inserta los permisos iniciales solo si la tabla Permisos está vacía (idempotente).
+     * Verifica primero si existen datos antes de insertar para evitar duplicados.
+     */
     public static void insertPermisos() {
         try (Connection conexion = dbConnection.getConnection()) {
 
