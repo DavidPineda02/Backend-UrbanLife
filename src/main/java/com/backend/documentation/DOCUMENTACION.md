@@ -1,8 +1,8 @@
-# Documentacion Paso a Paso — Backend UrbanLife (Modulo de Usuarios y Login)
+# Documentacion Paso a Paso — Backend UrbanLife (Modulo de Usuarios y Autenticacion)
 
 Esta documentacion explica paso a paso como se construyo el backend del proyecto UrbanLife desde cero. Esta pensada para alguien que nunca ha hecho un proyecto en Java y necesita entender que se hizo, por que se hizo, y en que orden.
 
-> **Alcance:** Solo cubre el modulo de **Usuarios** (CRUD) y **Autenticacion** (Login + JWT). Los demas modulos se documentaran por separado.
+> **Alcance:** Cubre el modulo de **Usuarios** (CRUD), **Autenticacion** (Login + JWT + Google OAuth) y **Recuperacion de contrasena**. Los demas modulos se documentaran por separado.
 
 ---
 
@@ -26,19 +26,21 @@ UrbanLife es un sistema de gestion contable para una tienda de ropa. El **backen
 | **dotenv-java** | Lee variables secretas desde un archivo `.env` |
 | **jBCrypt** | Encripta contrasenas de forma segura |
 | **JJWT** | Genera y valida tokens JWT para la autenticacion |
+| **javax.mail** | Envia correos electronicos via SMTP (Gmail) |
 
 **Arquitectura del proyecto (patron por capas):**
 
 Cada peticion que llega del frontend pasa por estas capas en orden:
 
 ```
-Peticion HTTP → Router → Controller → Service → DAO → Base de Datos
-                                                         ↓
-Respuesta JSON ← Controller ← Service ← DAO ← Resultado de la BD
+Peticion HTTP → Router → Middleware → Controller → Service → DAO → Base de Datos
+                                                                        ↓
+Respuesta JSON ←──────── Controller ←──── Service ←── DAO ←── Resultado de la BD
 ```
 
 Cada capa tiene una responsabilidad unica:
 - **Router**: Decide a que Controller enviar la peticion segun la ruta y el metodo HTTP
+- **Middleware**: Intercepta la peticion antes del Controller para verificar JWT y roles
 - **Controller**: Recibe la peticion, extrae los datos y delega al Service
 - **Service**: Contiene TODA la logica de validacion y reglas de negocio
 - **DAO**: Es el UNICO que escribe SQL y habla con la base de datos
@@ -50,51 +52,63 @@ Cada capa tiene una responsabilidad unica:
 ```
 src/main/java/com/backend/
 │
-├── Main.java                          → Punto de entrada (arranca todo)
+├── Main.java                              → Punto de entrada (arranca todo)
 │
 ├── config/
-│   └── dbConnection.java             → Conexion a MySQL usando .env
+│   └── dbConnection.java                 → Conexion a MySQL usando .env
 │
 ├── server/
-│   ├── serverConnection.java         → Crea y arranca el servidor HTTP
+│   ├── serverConnection.java             → Crea y arranca el servidor HTTP
 │   └── http/
-│       ├── ApiRequest.java           → Lee el cuerpo (body) de las peticiones
-│       └── ApiResponse.java          → Envia respuestas JSON estandarizadas
+│       ├── ApiRequest.java               → Lee el cuerpo (body) de las peticiones
+│       └── ApiResponse.java              → Envia respuestas JSON estandarizadas
 │
 ├── routes/
-│   ├── Router.java                   → Motor de ruteo (busca que handler ejecutar)
-│   └── Routes.java                   → Archivo donde se registran TODAS las rutas
+│   ├── Router.java                       → Motor de ruteo (busca que handler ejecutar)
+│   └── Routes.java                       → Archivo donde se registran TODAS las rutas
 │
 ├── models/
-│   └── Usuario.java                  → Clase que representa la tabla Usuarios de la BD
+│   ├── Usuario.java                      → Representa la tabla usuarios
+│   ├── Rol.java                          → Representa la tabla roles
+│   ├── UsuarioRol.java                   → Tabla intermedia usuarios_roles
+│   └── TokenRecuperacion.java            → Representa la tabla token_recuperacion
+│
+├── dto/
+│   ├── CreateUserRequest.java            → Datos que llegan al crear un usuario
+│   └── LoginRequest.java                 → Datos que llegan al hacer login
 │
 ├── dao/
-│   └── UsuarioDAO.java               → Consultas SQL para la tabla Usuarios (JDBC)
+│   ├── UsuarioDAO.java                   → Consultas SQL para la tabla usuarios
+│   ├── RolDAO.java                       → Consultas SQL para la tabla roles
+│   ├── UsuarioRolDAO.java                → Consultas SQL para la tabla usuarios_roles
+│   └── TokenRecuperacionDAO.java         → Consultas SQL para tokens de recuperacion
 │
 ├── services/
-│   ├── UserService.java              → Validaciones y logica para el CRUD de usuarios
-│   └── AuthService.java              → Validaciones y logica para el login
+│   ├── AuthService.java                  → Logica del login
+│   ├── UserService.java                  → Logica del CRUD de usuarios
+│   ├── GoogleAuthService.java            → Logica del login con Google
+│   ├── PasswordResetService.java         → Logica de recuperacion de contrasena
+│   └── EmailService.java                 → Envio de correos electronicos
 │
 ├── controllers/
-│   ├── UserController.java           → Recibe peticiones HTTP del CRUD de usuarios
-│   └── AuthController.java           → Recibe peticiones HTTP de autenticacion
+│   ├── AuthController.java               → Endpoints de autenticacion (login, me)
+│   ├── UserController.java               → Endpoints del CRUD de usuarios
+│   ├── GoogleAuthController.java         → Endpoint de login con Google
+│   └── PasswordResetController.java      → Endpoints de recuperacion de contrasena
 │
 ├── helpers/
-│   ├── PasswordHelper.java           → Encripta y verifica contrasenas con BCrypt
-│   ├── JwtHelper.java                → Genera y valida tokens JWT
-│   └── JsonHelper.java               → Utilidad para convertir JSON a objetos Java
+│   ├── PasswordHelper.java               → Encripta y verifica contrasenas con BCrypt
+│   ├── JwtHelper.java                    → Genera y valida tokens JWT
+│   └── JsonHelper.java                   → Convierte JSON a objetos Java y viceversa
 │
 ├── middlewares/
-│   └── AuthMiddleware.java           → Protege rutas verificando el token JWT
+│   └── AuthMiddleware.java               → Protege rutas verificando el token JWT y roles
 │
-├── seeders/                           → Datos iniciales que se insertan al arrancar
-│   ├── SeedRoles.java
-│   ├── SeedPermisos.java
-│   ├── SeedTipoMovimientos.java
-│   └── SeedTipoGasto.java
-│
-└── db/
-    └── UrbanLife.sql                  → Script completo de la base de datos
+└── seeders/                               → Datos iniciales que se insertan al arrancar
+    ├── SeedRoles.java
+    ├── SeedPermisos.java
+    ├── SeedTipoMovimientos.java
+    └── SeedTipoGasto.java
 ```
 
 ---
@@ -155,6 +169,13 @@ En el `pom.xml` se definen las dependencias (librerias externas):
         <version>0.12.6</version>
         <scope>runtime</scope>
     </dependency>
+
+    <!-- Envio de correos electronicos (recuperacion de contrasena) -->
+    <dependency>
+        <groupId>com.sun.mail</groupId>
+        <artifactId>javax.mail</artifactId>
+        <version>1.6.2</version>
+    </dependency>
 </dependencies>
 ```
 
@@ -180,7 +201,13 @@ Antes de escribir codigo, necesitamos un lugar seguro para guardar credenciales:
 DB_URL=jdbc:mysql://localhost:3306/UrbanLife
 DB_USER=root
 DB_PASSWD=tu_contrasena
+
 JWT_SECRET=una_clave_secreta_de_al_menos_32_caracteres
+
+GOOGLE_CLIENT_ID=tu_client_id_de_google_cloud_console
+
+EMAIL_USER=tu_correo@gmail.com
+EMAIL_PASS=tu_contrasena_de_aplicacion_gmail
 ```
 
 **¿Por que usamos .env en vez de escribir las credenciales directo en el codigo?**
@@ -188,7 +215,7 @@ JWT_SECRET=una_clave_secreta_de_al_menos_32_caracteres
 - Cada desarrollador puede tener credenciales diferentes
 - El `.env` se agrega al `.gitignore` para que Git lo ignore
 
-La libreria `dotenv-java` lee este archivo y pone esas variables disponibles en el codigo.
+**Nota sobre EMAIL_PASS:** Gmail no acepta la contrasena normal cuando la cuenta tiene verificacion en dos pasos. Se debe crear una "Contrasena de aplicacion" desde la configuracion de la cuenta de Google.
 
 ---
 
@@ -243,15 +270,16 @@ Connection conn = dbConnection.getConnection();
 
 **Archivo:** `db/UrbanLife.sql`
 
-Se ejecuta este script en MySQL para crear todas las tablas. Para el modulo de usuarios, las tablas relevantes son:
+Se ejecuta este script en MySQL para crear todas las tablas. Para el modulo de usuarios y autenticacion, las tablas relevantes son:
 
 ```sql
 CREATE TABLE Usuarios (
     ID_USUARIO INT AUTO_INCREMENT PRIMARY KEY,
     NOMBRE VARCHAR(100) NOT NULL,
     CORREO VARCHAR(120) NOT NULL UNIQUE,
-    CONTRASENA VARCHAR(255) NOT NULL,
-    ESTADO BOOLEAN NOT NULL DEFAULT TRUE
+    CONTRASENA VARCHAR(255),           -- NULL si la cuenta es de Google
+    ESTADO BOOLEAN NOT NULL DEFAULT TRUE,
+    GOOGLE_ID VARCHAR(255) UNIQUE      -- ID de Google, NULL si no usa Google
 );
 
 CREATE TABLE Roles (
@@ -260,13 +288,23 @@ CREATE TABLE Roles (
     DESCRIPCION VARCHAR(200)
 );
 
-CREATE TABLE Usuario_Rol (
+CREATE TABLE Usuarios_Roles (
     ID_USUARIO_ROL INT AUTO_INCREMENT PRIMARY KEY,
     USUARIO_ID INT NOT NULL,
     ROL_ID INT NOT NULL,
     FOREIGN KEY (USUARIO_ID) REFERENCES Usuarios(ID_USUARIO),
     FOREIGN KEY (ROL_ID) REFERENCES Roles(ID_ROLES),
     UNIQUE (USUARIO_ID, ROL_ID)
+);
+
+CREATE TABLE Token_Recuperacion (
+    ID_TOKEN INT AUTO_INCREMENT PRIMARY KEY,
+    USUARIO_ID INT NOT NULL,
+    TOKEN VARCHAR(255) NOT NULL UNIQUE,
+    FECHA_EXPIRACION DATETIME NOT NULL,
+    USADO BOOLEAN NOT NULL DEFAULT FALSE,
+    FECHA_CREACION DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (USUARIO_ID) REFERENCES Usuarios(ID_USUARIO)
 );
 ```
 
@@ -277,7 +315,10 @@ CREATE TABLE Usuario_Rol (
 - `UNIQUE` → No puede haber duplicados (ej: dos usuarios con el mismo correo)
 - `FOREIGN KEY` → Vincula una tabla con otra (ej: `USUARIO_ID` apunta a `Usuarios`)
 - `DEFAULT TRUE` → Si no se especifica, el estado sera `true` (activo)
-- `Usuario_Rol` es una **tabla intermedia** que conecta usuarios con roles. El `UNIQUE (USUARIO_ID, ROL_ID)` evita asignar el mismo rol dos veces
+- `CONTRASENA VARCHAR(255)` sin `NOT NULL` → Puede ser `NULL` cuando la cuenta fue creada con Google
+- `GOOGLE_ID` → Se llena al vincular o crear una cuenta con Google; queda `NULL` si no usa Google
+- `USADO BOOLEAN DEFAULT FALSE` en `Token_Recuperacion` → Los tokens de recuperacion son de un solo uso
+- `Usuarios_Roles` es una **tabla intermedia** que conecta usuarios con roles. El `UNIQUE (USUARIO_ID, ROL_ID)` evita asignar el mismo rol dos veces
 
 ---
 
@@ -398,16 +439,20 @@ El Router guarda las rutas en un `Map` anidado (un mapa dentro de otro mapa):
 ```
 {
   "GET": {
-    "/api/users"    → ejecuta UserController.listAll(),
-    "/api/users/id" → ejecuta UserController.getById(),
-    "/api/auth/me"  → ejecuta AuthMiddleware → AuthController.me()
+    "/api/users"                        → ejecuta middleware → UserController.listAll()
+    "/api/users/id"                     → ejecuta middleware → UserController.getById()
+    "/api/auth/me"                      → ejecuta middleware → AuthController.me()
+    "/api/auth/reset-password/validate" → PasswordResetController.validarToken()
   },
   "POST": {
-    "/api/users"       → ejecuta UserController.create(),
-    "/api/auth/login"  → ejecuta AuthController.login()
+    "/api/users"              → ejecuta middleware → UserController.create()
+    "/api/auth/login"         → AuthController.login()
+    "/api/auth/google"        → GoogleAuthController.loginWithGoogle()
+    "/api/auth/forgot-password" → PasswordResetController.solicitarRecuperacion()
+    "/api/auth/reset-password"  → PasswordResetController.cambiarContrasena()
   },
-  "PUT":   { "/api/users/id" → ejecuta UserController.update() },
-  "PATCH": { "/api/users/id" → ejecuta UserController.patch() }
+  "PUT":   { "/api/users/id" → ejecuta middleware → UserController.update() },
+  "PATCH": { "/api/users/id" → ejecuta middleware → UserController.patch() }
 }
 ```
 
@@ -435,8 +480,7 @@ Aqui se define que ruta ejecuta que handler. Es como un "directorio telefonico" 
 ```java
 package com.backend.routes;
 
-import com.backend.controllers.AuthController;
-import com.backend.controllers.UserController;
+import com.backend.controllers.*;
 import com.backend.middlewares.AuthMiddleware;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -448,15 +492,21 @@ public class Routes {
         AuthMiddleware auth = new AuthMiddleware();
 
         // ========== RUTAS DE AUTH ==========
-        router.post("/api/auth/login", AuthController.login());
-        router.get("/api/auth/me", auth.protect(AuthController.me()));
+        router.post("/api/auth/login",  AuthController.login());
+        router.post("/api/auth/google", GoogleAuthController.loginWithGoogle());
+        router.get("/api/auth/me",      auth.protect(AuthController.me()));
+
+        // ========== RUTAS DE RECUPERACION DE CONTRASENA ==========
+        router.post("/api/auth/forgot-password",         PasswordResetController.solicitarRecuperacion());
+        router.get("/api/auth/reset-password/validate",  PasswordResetController.validarToken());
+        router.post("/api/auth/reset-password",          PasswordResetController.cambiarContrasena());
 
         // ========== RUTAS DE USUARIOS ==========
-        router.get("/api/users", UserController.listAll());
-        router.post("/api/users", UserController.create());
-        router.get("/api/users/id", UserController.getById());
-        router.put("/api/users/id", UserController.update());
-        router.patch("/api/users/id", UserController.patch());
+        router.get("/api/users",      auth.protect(UserController.listAll(), "SUPER_ADMIN", "ADMIN"));
+        router.post("/api/users",     auth.protect(UserController.create(),  "SUPER_ADMIN", "ADMIN"));
+        router.get("/api/users/id",   auth.protect(UserController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        router.put("/api/users/id",   auth.protect(UserController.update(),  "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        router.patch("/api/users/id", auth.protect(UserController.patch(),   "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
 
         return router;
     }
@@ -465,11 +515,11 @@ public class Routes {
 
 **¿Que hace cada linea?**
 
-- `router.post("/api/auth/login", AuthController.login())` → Cuando llegue un `POST` a `/api/auth/login`, ejecuta el metodo `login()` del `AuthController`
-- `router.get("/api/auth/me", auth.protect(AuthController.me()))` → **Primero** pasa por el middleware de autenticacion, y **solo si el token es valido**, ejecuta `me()`
-- Las rutas de usuarios siguen el mismo patron: metodo HTTP + ruta + handler
+- `router.post("/api/auth/login", AuthController.login())` → Cuando llegue un `POST` a `/api/auth/login`, ejecuta el metodo `login()` del `AuthController`. Es **publica**, no necesita token.
+- `router.get("/api/auth/me", auth.protect(AuthController.me()))` → **Primero** pasa por el middleware de autenticacion, y **solo si el token es valido**, ejecuta `me()`.
+- `auth.protect(handler, "SUPER_ADMIN", "ADMIN")` → El middleware verifica el JWT **y ademas** que el rol del usuario este en la lista. Si el rol es `EMPLEADO`, responde `403`.
 
-**Nota sobre `auth.protect()`:** Esta funcion "envuelve" al handler. Antes de ejecutar el handler real, verifica el token JWT. Si no es valido, responde con error 401 y el handler nunca se ejecuta.
+**Nota sobre las rutas de recuperacion de contrasena:** Son **publicas** porque el usuario que las usa aun no tiene sesion activa (olvidó su contrasena).
 
 ---
 
@@ -509,7 +559,7 @@ public class ApiRequest {
 ```java
 ApiRequest request = new ApiRequest(exchange);
 String body = request.readBody();
-// body = {"nombre":"David","correo":"d@mail.com","contrasena":"123"}
+// body = {"correo":"d@mail.com","contrasena":"Abc1234"}
 ```
 
 ### ApiResponse.java — Enviar respuestas JSON
@@ -614,13 +664,14 @@ public class PasswordHelper {
 
 **¿Que hace cada metodo?**
 
-- `hashPassword("miClave123")` → Genera un hash como `$2a$12$xRz7kL...` (60 caracteres). Este hash es lo que se guarda en la BD.
-- `checkPassword("miClave123", "$2a$12$xRz7kL...")` → Compara la contrasena contra el hash. Retorna `true` si coinciden.
+- `hashPassword("MiClave1")` → Genera un hash como `$2a$12$xRz7kL...` (60 caracteres). Este hash es lo que se guarda en la BD.
+- `checkPassword("MiClave1", "$2a$12$xRz7kL...")` → Compara la contrasena contra el hash. Retorna `true` si coinciden.
 
 **¿Por que BCrypt y no SHA-256 u otro?**
 - BCrypt agrega un **salt** (valor aleatorio) a cada hash, entonces la misma contrasena genera hashes diferentes cada vez
 - Es **lento a proposito** (factor 12 tarda ~250ms), lo que hace practicamente imposible un ataque de fuerza bruta
 - Es **irreversible**: no se puede obtener la contrasena original desde el hash
+- `checkpw` es en tiempo constante, resistente a ataques de timing
 
 ### JwtHelper.java — Tokens JWT para autenticacion
 
@@ -666,17 +717,23 @@ public class JwtHelper {
 }
 ```
 
-**¿Que hace cada metodo?**
+**¿Que contiene el token generado?**
 
-- `generateToken(1, "david@mail.com", "ADMIN")` → Crea un token como `eyJhbGciOi...` que contiene:
-  - `subject` → El ID del usuario (1)
-  - `correo` → "david@mail.com"
-  - `rol` → "ADMIN"
-  - `issuedAt` → Fecha de creacion
-  - `expiration` → Fecha de expiracion (24 horas despues)
-  - Firmado con la clave secreta del `.env`
+```json
+{
+  "sub": "5",
+  "correo": "david@mail.com",
+  "rol": "ADMIN",
+  "iat": 1700000000,
+  "exp": 1700086400
+}
+```
 
-- `validateToken("eyJhbGciOi...")` → Verifica que el token sea valido y no haya expirado. Si es valido, retorna los datos (`Claims`). Si no, lanza una excepcion.
+- `sub` → ID del usuario
+- `correo` y `rol` → Claims personalizados
+- `iat` → Fecha de creacion
+- `exp` → Expiracion (24 horas despues)
+- El token va firmado con `JWT_SECRET`, nadie puede modificarlo sin invalidarlo
 
 **¿Como se usa el token en la practica?**
 ```
@@ -685,6 +742,9 @@ public class JwtHelper {
 3. Frontend envia el token en cada peticion: Header "Authorization: Bearer eyJhbG..."
 4. Backend valida el token y sabe quien es el usuario sin consultar la BD
 ```
+
+**¿Que pasa si el token expira?**
+`validateToken()` lanza `ExpiredJwtException`. El middleware la captura y responde `401 "Token expirado. Inicie sesion nuevamente"`.
 
 ### JsonHelper.java — Conversion JSON
 
@@ -717,706 +777,223 @@ public class JsonHelper {
 
 ---
 
-## Paso 10: Modelo de Usuario
+## Paso 10: Modelos
 
-**Archivo:** `models/Usuario.java`
+**Paquete:** `models/`
 
-Un **modelo** es una clase Java que representa exactamente una tabla de la base de datos. Cada campo de la clase corresponde a una columna de la tabla.
+Un **modelo** es una clase Java que representa exactamente una tabla de la base de datos. Son POJOs puros: solo atributos, constructores, getters y setters. No tienen logica de negocio.
+
+### Usuario.java
 
 ```java
 package com.backend.models;
 
 public class Usuario {
-    private int idUsuario;       // ID_USUARIO INT AUTO_INCREMENT PRIMARY KEY
-    private String nombre;       // NOMBRE VARCHAR(100) NOT NULL
-    private String correo;       // CORREO VARCHAR(120) NOT NULL UNIQUE
-    private String contrasena;   // CONTRASENA VARCHAR(255) NOT NULL
-    private boolean estado;      // ESTADO BOOLEAN NOT NULL DEFAULT TRUE
+    private int idUsuario;       // id_usuario INT AUTO_INCREMENT PRIMARY KEY
+    private String nombre;       // nombre VARCHAR(100) NOT NULL
+    private String correo;       // correo VARCHAR(120) NOT NULL UNIQUE
+    private String contrasena;   // contrasena VARCHAR(255) — NULL si cuenta Google
+    private boolean estado;      // estado BOOLEAN NOT NULL DEFAULT TRUE
+    private String googleId;     // google_id VARCHAR(255) UNIQUE
 
-    // Constructor vacio (necesario para que Gson pueda crear objetos)
-    public Usuario() {}
-
-    // Constructor completo (cuando leemos de la BD, ya tiene ID)
-    public Usuario(int idUsuario, String nombre, String correo, String contrasena, boolean estado) {
-        this.idUsuario = idUsuario;
-        this.nombre = nombre;
-        this.correo = correo;
-        this.contrasena = contrasena;
-        this.estado = estado;
-    }
-
-    // Constructor sin ID (para crear usuario nuevo, MySQL genera el ID)
-    public Usuario(String nombre, String correo, String contrasena, boolean estado) {
-        this.nombre = nombre;
-        this.correo = correo;
-        this.contrasena = contrasena;
-        this.estado = estado;
-    }
-
-    // Getters y Setters
-    public int getIdUsuario() { return idUsuario; }
-    public void setIdUsuario(int idUsuario) { this.idUsuario = idUsuario; }
-
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-
-    public String getCorreo() { return correo; }
-    public void setCorreo(String correo) { this.correo = correo; }
-
-    public String getContrasena() { return contrasena; }
-    public void setContrasena(String contrasena) { this.contrasena = contrasena; }
-
-    public boolean isEstado() { return estado; }
-    public void setEstado(boolean estado) { this.estado = estado; }
+    // Constructores, Getters y Setters...
 }
 ```
 
-**¿Por que dos constructores?**
+**¿Por que tres constructores?**
+- **Con todos los campos (incluyendo googleId):** Para mapear filas completas de la BD
+- **Sin googleId:** Para usuarios sin autenticacion de Google
+- **Sin ID:** Al crear un usuario nuevo, MySQL genera el ID automaticamente
 
-- **Con ID:** Cuando leemos un usuario de la BD, MySQL ya le asigno un `idUsuario`. Usamos este constructor en el DAO al mapear el `ResultSet`.
-- **Sin ID:** Cuando creamos un usuario nuevo, todavia no tiene ID (MySQL lo genera con `AUTO_INCREMENT`). Usamos este constructor en el Service.
+**Campo clave:** `contrasena = NULL` es la senal de que esa cuenta fue creada con Google. Si alguien intenta hacer login con contrasena en una cuenta Google, el sistema lo detecta.
 
-**¿Por que getters y setters?**
+### Rol.java
 
-Los campos son `private` (solo accesibles dentro de la clase). Los getters y setters permiten acceder a ellos desde fuera de forma controlada. Ademas:
-- `setContrasena(null)` → Se usa para **ocultar la contrasena** antes de enviar el usuario al frontend
-- Gson usa los getters para convertir el objeto a JSON
+```java
+private int idRoles;
+private String nombre;       // "SUPER_ADMIN", "ADMIN", "EMPLEADO"
+private String descripcion;
+```
+
+### UsuarioRol.java
+
+Tabla intermedia que relaciona un usuario con su rol:
+
+```java
+private int idUsuarioRol;
+private int usuarioId;
+private int rolId;
+```
+
+### TokenRecuperacion.java
+
+Representa los tokens de un solo uso para restablecer contrasenas:
+
+```java
+private int idToken;
+private int usuarioId;
+private String token;                    // UUID aleatorio, ej: "a1b2c3d4-..."
+private LocalDateTime fechaExpiracion;   // Ahora + 1 hora
+private boolean usado;                   // false = disponible, true = ya se uso
+private LocalDateTime fechaCreacion;
+```
 
 ---
 
-## Paso 11: DAO — Acceso a la Base de Datos
+## Paso 11: DTOs (Data Transfer Objects)
 
-**Archivo:** `dao/UsuarioDAO.java`
+**Paquete:** `dto/`
+
+Un DTO es una clase que representa los datos que **llegan desde el cliente** en el body de una peticion. Se usa en lugar de parsear el JSON a mano campo por campo.
+
+### CreateUserRequest.java
+
+Para crear un usuario (`POST /api/users`):
+
+```java
+package com.backend.dto;
+
+public class CreateUserRequest {
+    private String nombre;
+    private String correo;
+    private String contrasena;
+
+    public CreateUserRequest() {}
+
+    public boolean isValid() {
+        return nombre != null && !nombre.isBlank()
+                && correo != null && !correo.isBlank()
+                && contrasena != null && !contrasena.isBlank();
+    }
+
+    // Getters y Setters...
+}
+```
+
+Gson convierte el JSON que llega en el body directamente a este objeto:
+```java
+CreateUserRequest request = new Gson().fromJson(body, CreateUserRequest.class);
+String nombre = request.getNombre();
+```
+
+### LoginRequest.java
+
+Para el login (`POST /api/auth/login`):
+
+```java
+private String correo;
+private String contrasena;
+
+public boolean isValid() {
+    return correo != null && !correo.trim().isEmpty()
+            && contrasena != null && !contrasena.trim().isEmpty();
+}
+```
+
+**¿Por que usar DTOs en lugar de parsear el JSON a mano?**
+El controller no necesita saber como se estructura el JSON. Solo recibe el DTO ya construido. Gson se encarga de la conversion automaticamente.
+
+---
+
+## Paso 12: DAOs — Acceso a la Base de Datos
+
+**Paquete:** `dao/`
 
 El DAO (Data Access Object) es la **unica clase** que ejecuta SQL contra la base de datos. Ningun otro archivo escribe SQL.
 
+**Patron que siguen todos los DAOs:**
 ```java
-package com.backend.dao;
-
-import com.backend.config.dbConnection;
-import com.backend.models.Usuario;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
-public class UsuarioDAO {
-
-    // ============ BUSCAR POR CORREO ============
-    // Usado en: Login y validar correo duplicado al crear
-    public static Usuario findByCorreo(String correo) {
-        String sql = "SELECT * FROM usuarios WHERE correo = ?";
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, correo);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return mapRow(rs);
-        } catch (Exception e) {
-            System.out.println("Error UsuarioDAO.findByCorreo: " + e.getMessage());
-        }
-        return null;
-    }
-
-    // ============ BUSCAR POR ID ============
-    // Usado en: Obtener usuario, Actualizar usuario
-    public static Usuario findById(int id) {
-        String sql = "SELECT * FROM usuarios WHERE id_usuario = ?";
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return mapRow(rs);
-        } catch (Exception e) {
-            System.out.println("Error UsuarioDAO.findById: " + e.getMessage());
-        }
-        return null;
-    }
-
-    // ============ LISTAR TODOS ============
-    // Usado en: GET /api/users
-    public static List<Usuario> findAll() {
-        List<Usuario> lista = new ArrayList<>();
-        String sql = "SELECT * FROM usuarios ORDER BY id_usuario ASC";
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) lista.add(mapRow(rs));
-        } catch (Exception e) {
-            System.out.println("Error UsuarioDAO.findAll: " + e.getMessage());
-        }
-        return lista;
-    }
-
-    // ============ CREAR USUARIO ============
-    // Usado en: POST /api/users
-    public static Usuario create(Usuario u) {
-        String sql = "INSERT INTO usuarios (nombre, correo, contrasena, estado) VALUES (?, ?, ?, ?)";
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, u.getNombre());
-            stmt.setString(2, u.getCorreo());
-            stmt.setString(3, u.getContrasena());
-            stmt.setBoolean(4, u.isEstado());
-            if (stmt.executeUpdate() > 0) {
-                ResultSet keys = stmt.getGeneratedKeys();
-                if (keys.next()) u.setIdUsuario(keys.getInt(1));
-                return u;
-            }
-        } catch (Exception e) {
-            System.out.println("Error UsuarioDAO.create: " + e.getMessage());
-        }
-        return null;
-    }
-
-    // ============ ACTUALIZAR USUARIO ============
-    // Usado en: PUT y PATCH /api/users/id
-    public static boolean update(Usuario u) {
-        String sql = "UPDATE usuarios SET nombre = ?, correo = ?, estado = ? WHERE id_usuario = ?";
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, u.getNombre());
-            stmt.setString(2, u.getCorreo());
-            stmt.setBoolean(3, u.isEstado());
-            stmt.setInt(4, u.getIdUsuario());
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            System.out.println("Error UsuarioDAO.update: " + e.getMessage());
-        }
-        return false;
-    }
-
-    // ============ ACTUALIZAR CONTRASENA ============
-    // Usado en: PUT y PATCH cuando se envia contrasena nueva
-    public static boolean updatePassword(int id, String hashedPassword) {
-        String sql = "UPDATE usuarios SET contrasena = ? WHERE id_usuario = ?";
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, hashedPassword);
-            stmt.setInt(2, id);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            System.out.println("Error UsuarioDAO.updatePassword: " + e.getMessage());
-        }
-        return false;
-    }
-
-    // ============ OBTENER ROL DEL USUARIO ============
-    // Usado en: Login (para incluir el rol en el token JWT)
-    public static String findRolByUsuarioId(int usuarioId) {
-        String sql = """
-                SELECT r.nombre FROM roles r
-                INNER JOIN usuarios_roles ur ON r.id_roles = ur.rol_id
-                WHERE ur.usuario_id = ? LIMIT 1
-                """;
-        try (Connection conn = dbConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, usuarioId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return rs.getString("nombre");
-        } catch (Exception e) {
-            System.out.println("Error UsuarioDAO.findRolByUsuarioId: " + e.getMessage());
-        }
-        return null;
-    }
-
-    // ============ MAPEAR FILA DE BD A OBJETO JAVA ============
-    private static Usuario mapRow(ResultSet rs) throws SQLException {
-        return new Usuario(
-                rs.getInt("id_usuario"),
-                rs.getString("nombre"),
-                rs.getString("correo"),
-                rs.getString("contrasena"),
-                rs.getBoolean("estado"));
-    }
-}
-```
-
-**Conceptos importantes:**
-
-**¿Que es `PreparedStatement` y por que usamos `?`?**
-```java
-String sql = "SELECT * FROM usuarios WHERE correo = ?";
-stmt.setString(1, correo);  // El 1 se refiere al primer ?
-```
-El `?` es un **placeholder**. En vez de concatenar el valor directo en el SQL (peligroso), usamos `setString()` para que Java lo inserte de forma segura. Esto **previene inyeccion SQL** (un ataque donde alguien envia SQL malicioso como input).
-
-**¿Que es `try-with-resources`?**
-```java
+// Siempre con try-with-resources para cerrar la conexion automaticamente
 try (Connection conn = dbConnection.getConnection();
      PreparedStatement stmt = conn.prepareStatement(sql)) {
-    // usar conn y stmt
+    // configurar parametros con stmt.setString(), stmt.setInt(), etc.
+    // ejecutar con stmt.executeQuery() o stmt.executeUpdate()
+    // retornar resultado o null si falla
+} catch (Exception excepcion) {
+    System.out.println("Error NombreDAO.metodo: " + excepcion.getMessage());
 }
-// conn y stmt se cierran AUTOMATICAMENTE aqui, incluso si hay error
+return null; // o false segun el caso
 ```
+
+**¿Por que `PreparedStatement` y no concatenar strings?**
+
+```java
+// MAL (vulnerable a inyeccion SQL):
+String sql = "SELECT * FROM usuarios WHERE correo = '" + correo + "'";
+
+// BIEN (seguro):
+String sql = "SELECT * FROM usuarios WHERE correo = ?";
+stmt.setString(1, correo);  // Java escapa el valor automaticamente
+```
+
+**¿Que es `try-with-resources`?**
+
 Al usar `try()` con parentesis, Java cierra automaticamente la conexion y el statement al terminar. Sin esto, las conexiones quedarian abiertas y la BD dejaria de aceptar nuevas.
+
+### UsuarioDAO.java — Metodos principales
+
+| Metodo | SQL que ejecuta |
+|--------|----------------|
+| `findByCorreo(correo)` | `SELECT * FROM usuarios WHERE correo = ?` |
+| `findById(id)` | `SELECT * FROM usuarios WHERE id_usuario = ?` |
+| `findByGoogleId(googleId)` | `SELECT * FROM usuarios WHERE google_id = ?` |
+| `findAll()` | `SELECT * FROM usuarios ORDER BY id_usuario ASC` |
+| `create(usuario)` | `INSERT INTO usuarios (nombre, correo, contrasena, estado) VALUES (?, ?, ?, ?)` |
+| `createWithGoogle(...)` | INSERT con `contrasena = NULL` y `google_id = ?` |
+| `linkGoogleId(id, googleId)` | `UPDATE usuarios SET google_id = ? WHERE id_usuario = ?` |
+| `update(usuario)` | `UPDATE usuarios SET nombre, correo, estado WHERE id_usuario = ?` |
+| `updatePassword(id, hash)` | `UPDATE usuarios SET contrasena = ? WHERE id_usuario = ?` |
+| `findRolByUsuarioId(id)` | JOIN entre `roles` y `usuarios_roles` para obtener el nombre del rol |
 
 **¿Que es `Statement.RETURN_GENERATED_KEYS`?**
 
-En `create()`, al hacer un `INSERT`, MySQL genera un ID automatico. Para obtener ese ID usamos `RETURN_GENERATED_KEYS` y luego `getGeneratedKeys()`. Asi devolvemos el usuario creado con su ID.
+En `create()`, al hacer un `INSERT`, MySQL genera un ID automatico. Para obtener ese ID usamos `RETURN_GENERATED_KEYS` y luego `getGeneratedKeys()`. Asi devolvemos el usuario creado con su ID asignado.
 
-**¿Que es `mapRow()`?**
+El metodo privado `mapRow(ResultSet rs)` convierte una fila del resultado en un objeto `Usuario`. Se reutiliza en todos los metodos que leen de la BD para no repetir codigo.
 
-Metodo privado que toma una fila del resultado (`ResultSet`) y la convierte a un objeto `Usuario`. Se reutiliza en todos los metodos que leen de la BD.
+### RolDAO.java
 
----
-
-## Paso 12: Services — Logica de negocio y validaciones
-
-Los Services son la capa mas importante. Contienen TODAS las validaciones y reglas de negocio. Los Controllers NO validan, solo delegan al Service.
-
-### AuthService.java — Logica del Login
-
-**Archivo:** `services/AuthService.java`
+Operaciones sobre la tabla `roles`. El metodo mas usado en el modulo de autenticacion:
 
 ```java
-package com.backend.services;
-
-import com.backend.dao.UsuarioDAO;
-import com.backend.helpers.JwtHelper;
-import com.backend.helpers.PasswordHelper;
-import com.backend.models.Usuario;
-import com.google.gson.JsonObject;
-
-public class AuthService {
-
-    public static JsonObject validateLogin(String correo, String contrasena) {
-        JsonObject response = new JsonObject();
-
-        // 1. Validar que los campos no esten vacios
-        if (correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Correo y contrasena son requeridos");
-            response.addProperty("status", 400);
-            return response;
-        }
-
-        // 2. Buscar usuario por correo en la BD
-        Usuario usuario = UsuarioDAO.findByCorreo(correo);
-        if (usuario == null) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Credenciales invalidas");
-            response.addProperty("status", 401);
-            return response;
-        }
-
-        // 3. Verificar contrasena con BCrypt
-        if (!PasswordHelper.checkPassword(contrasena, usuario.getContrasena())) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Credenciales invalidas");
-            response.addProperty("status", 401);
-            return response;
-        }
-
-        // 4. Verificar que el usuario este activo
-        if (!usuario.isEstado()) {
-            response.addProperty("success", false);
-            response.addProperty("message", "Usuario inactivo. Contacte al administrador");
-            response.addProperty("status", 403);
-            return response;
-        }
-
-        // 5. Obtener el rol del usuario
-        String rol = UsuarioDAO.findRolByUsuarioId(usuario.getIdUsuario());
-        if (rol == null) rol = "Sin rol";
-
-        // 6. Generar token JWT
-        String token = JwtHelper.generateToken(usuario.getIdUsuario(), usuario.getCorreo(), rol);
-
-        // 7. Armar respuesta exitosa
-        response.addProperty("success", true);
-        response.addProperty("message", "Login exitoso");
-        response.addProperty("token", token);
-        response.addProperty("nombre", usuario.getNombre());
-        response.addProperty("correo", usuario.getCorreo());
-        response.addProperty("rol", rol);
-        response.addProperty("status", 200);
-
-        return response;
-    }
+public static Rol findByNombre(String nombre) {
+    // SELECT * FROM roles WHERE nombre = ?
+    // Usado para buscar el rol "EMPLEADO" al crear usuarios nuevos
 }
 ```
 
-**Flujo visual del login:**
+### UsuarioRolDAO.java
 
-```
-correo + contrasena
-       ↓
-   ¿Estan vacios? ──────────── Si → 400 "Correo y contrasena son requeridos"
-       ↓ No
-   ¿Existe en la BD? ─────── No → 401 "Credenciales invalidas"
-       ↓ Si
-   ¿Contrasena coincide? ──── No → 401 "Credenciales invalidas"
-       ↓ Si
-   ¿Usuario activo? ─────── No → 403 "Usuario inactivo"
-       ↓ Si
-   Obtener rol → Generar JWT
-       ↓
-   200 + token + datos del usuario
-```
-
-**Nota de seguridad:** En los pasos 2 y 3 se responde el MISMO mensaje ("Credenciales invalidas"). Esto es a proposito: si dijera "correo no encontrado" vs "contrasena incorrecta", un atacante podria saber si un correo esta registrado.
-
-### UserService.java — Logica del CRUD de Usuarios
-
-**Archivo:** `services/UserService.java`
-
-#### Crear usuario — `validateAndCreate()`
+Operaciones sobre la tabla intermedia `usuarios_roles`. El metodo mas usado:
 
 ```java
-public static JsonObject validateAndCreate(String nombre, String correo,
-                                            String contrasena, boolean estado) {
-    JsonObject response = new JsonObject();
-
-    // Validar campos obligatorios
-    if (nombre == null || nombre.isBlank() || correo == null || correo.isBlank()
-            || contrasena == null || contrasena.isBlank()) {
-        response.addProperty("success", false);
-        response.addProperty("message", "Nombre, correo y contrasena son requeridos");
-        response.addProperty("status", 400);
-        return response;
-    }
-
-    // Verificar que el correo no este registrado
-    if (UsuarioDAO.findByCorreo(correo) != null) {
-        response.addProperty("success", false);
-        response.addProperty("message", "El correo ya esta registrado");
-        response.addProperty("status", 409);
-        return response;
-    }
-
-    // Crear usuario con contrasena encriptada
-    Usuario nuevo = new Usuario(nombre, correo,
-            PasswordHelper.hashPassword(contrasena), estado);
-    Usuario creado = UsuarioDAO.create(nuevo);
-
-    if (creado != null) {
-        creado.setContrasena(null);  // Ocultar contrasena en la respuesta
-        response.addProperty("success", true);
-        response.addProperty("message", "Usuario creado exitosamente");
-        response.add("data", gson.toJsonTree(creado));
-        response.addProperty("status", 201);
-    } else {
-        response.addProperty("success", false);
-        response.addProperty("message", "Error al crear el usuario");
-        response.addProperty("status", 500);
-    }
-    return response;
+public static UsuarioRol create(UsuarioRol usuarioRol) {
+    // INSERT INTO usuario_rol (usuario_id, rol_id) VALUES (?, ?)
+    // Asigna el rol EMPLEADO a un usuario recien creado
 }
 ```
 
-#### Actualizar completo — `validateAndUpdate()` (PUT)
+### TokenRecuperacionDAO.java
+
+Maneja los tokens de recuperacion de contrasena:
 
 ```java
-public static JsonObject validateAndUpdate(int id, String nombre, String correo,
-                                            String contrasena, boolean estado) {
-    // 1. Verificar que el usuario existe → 404 si no
-    // 2. Validar nombre y correo obligatorios → 400
-    // 3. Si cambio el correo, verificar duplicado → 409
-    // 4. Actualizar nombre, correo, estado via UsuarioDAO.update()
-    // 5. Si envio contrasena, actualizarla via UsuarioDAO.updatePassword()
-    // 6. Retornar usuario actualizado → 200
-}
-```
+// Genera un UUID, lo guarda en BD con fecha de expiracion, retorna el UUID
+public static String guardarToken(int usuarioId, LocalDateTime fechaExpiracion)
 
-#### Actualizar parcial — `partialUpdate()` (PATCH)
+// Verifica si el token existe, no esta usado y no ha expirado
+public static JsonObject validarToken(String token)
 
-```java
-public static JsonObject partialUpdate(int id, String nombre, String correo,
-                                        String contrasena, Boolean estado) {
-    // 1. Verificar que el usuario existe → 404
-    // 2. Si envio correo nuevo, verificar duplicado → 409
-    // 3. Solo actualizar campos que NO son null
-    // 4. Si envio contrasena, actualizarla aparte
-    // 5. Retornar usuario actualizado → 200
-}
-```
+// Hace UPDATE ... SET usado = TRUE para inutilizar el token
+public static boolean marcarTokenUsado(int idToken)
 
-**Diferencia entre PUT y PATCH:**
-
-| Aspecto | PUT (validateAndUpdate) | PATCH (partialUpdate) |
-|---------|------------------------|----------------------|
-| Campos | Nombre y correo OBLIGATORIOS | Todos opcionales |
-| Estado | `boolean estado` (primitivo) | `Boolean estado` (objeto, puede ser `null`) |
-| Logica | Reemplaza TODOS los campos | Solo modifica los enviados |
-| Uso | Formulario de edicion completo | Cambiar solo un campo |
-
-**¿Por que `Boolean` (objeto) en PATCH y `boolean` (primitivo) en PUT?**
-
-`boolean` solo puede ser `true` o `false`. `Boolean` puede ser `true`, `false` o `null`. En PATCH necesitamos saber si el frontend envio el campo o no: si envio `estado: false` → actualizamos; si no envio `estado` → lo dejamos como esta. Con `boolean` no podriamos distinguir "envio false" de "no envio nada".
-
-**Tabla de validaciones:**
-
-| Operacion | Caso | HTTP | Mensaje |
-|-----------|------|------|---------|
-| Crear | Campos vacios | 400 | "Nombre, correo y contrasena son requeridos" |
-| Crear | Correo duplicado | 409 | "El correo ya esta registrado" |
-| Crear | Error de BD | 500 | "Error al crear el usuario" |
-| Crear | Exito | 201 | "Usuario creado exitosamente" |
-| PUT | No existe | 404 | "Usuario no encontrado" |
-| PUT | Campos vacios | 400 | "Nombre y correo son obligatorios en PUT" |
-| PUT | Correo en uso | 409 | "El correo ya esta en uso por otro usuario" |
-| PUT | Exito | 200 | "Usuario actualizado exitosamente" |
-| PATCH | No existe | 404 | "Usuario no encontrado" |
-| PATCH | Correo en uso | 409 | "El correo ya esta en uso por otro usuario" |
-| PATCH | Exito | 200 | "Usuario actualizado parcialmente" |
-
----
-
-## Paso 13: Controllers — Recepcion de peticiones HTTP
-
-Los Controllers son el **punto de entrada** de cada peticion. Su responsabilidad es simple:
-1. Leer los datos de la peticion (body JSON, parametros de URL)
-2. Delegar al Service correspondiente
-3. Enviar la respuesta al frontend
-
-### AuthController.java
-
-**Archivo:** `controllers/AuthController.java`
-
-#### Login — `POST /api/auth/login`
-
-```java
-public static HttpHandler login() {
-    return exchange -> {
-        ApiRequest request = new ApiRequest(exchange);
-        String body = request.readBody();
-
-        if (body.isEmpty()) {
-            ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
-            return;
-        }
-
-        Gson gson = new Gson();
-        JsonObject json = gson.fromJson(body, JsonObject.class);
-
-        String correo = json.has("correo") ? json.get("correo").getAsString() : "";
-        String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : "";
-
-        JsonObject response = AuthService.validateLogin(correo, contrasena);
-        int code = response.get("status").getAsInt();
-        response.remove("status");
-
-        ApiResponse.send(exchange, response.toString(), code);
-    };
-}
-```
-
-**Flujo:** Leer body → Parsear JSON → Extraer correo y contrasena → AuthService valida → Retorna token JWT
-
-#### Obtener usuario autenticado — `GET /api/auth/me` (ruta protegida)
-
-```java
-public static HttpHandler me() {
-    return exchange -> {
-        // El middleware ya valido el token y puso los datos en el exchange
-        String userId = (String) exchange.getAttribute("userId");
-        String correo = (String) exchange.getAttribute("correo");
-        String rol = (String) exchange.getAttribute("rol");
-
-        JsonObject response = new JsonObject();
-        response.addProperty("success", true);
-        response.addProperty("userId", userId);
-        response.addProperty("correo", correo);
-        response.addProperty("rol", rol);
-
-        ApiResponse.send(exchange, response.toString(), 200);
-    };
-}
-```
-
-**¿Como llegan los datos al `exchange.getAttribute()`?** El middleware de autenticacion los puso ahi despues de validar el token JWT. El controller solo los lee.
-
-### UserController.java
-
-**Archivo:** `controllers/UserController.java`
-
-#### Listar todos — `GET /api/users`
-
-```java
-public static HttpHandler listAll() {
-    return exchange -> {
-        List<Usuario> lista = UsuarioDAO.findAll();
-        lista.forEach(u -> u.setContrasena(null));  // Ocultar contrasenas
-        ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", lista));
-    };
-}
-```
-
-#### Obtener por ID — `GET /api/users/id?id=5`
-
-```java
-public static HttpHandler getById() {
-    return exchange -> {
-        String query = exchange.getRequestURI().getQuery();  // Obtiene "id=5"
-        if (query == null || !query.matches("id=\\d+")) {
-            ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
-            return;
-        }
-        int id = Integer.parseInt(query.split("=")[1]);
-
-        Usuario u = UsuarioDAO.findById(id);
-        if (u == null) {
-            ApiResponse.error(exchange, 404, "Usuario no encontrado");
-            return;
-        }
-        u.setContrasena(null);
-        ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", u));
-    };
-}
-```
-
-#### Crear — `POST /api/users`
-
-```java
-public static HttpHandler create() {
-    return exchange -> {
-        ApiRequest request = new ApiRequest(exchange);
-        String body = request.readBody();
-
-        if (body.isEmpty()) {
-            ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
-            return;
-        }
-
-        Gson gson = new Gson();
-        JsonObject json = gson.fromJson(body, JsonObject.class);
-
-        String nombre = json.has("nombre") ? json.get("nombre").getAsString() : "";
-        String correo = json.has("correo") ? json.get("correo").getAsString() : "";
-        String contrasena = json.has("contrasena") ? json.get("contrasena").getAsString() : "";
-        boolean estado = json.has("estado") ? json.get("estado").getAsBoolean() : true;
-
-        JsonObject response = UserService.validateAndCreate(nombre, correo, contrasena, estado);
-        int code = response.get("status").getAsInt();
-        response.remove("status");
-
-        ApiResponse.send(exchange, response.toString(), code);
-    };
-}
-```
-
-#### Actualizar completo — `PUT /api/users/id?id=5`
-
-Mismo patron: extraer ID del query string → leer body → parsear JSON → delegar a `UserService.validateAndUpdate()`.
-
-#### Actualizar parcial — `PATCH /api/users/id?id=5`
-
-Mismo patron pero usa `null` como valor por defecto cuando el campo no viene en el JSON, y delega a `UserService.partialUpdate()`.
-
-**¿Que es un `HttpHandler` y por que se retorna con `return exchange -> { ... }`?**
-
-`HttpHandler` es una interfaz de Java con un solo metodo: `handle(HttpExchange exchange)`. En vez de crear una clase que la implemente, usamos una **expresion lambda** (`exchange -> { ... }`) que es una forma corta de escribir lo mismo.
-
-**¿Por que se hace `response.remove("status")`?**
-
-El Service agrega un campo `"status"` al JsonObject para indicar el codigo HTTP (200, 400, 404, etc.). Ese campo es para uso interno — no lo enviamos al frontend. Lo extraemos, lo usamos como status code de la respuesta HTTP, y lo removemos del JSON.
-
----
-
-## Paso 14: Middleware de Autenticacion
-
-**Archivo:** `middlewares/AuthMiddleware.java`
-
-El middleware es una capa que se ejecuta **ANTES** del controller. Se usa para proteger rutas que requieren autenticacion.
-
-```java
-package com.backend.middlewares;
-
-import com.backend.helpers.JwtHelper;
-import com.backend.server.http.ApiResponse;
-import com.sun.net.httpserver.HttpHandler;
-import io.jsonwebtoken.Claims;
-
-public class AuthMiddleware {
-
-    public HttpHandler protect(HttpHandler next, String... allowedRoles) {
-        return exchange -> {
-            try {
-                if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                    ApiResponse.handleCors(exchange);
-                    return;
-                }
-
-                // 1. Buscar el header "Authorization"
-                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
-                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                    ApiResponse.error(exchange, 401, "Token de autenticacion requerido");
-                    return;
-                }
-
-                // 2. Extraer y validar el token JWT
-                Claims claims = JwtHelper.validateToken(authHeader.substring(7));
-
-                // 3. Guardar datos del usuario en el exchange
-                exchange.setAttribute("userId", claims.getSubject());
-                exchange.setAttribute("correo", claims.get("correo", String.class));
-                exchange.setAttribute("rol", claims.get("rol", String.class));
-
-                // 4. Si se especificaron roles, verificar autorizacion
-                if (allowedRoles.length > 0) {
-                    String userRol = claims.get("rol", String.class);
-                    boolean authorized = false;
-                    for (String rol : allowedRoles) {
-                        if (rol.equalsIgnoreCase(userRol)) {
-                            authorized = true;
-                            break;
-                        }
-                    }
-                    if (!authorized) {
-                        ApiResponse.error(exchange, 403, "No tiene permiso para esta accion");
-                        return;
-                    }
-                }
-
-                // 5. Todo bien → ejecutar el handler original
-                next.handle(exchange);
-
-            } catch (io.jsonwebtoken.ExpiredJwtException e) {
-                ApiResponse.error(exchange, 401, "Token expirado. Inicie sesion nuevamente");
-            } catch (io.jsonwebtoken.JwtException e) {
-                ApiResponse.error(exchange, 401, "Token invalido");
-            } catch (Exception e) {
-                ApiResponse.error(exchange, 500, "Error interno del servidor");
-            }
-        };
-    }
-}
-```
-
-**¿Como se usa?**
-```java
-// Cualquier usuario autenticado puede acceder
-auth.protect(AuthController.me())
-
-// Solo SUPER_ADMIN y ADMIN pueden acceder
-auth.protect(UserController.delete(), "SUPER_ADMIN", "ADMIN")
-```
-
-**Flujo de ejecucion:**
-
-```
-Peticion llega con Header: "Authorization: Bearer eyJhbG..."
-       ↓
-   ¿Header existe y empieza con "Bearer "? ── No → 401 "Token requerido"
-       ↓ Si
-   Extraer token (quitar "Bearer ")
-       ↓
-   ¿Token valido? ── Expiro → 401 "Token expirado"
-                  ── Invalido → 401 "Token invalido"
-       ↓ Valido
-   Guardar userId, correo, rol en exchange
-       ↓
-   ¿Se especificaron roles permitidos?
-       ↓ Si                    ↓ No
-   ¿Rol del usuario esta      Ejecutar handler
-    en la lista?               (controller)
-       ↓ No         ↓ Si
-   403 "No tiene    Ejecutar handler
-    permiso"        (controller)
+// Actualiza la contrasena del usuario en la BD
+public static boolean actualizarContrasena(int usuarioId, String hashContrasena)
 ```
 
 ---
 
-## Paso 15: Seeders — Datos iniciales
+## Paso 13: Seeders — Datos iniciales
 
 **Carpeta:** `seeders/`
 
@@ -1437,6 +1014,8 @@ private static final String[][] roles = {
 };
 ```
 
+**¿Por que son necesarios?** El sistema asigna el rol `EMPLEADO` a cada usuario nuevo. Si la tabla `roles` esta vacia, `RolDAO.findByNombre("EMPLEADO")` retornaria `null` y el usuario quedaria sin rol.
+
 ### SeedPermisos.java
 
 Inserta 10 permisos: Gestionar Usuarios, Gestionar Roles, Gestionar Productos, Gestionar Categorias, Gestionar Ventas, Gestionar Compras, Gestionar Movimientos, Gestionar Gastos, Ver Reportes, Gestionar Perfil.
@@ -1455,7 +1034,476 @@ Transporte, Impuestos, Almacenamiento, Embalaje, Otros.
 
 ---
 
-## Paso 16: Punto de entrada — Main.java
+## Paso 14: Services — Logica de negocio y validaciones
+
+Los Services son la capa mas importante. Contienen TODAS las validaciones y reglas de negocio. Los Controllers NO validan, solo delegan al Service.
+
+### AuthService.java — Logica del Login
+
+**Archivo:** `services/AuthService.java`
+
+```java
+private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
+
+public static JsonObject validateLogin(String correo, String contrasena) {
+
+    // 1. Validar que los campos no esten vacios
+    if (correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
+        // → 400 "Correo y contraseña son requeridos"
+    }
+
+    // 2. Validar formato de correo
+    if (!correo.matches(EMAIL_REGEX)) {
+        // → 400 "El formato del correo no es valido"
+    }
+
+    // 3. Buscar usuario por correo en la BD
+    Usuario usuario = UsuarioDAO.findByCorreo(correo);
+    if (usuario == null) {
+        // → 401 "Credenciales invalidas"
+    }
+
+    // 4. Detectar si es cuenta de Google (no tiene contrasena)
+    if (usuario.getContrasena() == null) {
+        // → 401 "Esta cuenta usa inicio de sesion con Google"
+    }
+
+    // 5. Verificar contrasena con BCrypt
+    if (!PasswordHelper.checkPassword(contrasena, usuario.getContrasena())) {
+        // → 401 "Credenciales invalidas"
+    }
+
+    // 6. Verificar que el usuario este activo
+    if (!usuario.isEstado()) {
+        // → 403 "Usuario inactivo. Contacte al administrador"
+    }
+
+    // 7. Obtener rol → Generar JWT → 200 + token + datos del usuario
+}
+```
+
+**Flujo visual del login:**
+
+```
+correo + contrasena
+       ↓
+   ¿Estan vacios?             → Si → 400 "Correo y contrasena son requeridos"
+       ↓ No
+   ¿Formato de correo valido? → No → 400 "El formato del correo no es valido"
+       ↓ Si
+   ¿Existe en la BD?          → No → 401 "Credenciales invalidas"
+       ↓ Si
+   ¿Tiene contrasena en BD?   → No → 401 "Esta cuenta usa inicio de sesion con Google"
+       ↓ Si
+   ¿Contrasena coincide?      → No → 401 "Credenciales invalidas"
+       ↓ Si
+   ¿Usuario activo?           → No → 403 "Usuario inactivo"
+       ↓ Si
+   Obtener rol → Generar JWT
+       ↓
+   200 + token + datos del usuario
+```
+
+**Nota de seguridad:** Cuando el usuario no existe y cuando la contrasena es incorrecta, el mensaje es **identico**: `"Credenciales invalidas"`. Esto evita que un atacante descubra si un correo esta registrado en el sistema.
+
+### UserService.java — Logica del CRUD de Usuarios
+
+**Archivo:** `services/UserService.java`
+
+```java
+private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
+// Minimo 8 caracteres, al menos una mayuscula, una minuscula y un numero
+private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$";
+```
+
+#### Crear usuario — `validateAndCreate()`
+
+```java
+public static JsonObject validateAndCreate(String nombre, String correo, String contrasena) {
+
+    // 1. Validar campos obligatorios
+    if (nombre vacio || correo vacio || contrasena vacia)
+        → 400 "Nombre, correo y contraseña son requeridos"
+
+    // 2. Validar formato de correo
+    if (!correo.matches(EMAIL_REGEX))
+        → 400 "El formato del correo no es valido"
+
+    // 3. Validar complejidad de contrasena
+    if (!contrasena.matches(PASSWORD_REGEX))
+        → 400 "La contraseña debe tener minimo 8 caracteres, una mayuscula, una minuscula y un numero"
+
+    // 4. Verificar correo duplicado
+    if (UsuarioDAO.findByCorreo(correo) != null)
+        → 409 "El correo ya esta registrado"
+
+    // 5. Crear usuario con contrasena encriptada
+    PasswordHelper.hashPassword(contrasena) → BCrypt hash
+    UsuarioDAO.create(usuario) → INSERT en BD
+
+    // 6. Asignar rol EMPLEADO
+    RolDAO.findByNombre("EMPLEADO")
+    UsuarioRolDAO.create(usuarioId, rolEmpleadoId)
+
+    // 7. Generar JWT (auto-login) → 201 + token + datos
+}
+```
+
+**¿Por que auto-login al registrar?** Para que el frontend pueda iniciar la sesion sin hacer un segundo request al servidor.
+
+#### Actualizar completo — `validateAndUpdate()` (PUT)
+
+```
+1. Verificar que el usuario existe         → 404 si no
+2. Validar nombre y correo obligatorios    → 400
+3. Validar formato de correo               → 400
+4. Si cambio el correo, verificar duplicado → 409
+5. Actualizar nombre, correo, estado via UsuarioDAO.update()
+6. Si envio contrasena, actualizarla via UsuarioDAO.updatePassword()
+7. Retornar usuario actualizado            → 200
+```
+
+#### Actualizar parcial — `partialUpdate()` (PATCH)
+
+```
+1. Verificar que el usuario existe
+2. Si envio correo, validar formato y verificar duplicado
+3. Solo actualizar campos que NO son null
+4. Si envio contrasena, actualizarla aparte
+5. Retornar usuario actualizado → 200
+```
+
+**Diferencia entre PUT y PATCH:**
+
+| Aspecto | PUT | PATCH |
+|---------|-----|-------|
+| Campos | Nombre y correo OBLIGATORIOS | Todos opcionales |
+| Estado | `boolean estado` (primitivo) | `Boolean estado` (objeto, puede ser `null`) |
+| Logica | Reemplaza TODOS los campos | Solo modifica los enviados |
+
+**¿Por que `Boolean` (objeto) en PATCH y `boolean` (primitivo) en PUT?**
+
+`boolean` solo puede ser `true` o `false`. `Boolean` puede ser `true`, `false` o `null`. En PATCH necesitamos saber si el frontend envio el campo o no: si envio `estado: false` → actualizamos; si no envio `estado` → lo dejamos como esta.
+
+### GoogleAuthService.java — Logica del Login con Google
+
+**Archivo:** `services/GoogleAuthService.java`
+
+El login con Google no verifica contrasena. En su lugar, verifica que el token de Google sea autentico y fue emitido para nuestra aplicacion.
+
+**Flujo completo:**
+
+```
+POST /api/auth/google  { "credential": "<id-token-de-google>" }
+  │
+  ├─ ¿Token vacio?                               → 400
+  │
+  ├─ Llama a la API de Google:
+  │    GET https://oauth2.googleapis.com/tokeninfo?id_token=<token>
+  │    Si Google responde != 200                 → 401 "Token invalido o expirado"
+  │
+  ├─ ¿datosGoogle.aud == GOOGLE_CLIENT_ID?
+  │    No → 401 "Token no autorizado para esta aplicacion"
+  │    (Evita que un token de otra app de Google funcione en la nuestra)
+  │
+  ├─ ¿datosGoogle.email_verified == "true"?
+  │    No → 401 "El correo de Google no esta verificado"
+  │
+  ├─ Extrae: googleId (campo "sub"), correo, nombre
+  │
+  ├─ UsuarioDAO.findByGoogleId(googleId)
+  │    ├─ Encontrado → usar ese usuario directamente
+  │    └─ No encontrado → UsuarioDAO.findByCorreo(correo)
+  │         ├─ Encontrado (cuenta manual con ese correo)
+  │         │    → UsuarioDAO.linkGoogleId() → vincula el google_id
+  │         └─ No encontrado
+  │              → UsuarioDAO.createWithGoogle() → crea cuenta nueva
+  │              → UsuarioRolDAO.create() → asigna rol EMPLEADO
+  │
+  ├─ ¿usuario.estado == false?                   → 403
+  │
+  └─ JwtHelper.generateToken()
+       → 200 { token, nombre, correo, rol }
+```
+
+**El caso de vinculacion:** Si alguien tiene cuenta manual con `correo = juan@gmail.com` y despues inicia sesion con Google usando ese mismo correo, el sistema detecta la cuenta existente y le agrega el `google_id`. A partir de ese momento puede autenticarse de ambas formas.
+
+### PasswordResetService.java — Logica de Recuperacion de Contrasena
+
+**Archivo:** `services/PasswordResetService.java`
+
+El flujo de recuperacion tiene tres etapas:
+
+**Etapa 1 — Solicitar recuperacion:**
+```
+UsuarioDAO.findByCorreo(correo)
+  ├─ ¿No existe?
+  │    → Respuesta GENERICA exitosa (no revela si el correo existe)
+  │      "Si el correo esta registrado, recibiras un enlace en breve"
+  │
+  ├─ ¿usuario.contrasena == null? (cuenta Google)
+  │    → 400 "Esta cuenta usa inicio de sesion con Google"
+  │
+  ├─ ¿usuario.estado == false?
+  │    → 403 "Usuario inactivo"
+  │
+  └─ TokenRecuperacionDAO.guardarToken(usuarioId, ahora + 1 hora)
+       Genera UUID aleatorio, lo guarda en BD con expiracion
+       → EmailService.enviarCorreoRecuperacion(correo, token)
+```
+
+**¿Por que la respuesta generica cuando el correo no existe?**
+Si respondiéramos "ese correo no esta registrado", un atacante podria usar este endpoint para averiguar que correos tienen cuenta en el sistema (enumeracion de usuarios).
+
+**Etapa 2 — Validar token:**
+```
+TokenRecuperacionDAO.validarToken(token)
+  ├─ ¿No existe o ya fue usado?   → 400 "Token invalido o ya utilizado"
+  ├─ ¿Fecha actual > expiracion?  → 400 "El token ha expirado"
+  └─ Token valido                 → 200 { idToken, usuarioId }
+```
+
+**Etapa 3 — Cambiar contrasena:**
+```
+├─ ¿Token o contrasena vacios?        → 400
+├─ ¿Contrasena no cumple PASSWORD_REGEX? → 400
+├─ TokenRecuperacionDAO.validarToken() (segunda verificacion)
+├─ PasswordHelper.hashPassword(nuevaContrasena)
+├─ TokenRecuperacionDAO.actualizarContrasena(usuarioId, hash)
+└─ TokenRecuperacionDAO.marcarTokenUsado(idToken)
+     → El token queda inutilizable para siempre
+```
+
+**¿Por que validar el token dos veces?** Porque entre la validacion y el cambio podria pasar tiempo. El token se valida nuevamente antes de actualizar para garantizar que no expiro en ese intervalo.
+
+### EmailService.java — Envio de Correos
+
+**Archivo:** `services/EmailService.java`
+
+Usa SMTP de Gmail con `javax.mail`. Requiere `EMAIL_USER` y `EMAIL_PASS` en el `.env`.
+
+```java
+// Configuracion SMTP de Gmail
+propiedades.put("mail.smtp.host", "smtp.gmail.com");
+propiedades.put("mail.smtp.port", "587");
+propiedades.put("mail.smtp.auth", "true");
+propiedades.put("mail.smtp.starttls.enable", "true");
+```
+
+El metodo `enviarCorreoRecuperacion(correo, token)` construye un email HTML con un boton que apunta a:
+```
+http://localhost:5500/reset-password.html?token=<uuid>
+```
+
+**Si el envio de correo falla** (red, credenciales incorrectas, etc.), el link se imprime en consola del servidor para no bloquear el flujo de desarrollo:
+```
+==============================
+LINK RECUPERACION (fallo email):
+http://localhost:5500/reset-password.html?token=abc-123-...
+==============================
+```
+
+---
+
+## Paso 15: Controllers — Recepcion de peticiones HTTP
+
+Los Controllers son el **punto de entrada** de cada peticion. Su responsabilidad es simple:
+1. Leer los datos de la peticion (body JSON, parametros de URL)
+2. Delegar al Service correspondiente
+3. Enviar la respuesta al frontend
+
+**Patron comun de todos los controllers:**
+```java
+public static HttpHandler nombreEndpoint() {
+    return exchange -> {
+        // 1. Leer body
+        ApiRequest request = new ApiRequest(exchange);
+        String body = request.readBody();
+        if (body.isEmpty()) { ApiResponse.error(...400...); return; }
+
+        // 2. Parsear JSON
+        JsonObject json = new Gson().fromJson(body, JsonObject.class);
+
+        // 3. Extraer campos
+        String campo = json.has("campo") ? json.get("campo").getAsString() : "";
+
+        // 4. Delegar al Service
+        JsonObject response = AlgunService.metodo(campo);
+
+        // 5. Extraer status code interno y enviar respuesta
+        int code = response.get("status").getAsInt();
+        response.remove("status");
+        ApiResponse.send(exchange, response.toString(), code);
+    };
+}
+```
+
+**¿Por que se hace `response.remove("status")`?**
+El Service agrega un campo `"status"` al JsonObject para indicar el codigo HTTP internamente. Lo extraemos, lo usamos como status code de la respuesta HTTP, y lo removemos del JSON que se envia al frontend.
+
+### AuthController.java
+
+#### `login()` — `POST /api/auth/login`
+
+Lee body → Extrae correo y contrasena → Llama a `AuthService.validateLogin()` → Retorna token JWT
+
+#### `me()` — `GET /api/auth/me` (ruta protegida)
+
+El middleware ya valido el token y puso los datos en el exchange. El controller solo los lee:
+```java
+String userId = (String) exchange.getAttribute("userId");
+String correo = (String) exchange.getAttribute("correo");
+String rol    = (String) exchange.getAttribute("rol");
+```
+No consulta la base de datos. Los datos vienen del propio token JWT.
+
+### GoogleAuthController.java
+
+#### `loginWithGoogle()` — `POST /api/auth/google`
+
+Lee el campo `"credential"` del body → Llama a `GoogleAuthService.loginWithGoogle()` → Retorna token JWT
+
+### PasswordResetController.java
+
+#### `solicitarRecuperacion()` — `POST /api/auth/forgot-password`
+Lee `"correo"` del body → Llama a `PasswordResetService.solicitarRecuperacion()`
+
+#### `validarToken()` — `GET /api/auth/reset-password/validate?token=X`
+Lee el token del query param (no del body, porque es un GET) → Llama a `PasswordResetService.validarToken()`
+
+#### `cambiarContrasena()` — `POST /api/auth/reset-password`
+Lee `"token"` y `"contrasena"` del body → Llama a `PasswordResetService.cambiarContrasena()`
+
+### UserController.java
+
+#### `listAll()` — `GET /api/users`
+```java
+List<Usuario> lista = UsuarioDAO.findAll();
+lista.forEach(u -> u.setContrasena(null));  // Ocultar contrasenas
+ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", lista));
+```
+
+#### `getById()` — `GET /api/users/id?id=5`
+
+Ademas de buscar el usuario, verifica la restriccion de recurso propio:
+```java
+String rolUsuario    = (String) exchange.getAttribute("rol");
+String idUsuarioToken = (String) exchange.getAttribute("userId");
+
+if ("EMPLEADO".equalsIgnoreCase(rolUsuario) && !idUsuarioToken.equals(String.valueOf(id))) {
+    ApiResponse.error(exchange, 403, "No tiene permiso para acceder a este recurso");
+    return;
+}
+```
+Un `EMPLEADO` puede ver solo su propio perfil (`?id=5` cuando su token dice `userId=5`), no el de otros usuarios.
+
+#### `create()`, `update()`, `patch()` — Siguen el patron estandar
+
+`update()` y `patch()` tambien aplican la misma restriccion de recurso propio para EMPLEADO.
+
+**Las contrasenas nunca se devuelven:**
+```java
+usuario.setContrasena(null);  // Se limpia antes de serializar a JSON
+```
+
+---
+
+## Paso 16: Middleware de Autenticacion
+
+**Archivo:** `middlewares/AuthMiddleware.java`
+
+El middleware es una capa que se ejecuta **ANTES** del controller. Se usa para proteger rutas que requieren autenticacion.
+
+```java
+public HttpHandler protect(HttpHandler next, String... rolesPermitidos) {
+    return exchange -> {
+        try {
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                ApiResponse.handleCors(exchange);
+                return;
+            }
+
+            // 1. Buscar el header "Authorization"
+            String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                ApiResponse.error(exchange, 401, "Token de autenticacion requerido");
+                return;
+            }
+
+            // 2. Extraer y validar el token JWT
+            Claims claims = JwtHelper.validateToken(authHeader.substring(7));
+
+            // 3. Guardar datos del usuario en el exchange (para que el controller los lea)
+            exchange.setAttribute("userId", claims.getSubject());
+            exchange.setAttribute("correo", claims.get("correo", String.class));
+            exchange.setAttribute("rol", claims.get("rol", String.class));
+
+            // 4. Si se especificaron roles, verificar autorizacion
+            if (rolesPermitidos.length > 0) {
+                String rolUsuario = claims.get("rol", String.class);
+                boolean autorizado = false;
+                for (String rol : rolesPermitidos) {
+                    if (rol.equalsIgnoreCase(rolUsuario)) {
+                        autorizado = true;
+                        break;
+                    }
+                }
+                if (!autorizado) {
+                    ApiResponse.error(exchange, 403, "No tiene permiso para esta accion");
+                    return;
+                }
+            }
+
+            // 5. Todo bien → ejecutar el handler original
+            next.handle(exchange);
+
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            ApiResponse.error(exchange, 401, "Token expirado. Inicie sesion nuevamente");
+        } catch (io.jsonwebtoken.JwtException e) {
+            ApiResponse.error(exchange, 401, "Token invalido");
+        } catch (Exception e) {
+            ApiResponse.error(exchange, 500, "Error interno del servidor");
+        }
+    };
+}
+```
+
+**Flujo de ejecucion:**
+
+```
+Peticion llega con Header: "Authorization: Bearer eyJhbG..."
+       ↓
+   ¿Es peticion OPTIONS?          → Si → responde 204 CORS y termina
+       ↓ No
+   ¿Header Authorization existe?  → No → 401 "Token de autenticacion requerido"
+       ↓ Si
+   ¿Token valido?   → Expiro      → 401 "Token expirado. Inicie sesion nuevamente"
+                    → Invalido    → 401 "Token invalido"
+       ↓ Valido
+   Guarda userId, correo, rol en exchange
+       ↓
+   ¿Se especificaron roles?
+       ↓ Si                        ↓ No
+   ¿Rol del usuario esta           Ejecutar handler (controller)
+    en la lista permitida?
+       ↓ No            ↓ Si
+   403 "No tiene       Ejecutar handler (controller)
+    permiso"
+```
+
+**¿Por que distinguir token expirado de token invalido?**
+El frontend necesita reaccionar diferente: si el token expiro, debe redirigir al login con mensaje "sesion expirada". Si es invalido (manipulado), es un caso de seguridad mas serio.
+
+**¿Como se usa en Routes.java?**
+```java
+auth.protect(handler)                              // Solo JWT valido (cualquier rol)
+auth.protect(handler, "SUPER_ADMIN", "ADMIN")      // JWT valido + rol especifico
+auth.protect(handler, "SUPER_ADMIN", "ADMIN", "EMPLEADO") // Los tres roles
+```
+
+---
+
+## Paso 17: Punto de entrada — Main.java
 
 **Archivo:** `Main.java`
 
@@ -1464,10 +1512,7 @@ Es el archivo que arranca todo el sistema:
 ```java
 package com.backend;
 
-import com.backend.seeders.SeedRoles;
-import com.backend.seeders.SeedPermisos;
-import com.backend.seeders.SeedTipoMovimientos;
-import com.backend.seeders.SeedTipoGasto;
+import com.backend.seeders.*;
 import com.backend.server.serverConnection;
 
 public class Main {
@@ -1491,10 +1536,10 @@ public class Main {
 ```
 1. Se ejecuta Main.main()
 2. Seeders verifican e insertan datos iniciales en la BD
-   - Roles: SUPER_ADMIN, ADMIN, EMPLEADO
-   - Permisos: 10 permisos del sistema
-   - Tipos de movimiento: Venta (Ingreso), Compra (Egreso), Gasto (Egreso)
-   - Tipos de gasto: Transporte, Impuestos, Almacenamiento, Embalaje, Otros
+   ├── Roles: SUPER_ADMIN, ADMIN, EMPLEADO
+   ├── Permisos: 10 permisos del sistema
+   ├── Tipos de movimiento: Venta (Ingreso), Compra (Egreso), Gasto (Egreso)
+   └── Tipos de gasto: Transporte, Impuestos, Almacenamiento, Embalaje, Otros
 3. serverConnection.startServer(8080) crea el HttpServer
 4. Routes.configureRoutes() registra todas las rutas en el Router
 5. El servidor inicia en http://localhost:8080
@@ -1505,36 +1550,11 @@ public class Main {
 
 ## Flujos completos (de principio a fin)
 
-### Flujo: Crear un usuario (POST /api/users)
-
-```
-Frontend envia POST /api/users
-Body: {"nombre":"David","correo":"d@mail.com","contrasena":"123"}
-    ↓
-Router.handle() busca: routes["POST"]["/api/users"]
-    ↓ Encuentra → UserController.create()
-    ↓
-Controller:
-    ├── Lee el body JSON
-    ├── Extrae nombre, correo, contrasena, estado
-    └── Llama a UserService.validateAndCreate(...)
-    ↓
-Service:
-    ├── ¿Campos vacios? → No → Continuar
-    ├── ¿Correo existe? → UsuarioDAO.findByCorreo("d@mail.com") → null → No existe
-    ├── Encriptar contrasena: PasswordHelper.hashPassword("123") → "$2a$12$..."
-    └── Insertar: UsuarioDAO.create(nuevo) → INSERT INTO usuarios → Retorna usuario con ID
-    ↓
-Controller: Extrae status code → Envia respuesta JSON
-    ↓
-Frontend recibe: 201 {"success":true,"message":"Usuario creado","data":{...}}
-```
-
-### Flujo: Login (POST /api/auth/login)
+### Flujo: Login con correo y contrasena
 
 ```
 Frontend envia POST /api/auth/login
-Body: {"correo":"d@mail.com","contrasena":"123"}
+Body: {"correo":"david@mail.com","contrasena":"MiClave1"}
     ↓
 Router.handle() busca: routes["POST"]["/api/auth/login"]
     ↓ Encuentra → AuthController.login()
@@ -1545,73 +1565,121 @@ Controller:
     └── Llama a AuthService.validateLogin(...)
     ↓
 Service:
-    ├── UsuarioDAO.findByCorreo("d@mail.com") → Usuario encontrado
-    ├── PasswordHelper.checkPassword("123", "$2a$12$...") → true
+    ├── Formato correo OK
+    ├── UsuarioDAO.findByCorreo("david@mail.com") → Usuario encontrado
+    ├── usuario.getContrasena() != null → no es cuenta Google
+    ├── PasswordHelper.checkPassword("MiClave1", "$2a$12$...") → true
     ├── usuario.isEstado() → true (activo)
-    ├── UsuarioDAO.findRolByUsuarioId(1) → "ADMIN"
-    └── JwtHelper.generateToken(1, "d@mail.com", "ADMIN") → "eyJhbG..."
+    ├── UsuarioDAO.findRolByUsuarioId(5) → "ADMIN"
+    └── JwtHelper.generateToken(5, "david@mail.com", "ADMIN") → "eyJhbG..."
     ↓
 Frontend recibe: 200 {"success":true,"token":"eyJhbG...","nombre":"David","rol":"ADMIN"}
 ```
 
-### Flujo: Ruta protegida (GET /api/auth/me)
+### Flujo: Login con Google
 
 ```
-Frontend envia GET /api/auth/me
+Frontend envia POST /api/auth/google
+Body: {"credential": "<id-token-de-google>"}
+    ↓
+GoogleAuthController → GoogleAuthService.loginWithGoogle()
+    ↓
+Service:
+    ├── GET https://oauth2.googleapis.com/tokeninfo?id_token=<token>
+    │    → Google responde: {sub:"12345", email:"david@gmail.com", email_verified:"true", aud:"..."}
+    ├── aud == GOOGLE_CLIENT_ID → OK
+    ├── email_verified == "true" → OK
+    ├── UsuarioDAO.findByGoogleId("12345") → null (primera vez)
+    ├── UsuarioDAO.findByCorreo("david@gmail.com") → null (tampoco existe)
+    ├── UsuarioDAO.createWithGoogle("12345", "David", "david@gmail.com") → nuevo usuario
+    ├── UsuarioRolDAO.create(nuevoId, rolEmpleadoId) → asigna EMPLEADO
+    └── JwtHelper.generateToken(...) → "eyJhbG..."
+    ↓
+Frontend recibe: 200 {"success":true,"token":"eyJhbG...","rol":"EMPLEADO"}
+```
+
+### Flujo: Ruta protegida con rol
+
+```
+Frontend envia GET /api/users
 Header: "Authorization: Bearer eyJhbG..."
     ↓
-Router.handle() busca: routes["GET"]["/api/auth/me"]
-    ↓ Encuentra → auth.protect(AuthController.me())
+Router → auth.protect(UserController.listAll(), "SUPER_ADMIN", "ADMIN")
     ↓
 AuthMiddleware.protect():
-    ├── Extrae token del header "Authorization"
-    ├── JwtHelper.validateToken("eyJhbG...") → Claims: {sub:"1", correo:"d@mail.com", rol:"ADMIN"}
-    ├── exchange.setAttribute("userId", "1")
-    ├── exchange.setAttribute("correo", "d@mail.com")
-    ├── exchange.setAttribute("rol", "ADMIN")
-    └── next.handle(exchange) → Pasa al controller
+    ├── Extrae token del header
+    ├── JwtHelper.validateToken("eyJhbG...") → Claims: {sub:"5", rol:"EMPLEADO"}
+    ├── Guarda userId, correo, rol en exchange
+    ├── ¿"EMPLEADO" esta en ["SUPER_ADMIN", "ADMIN"]? → NO
+    └── ApiResponse.error(403, "No tiene permiso para esta accion")
     ↓
-AuthController.me():
-    ├── Lee exchange.getAttribute("userId") → "1"
-    ├── Lee exchange.getAttribute("correo") → "d@mail.com"
-    └── Lee exchange.getAttribute("rol") → "ADMIN"
-    ↓
-Frontend recibe: 200 {"success":true,"userId":"1","correo":"d@mail.com","rol":"ADMIN"}
+Frontend recibe: 403 {"success":false,"message":"No tiene permiso para esta accion"}
+```
+
+### Flujo: Recuperacion de contrasena (los 3 pasos)
+
+```
+PASO 1 — Solicitar:
+Frontend → POST /api/auth/forgot-password  {"correo":"david@mail.com"}
+    ↓ PasswordResetService:
+    ├── UsuarioDAO.findByCorreo → usuario encontrado, activo, con contrasena
+    ├── TokenRecuperacionDAO.guardarToken(5, ahora+1hora) → UUID generado
+    ├── EmailService.enviarCorreoRecuperacion("david@mail.com", uuid)
+    └── 200 "Si el correo esta registrado, recibiras un enlace en breve"
+
+PASO 2 — Validar token:
+Frontend → GET /api/auth/reset-password/validate?token=abc-123
+    ↓ PasswordResetService:
+    ├── TokenRecuperacionDAO.validarToken("abc-123")
+    │    Token encontrado, no usado, no expirado
+    └── 200 "Token valido"
+
+PASO 3 — Cambiar contrasena:
+Frontend → POST /api/auth/reset-password  {"token":"abc-123","contrasena":"NuevaClave1"}
+    ↓ PasswordResetService:
+    ├── PASSWORD_REGEX OK
+    ├── TokenRecuperacionDAO.validarToken("abc-123") → segunda validacion
+    ├── PasswordHelper.hashPassword("NuevaClave1") → nuevo hash BCrypt
+    ├── TokenRecuperacionDAO.actualizarContrasena(5, nuevoHash)
+    ├── TokenRecuperacionDAO.marcarTokenUsado(idToken)
+    └── 200 "Contrasena actualizada correctamente"
 ```
 
 ---
 
-## Endpoints del modulo de Usuarios y Auth
+## Endpoints del sistema
 
-| Metodo | Ruta | Protegida | Descripcion |
-|--------|------|-----------|-------------|
-| POST | `/api/auth/login` | No | Iniciar sesion (retorna token JWT) |
-| GET | `/api/auth/me` | Si (JWT) | Obtener datos del usuario autenticado |
-| GET | `/api/users` | No | Listar todos los usuarios |
-| POST | `/api/users` | No | Crear un usuario nuevo |
-| GET | `/api/users/id?id=X` | No | Obtener un usuario por su ID |
-| PUT | `/api/users/id?id=X` | No | Actualizar usuario completo |
-| PATCH | `/api/users/id?id=X` | No | Actualizar usuario parcialmente |
+| Metodo | Ruta | Acceso | Descripcion |
+|--------|------|--------|-------------|
+| POST | `/api/auth/login` | Publico | Iniciar sesion con correo y contrasena |
+| POST | `/api/auth/google` | Publico | Iniciar sesion con Google |
+| GET | `/api/auth/me` | JWT valido | Obtener datos del usuario autenticado |
+| POST | `/api/auth/forgot-password` | Publico | Solicitar recuperacion de contrasena |
+| GET | `/api/auth/reset-password/validate` | Publico | Validar token de recuperacion |
+| POST | `/api/auth/reset-password` | Publico | Cambiar contrasena con token |
+| GET | `/api/users` | SUPER_ADMIN, ADMIN | Listar todos los usuarios |
+| POST | `/api/users` | SUPER_ADMIN, ADMIN | Crear un usuario nuevo |
+| GET | `/api/users/id?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO* | Obtener usuario por ID |
+| PUT | `/api/users/id?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO* | Actualizar usuario completo |
+| PATCH | `/api/users/id?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO* | Actualizar usuario parcialmente |
+
+> *EMPLEADO solo puede acceder o modificar su propio perfil (cuando `?id=X` coincide con su `userId` del token).
 
 ---
 
-## Como ejecutar el proyecto
+## Codigos de respuesta HTTP
 
-```bash
-# 1. Crear la base de datos
-#    Abrir MySQL y ejecutar el script db/UrbanLife.sql
-
-# 2. Crear el archivo .env en la raiz del proyecto
-#    DB_URL=jdbc:mysql://localhost:3306/UrbanLife
-#    DB_USER=root
-#    DB_PASSWD=tu_contrasena
-#    JWT_SECRET=clave_secreta_de_al_menos_32_caracteres
-
-# 3. Compilar y ejecutar
-mvn clean compile exec:java
-```
-
-El servidor iniciara en `http://localhost:8080` y los seeders insertaran los datos iniciales automaticamente.
+| Codigo | Significado en este sistema |
+|--------|----------------------------|
+| 200 | Operacion exitosa |
+| 201 | Recurso creado exitosamente |
+| 204 | Respuesta a preflight CORS (OPTIONS) |
+| 400 | Error de validacion (campos faltantes, formato incorrecto, token invalido/expirado) |
+| 401 | No autenticado (credenciales invalidas, token ausente/expirado/invalido) |
+| 403 | Sin permisos (rol insuficiente, usuario inactivo, recurso ajeno) |
+| 404 | Recurso no encontrado |
+| 409 | Conflicto (correo duplicado) |
+| 500 | Error interno del servidor |
 
 ---
 
@@ -1622,3 +1690,28 @@ El servidor iniciara en `http://localhost:8080` y los seeders insertaran los dat
 | `SUPER_ADMIN` | Acceso total incluyendo configuracion tecnica | Desarrollador |
 | `ADMIN` | Gestion completa del negocio | Dueno del negocio |
 | `EMPLEADO` | Acceso operativo limitado | Empleados de la tienda |
+
+Los usuarios nuevos (manuales o de Google) reciben el rol `EMPLEADO` por defecto.
+
+---
+
+## Como ejecutar el proyecto
+
+```bash
+# 1. Crear la base de datos
+#    Abrir MySQL y ejecutar el script db/UrbanLife.sql
+
+# 2. Crear el archivo .env en la raiz del proyecto con:
+#    DB_URL=jdbc:mysql://localhost:3306/UrbanLife
+#    DB_USER=root
+#    DB_PASSWD=tu_contrasena
+#    JWT_SECRET=clave_secreta_de_al_menos_32_caracteres
+#    GOOGLE_CLIENT_ID=tu_client_id_de_google
+#    EMAIL_USER=tu_correo@gmail.com
+#    EMAIL_PASS=tu_contrasena_de_aplicacion
+
+# 3. Compilar y ejecutar
+mvn clean compile exec:java
+```
+
+El servidor iniciara en `http://localhost:8080` y los seeders insertaran los datos iniciales automaticamente.

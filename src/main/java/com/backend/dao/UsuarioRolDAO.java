@@ -7,8 +7,17 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DAO (Data Access Object) para gestionar operaciones CRUD y consultas
+ * relacionadas con las relaciones usuario-rol en la base de datos.
+ */
 public class UsuarioRolDAO {
 
+    /**
+     * Busca una relación usuario-rol por su ID.
+     * @param id ID de la relación a buscar
+     * @return Relación UsuarioRol encontrada o null si no existe
+     */
     public static UsuarioRol findById(int id) {
         String sql = "SELECT * FROM usuario_rol WHERE id_usuario_rol = ?";
         try (Connection conexion = dbConnection.getConnection();
