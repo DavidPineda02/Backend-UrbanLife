@@ -46,11 +46,12 @@ public class PasswordResetService {
             return respuesta;
         }
 
-        // Las cuentas de Google no tienen contrasena, no pueden usar este flujo
+        // Las cuentas de Google no tienen contrasena, no pueden usar este flujo.
+        // Respuesta generica para no revelar que el correo existe con cuenta Google.
         if (usuario.getContrasena() == null) {
-            respuesta.addProperty("success", false);
-            respuesta.addProperty("message", "Esta cuenta usa inicio de sesion con Google");
-            respuesta.addProperty("status", 400);
+            respuesta.addProperty("success", true);
+            respuesta.addProperty("message", "Si el correo está registrado, recibirás un enlace en breve");
+            respuesta.addProperty("status", 200);
             return respuesta;
         }
 
