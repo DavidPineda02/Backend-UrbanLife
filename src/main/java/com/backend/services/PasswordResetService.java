@@ -2,7 +2,7 @@ package com.backend.services;
 
 // Para guardar y validar tokens de recuperacion en la BD
 import com.backend.dao.TokenRecuperacionDAO;
-// Para buscar el usuario por correo
+// Para buscar el usuario por correo y actualizar su contraseña
 import com.backend.dao.UsuarioDAO;
 // Para hashear la nueva contrasena antes de guardarla
 import com.backend.helpers.PasswordHelper;
@@ -154,7 +154,7 @@ public class PasswordResetService {
         // Hashear la nueva contrasena con BCrypt antes de guardarla
         String hashNuevaContrasena = PasswordHelper.hashPassword(nuevaContrasena);
         // Actualizar la contrasena del usuario en la base de datos
-        boolean actualizado = TokenRecuperacionDAO.actualizarContrasena(usuarioId, hashNuevaContrasena);
+        boolean actualizado = UsuarioDAO.updatePassword(usuarioId, hashNuevaContrasena);
 
         if (!actualizado) {
             respuesta.addProperty("success", false);
