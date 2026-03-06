@@ -189,8 +189,14 @@ public class UserService {
             return respuesta;
         }
 
-        // Si se envio una nueva contrasena, hashearla y actualizarla por separado
+        // Si se envio una nueva contrasena, validar politica y hashearla
         if (contrasena != null && !contrasena.isBlank()) {
+            if (!contrasena.matches(PASSWORD_REGEX)) {
+                respuesta.addProperty("success", false);
+                respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+                respuesta.addProperty("status", 400);
+                return respuesta;
+            }
             UsuarioDAO.updatePassword(id, PasswordHelper.hashPassword(contrasena));
         }
 
@@ -257,8 +263,14 @@ public class UserService {
             return respuesta;
         }
 
-        // Si se envio una nueva contrasena, hashearla y actualizarla por separado
+        // Si se envio una nueva contrasena, validar politica y hashearla
         if (contrasena != null && !contrasena.isBlank()) {
+            if (!contrasena.matches(PASSWORD_REGEX)) {
+                respuesta.addProperty("success", false);
+                respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+                respuesta.addProperty("status", 400);
+                return respuesta;
+            }
             UsuarioDAO.updatePassword(id, PasswordHelper.hashPassword(contrasena));
         }
 
