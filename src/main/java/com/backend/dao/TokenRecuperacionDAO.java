@@ -91,19 +91,6 @@ public class TokenRecuperacionDAO {
         return false;
     }
 
-    public static boolean actualizarContrasena(int usuarioId, String hashContrasena) {
-        String sql = "UPDATE usuarios SET contrasena = ? WHERE id_usuario = ?";
-        try (Connection conexion = dbConnection.getConnection();
-             PreparedStatement consulta = conexion.prepareStatement(sql)) {
-            consulta.setString(1, hashContrasena);
-            consulta.setInt(2, usuarioId);
-            return consulta.executeUpdate() > 0;
-        } catch (Exception excepcion) {
-            System.out.println("Error TokenRecuperacionDAO.actualizarContrasena: " + excepcion.getMessage());
-        }
-        return false;
-    }
-
     /**
      * Genera el hash SHA-256 de un String en hexadecimal.
      * Se usa para no almacenar tokens de recuperacion en texto plano en la BD.
