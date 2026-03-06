@@ -241,6 +241,11 @@ public class UserController {
             String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
             // En PUT el estado tiene valor por defecto true si no se envia
             boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : true;
+            // EMPLEADO no puede cambiar su propio estado: conservar el valor actual de la BD
+            if ("EMPLEADO".equalsIgnoreCase(rolUsuario)) {
+                Usuario usuarioActual = UsuarioDAO.findById(id);
+                if (usuarioActual != null) estado = usuarioActual.isEstado();
+            }
 
             // Delegar al servicio la validacion y actualizacion completa del usuario
             JsonObject respuesta = UserService.validateAndUpdate(id, nombre, correo, contrasena, estado);
@@ -323,6 +328,10 @@ public class UserController {
             String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : null;
             // Boolean (objeto) en lugar de boolean primitivo para poder diferenciar null de false
             Boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : null;
+            // EMPLEADO no puede cambiar su propio estado: ignorar el campo si viene en el body
+            if ("EMPLEADO".equalsIgnoreCase(rolUsuario)) {
+                estado = null;
+            }
 
             // Delegar al servicio la actualizacion parcial (solo se actualizan los campos no nulos)
             JsonObject respuesta = UserService.partialUpdate(id, nombre, correo, contrasena, estado);
