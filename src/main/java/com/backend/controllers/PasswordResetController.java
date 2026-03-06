@@ -82,14 +82,18 @@ public class PasswordResetController {
             // Log de petición
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/reset-password/validate");
 
-            // Obtener la query string de la URL (ej: "token=abc123")
+            // Obtener la query string de la URL (ej: "token=abc123&otro=val")
             String query = exchange.getRequestURI().getQuery();
             // Inicializar token vacío
             String token = "";
-            // Extraer el valor del parametro "token" si existe en la query string
-            if (query != null && query.contains("token=")) {
-                // Extraer valor del token
-                token = query.split("token=")[1];
+            // Recorrer los parametros para encontrar "token" de forma segura
+            if (query != null) {
+                for (String param : query.split("&")) {
+                    if (param.startsWith("token=")) {
+                        token = param.substring(6);
+                        break;
+                    }
+                }
             }
 
             // Delegar al servicio la validacion del token contra la base de datos
