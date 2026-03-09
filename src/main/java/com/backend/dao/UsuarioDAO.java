@@ -90,13 +90,14 @@ public class UsuarioDAO {
      * @return Usuario creado con su ID asignado, o null si falló
      */
     public static Usuario create(Usuario usuario) {
-        String sql = "INSERT INTO usuarios (nombre, correo, contrasena, estado) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, estado) VALUES (?, ?, ?, ?, ?)";
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             consulta.setString(1, usuario.getNombre());
-            consulta.setString(2, usuario.getCorreo());
-            consulta.setString(3, usuario.getContrasena());
-            consulta.setBoolean(4, usuario.isEstado());
+            consulta.setString(2, usuario.getApellido());
+            consulta.setString(3, usuario.getCorreo());
+            consulta.setString(4, usuario.getContrasena());
+            consulta.setBoolean(5, usuario.isEstado());
             if (consulta.executeUpdate() > 0) {
                 ResultSet clavesGeneradas = consulta.getGeneratedKeys();
                 if (clavesGeneradas.next()) usuario.setIdUsuario(clavesGeneradas.getInt(1));
@@ -115,17 +116,19 @@ public class UsuarioDAO {
      * @param correo Correo electrónico del usuario
      * @return Usuario creado con su ID asignado, o null si falló
      */
-    public static Usuario createWithGoogle(String googleId, String nombre, String correo) {
-        String sql = "INSERT INTO usuarios (nombre, correo, contrasena, estado, google_id) VALUES (?, ?, NULL, true, ?)";
+    public static Usuario createWithGoogle(String googleId, String nombre, String apellido, String correo) {
+        String sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, estado, google_id) VALUES (?, ?, ?, NULL, true, ?)";
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             consulta.setString(1, nombre);
-            consulta.setString(2, correo);
-            consulta.setString(3, googleId);
+            consulta.setString(2, apellido);
+            consulta.setString(3, correo);
+            consulta.setString(4, googleId);
             if (consulta.executeUpdate() > 0) {
                 ResultSet clavesGeneradas = consulta.getGeneratedKeys();
                 Usuario nuevo = new Usuario();
                 nuevo.setNombre(nombre);
+                nuevo.setApellido(apellido);
                 nuevo.setCorreo(correo);
                 nuevo.setGoogleId(googleId);
                 nuevo.setEstado(true);
@@ -163,13 +166,14 @@ public class UsuarioDAO {
      * @return true si la actualización fue exitosa, false si falló
      */
     public static boolean update(Usuario usuario) {
-        String sql = "UPDATE usuarios SET nombre = ?, correo = ?, estado = ? WHERE id_usuario = ?";
+        String sql = "UPDATE usuarios SET nombre = ?, apellido = ?, correo = ?, estado = ? WHERE id_usuario = ?";
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
             consulta.setString(1, usuario.getNombre());
-            consulta.setString(2, usuario.getCorreo());
-            consulta.setBoolean(3, usuario.isEstado());
-            consulta.setInt(4, usuario.getIdUsuario());
+            consulta.setString(2, usuario.getApellido());
+            consulta.setString(3, usuario.getCorreo());
+            consulta.setBoolean(4, usuario.isEstado());
+            consulta.setInt(5, usuario.getIdUsuario());
             return consulta.executeUpdate() > 0;
         } catch (Exception excepcion) {
             System.out.println("Error UsuarioDAO.update: " + excepcion.getMessage());
@@ -259,14 +263,13 @@ public class UsuarioDAO {
         Usuario usuario = new Usuario(
                 resultado.getInt("id_usuario"),
                 resultado.getString("nombre"),
+                resultado.getString("apellido"),
                 resultado.getString("correo"),
                 resultado.getString("contrasena"),
                 resultado.getBoolean("estado"));
         try {
             usuario.setGoogleId(resultado.getString("google_id"));
-        } catch (SQLException ignored) {
-            // La columna google_id puede no existir en consultas antiguas
-        }
+        } catch (SQLException ignored) {}
         return usuario;
     }
 }
