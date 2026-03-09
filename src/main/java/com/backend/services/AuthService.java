@@ -123,6 +123,8 @@ public class AuthService {
         respuesta.addProperty("token", token);
         // Nombre del usuario
         respuesta.addProperty("nombre", usuario.getNombre());
+        // Apellido del usuario
+        respuesta.addProperty("apellido", usuario.getApellido());
         // Correo del usuario
         respuesta.addProperty("correo", usuario.getCorreo());
         // Rol del usuario
