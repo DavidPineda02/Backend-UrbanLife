@@ -8,8 +8,10 @@ package com.backend.models;
 public class Usuario {
     /** Identificador único del usuario en la base de datos */
     private int idUsuario;
-    /** Nombre completo del usuario */
+    /** Nombre del usuario */
     private String nombre;
+    /** Apellido del usuario */
+    private String apellido;
     /** Correo electrónico del usuario (usado para login) */
     private String correo;
     /** Contraseña del usuario (almacenada encriptada) */
@@ -33,9 +35,10 @@ public class Usuario {
      * @param contrasena Contraseña (debe venir encriptada)
      * @param estado Estado del usuario
      */
-    public Usuario(int idUsuario, String nombre, String correo, String contrasena, boolean estado) {
+    public Usuario(int idUsuario, String nombre, String apellido, String correo, String contrasena, boolean estado) {
         this.idUsuario = idUsuario;
         this.nombre = nombre;
+        this.apellido = apellido;
         this.correo = correo;
         this.contrasena = contrasena;
         this.estado = estado;
@@ -43,16 +46,11 @@ public class Usuario {
 
     /**
      * Constructor para crear un usuario con ID y Google ID.
-     * @param idUsuario ID del usuario
-     * @param nombre Nombre del usuario
-     * @param correo Correo electrónico
-     * @param contrasena Contraseña (debe venir encriptada)
-     * @param estado Estado del usuario
-     * @param googleId ID de Google para autenticación OAuth2
      */
-    public Usuario(int idUsuario, String nombre, String correo, String contrasena, boolean estado, String googleId) {
+    public Usuario(int idUsuario, String nombre, String apellido, String correo, String contrasena, boolean estado, String googleId) {
         this.idUsuario = idUsuario;
         this.nombre = nombre;
+        this.apellido = apellido;
         this.correo = correo;
         this.contrasena = contrasena;
         this.estado = estado;
@@ -61,13 +59,10 @@ public class Usuario {
 
     /**
      * Constructor para crear un nuevo usuario (sin ID).
-     * @param nombre Nombre del usuario
-     * @param correo Correo electrónico
-     * @param contrasena Contraseña (debe venir encriptada)
-     * @param estado Estado del usuario
      */
-    public Usuario(String nombre, String correo, String contrasena, boolean estado) {
+    public Usuario(String nombre, String apellido, String correo, String contrasena, boolean estado) {
         this.nombre = nombre;
+        this.apellido = apellido;
         this.correo = correo;
         this.contrasena = contrasena;
         this.estado = estado;
@@ -88,6 +83,14 @@ public class Usuario {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public String getApellido() {
+        return apellido;
+    }
+
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
     }
 
     public String getCorreo() {
