@@ -163,7 +163,7 @@ public class UserController {
 
             // Delegar la validacion, creacion y generacion de JWT al servicio
             JsonObject respuesta = UserService.validateAndCreate(
-                    request.getNombre(), request.getCorreo(), request.getContrasena());
+                    request.getNombre(), request.getApellido(), request.getCorreo(), request.getContrasena());
             // Obtener código HTTP
             int codigoHttp = respuesta.get("status").getAsInt();
             // Limpiar campo interno
@@ -237,6 +237,7 @@ public class UserController {
 
             // Extraer cada campo del JSON, usando "" como valor por defecto si no vienen
             String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : "";
+            String apellido = datosJson.has("apellido") ? datosJson.get("apellido").getAsString() : "";
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
             String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
             // En PUT el estado tiene valor por defecto true si no se envia
@@ -248,7 +249,7 @@ public class UserController {
             }
 
             // Delegar al servicio la validacion y actualizacion completa del usuario
-            JsonObject respuesta = UserService.validateAndUpdate(id, nombre, correo, contrasena, estado);
+            JsonObject respuesta = UserService.validateAndUpdate(id, nombre, apellido, correo, contrasena, estado);
             // Obtener código HTTP
             int codigoHttp = respuesta.get("status").getAsInt();
             // Limpiar campo interno
@@ -322,6 +323,7 @@ public class UserController {
 
             // Extraer cada campo, usando null como valor por defecto (null = no actualizar ese campo)
             String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : null;
+            String apellido = datosJson.has("apellido") ? datosJson.get("apellido").getAsString() : null;
             // Correo opcional
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : null;
             // Contraseña opcional
@@ -334,7 +336,7 @@ public class UserController {
             }
 
             // Delegar al servicio la actualizacion parcial (solo se actualizan los campos no nulos)
-            JsonObject respuesta = UserService.partialUpdate(id, nombre, correo, contrasena, estado);
+            JsonObject respuesta = UserService.partialUpdate(id, nombre, apellido, correo, contrasena, estado);
             // Obtener código HTTP
             int codigoHttp = respuesta.get("status").getAsInt();
             // Limpiar campo interno
