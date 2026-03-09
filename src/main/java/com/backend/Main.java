@@ -9,6 +9,8 @@ import com.backend.seeders.SeedPermisos;
 import com.backend.seeders.SeedTipoMovimientos;
 // Seeder para insertar tipos de gastos adicionales
 import com.backend.seeders.SeedTipoGasto;
+// Seeder para insertar el usuario SUPER_ADMIN inicial
+import com.backend.seeders.SeedSuperAdmin;
 // Importar la clase que inicia el servidor HTTP
 import com.backend.server.serverConnection;
 
@@ -39,6 +41,8 @@ public class Main {
         SeedTipoMovimientos.insertTipoMovimientos();
         // Insertar tipos de gasto si no existen
         SeedTipoGasto.insertTipoGasto();
+        // Insertar usuario SUPER_ADMIN si no existe
+        SeedSuperAdmin.insertSuperAdmin();
         System.out.println("Seeders finalizados.\n");
 
         // Iniciar el servidor HTTP escuchando en el puerto 8080
