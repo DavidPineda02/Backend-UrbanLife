@@ -112,8 +112,10 @@ public class GoogleAuthService {
         String googleId = datosGoogle.get("sub").getAsString();
         // Correo de la cuenta Google
         String correo = datosGoogle.get("email").getAsString();
-        // Nombre o correo como fallback
-        String nombre = datosGoogle.has("name") ? datosGoogle.get("name").getAsString() : correo;
+        // Nombre (given_name) o correo como fallback
+        String nombre = datosGoogle.has("given_name") ? datosGoogle.get("given_name").getAsString() : correo;
+        // Apellido (family_name) o vacío como fallback
+        String apellido = datosGoogle.has("family_name") ? datosGoogle.get("family_name").getAsString() : "";
 
         // Intentar encontrar el usuario por su google_id (logins previos con Google)
         Usuario usuario = UsuarioDAO.findByGoogleId(googleId);
@@ -132,7 +134,7 @@ public class GoogleAuthService {
             // Usuario no existe
             } else {
                 // El correo no existe: crear una cuenta nueva vinculada a Google
-                usuario = UsuarioDAO.createWithGoogle(googleId, nombre, correo);
+                usuario = UsuarioDAO.createWithGoogle(googleId, nombre, apellido, correo);
                 // Validar creación exitosa
                 if (usuario == null) {
                     // Indicar fallo
@@ -187,6 +189,8 @@ public class GoogleAuthService {
         respuesta.addProperty("token", token);
         // Nombre del usuario
         respuesta.addProperty("nombre", usuario.getNombre());
+        // Apellido del usuario
+        respuesta.addProperty("apellido", usuario.getApellido());
         // Correo del usuario
         respuesta.addProperty("correo", usuario.getCorreo());
         // Rol del usuario
