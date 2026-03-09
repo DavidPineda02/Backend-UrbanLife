@@ -8,8 +8,10 @@ package com.backend.dto;
  */
 public class CreateUserRequest {
 
-    /** Nombre completo del nuevo usuario */
+    /** Nombre del nuevo usuario */
     private String nombre;
+    /** Apellido del nuevo usuario */
+    private String apellido;
     /** Correo electrónico (único en el sistema) */
     private String correo;
     /** Contraseña en texto plano (se hashea antes de guardar) */
@@ -27,11 +29,9 @@ public class CreateUserRequest {
      * @return true si todos los campos son válidos, false si alguno es inválido
      */
     public boolean isValid() {
-        // nombre no puede ser nulo ni solo espacios
         return nombre != null && !nombre.isBlank()
-                // correo no puede ser nulo ni solo espacios
+                && apellido != null && !apellido.isBlank()
                 && correo != null && !correo.isBlank()
-                // contraseña no puede ser nula ni vacía
                 && contrasena != null && !contrasena.isBlank();
     }
 
@@ -39,6 +39,11 @@ public class CreateUserRequest {
     public String getNombre() { return nombre; }
     /** @param nombre Nombre a establecer */
     public void setNombre(String nombre) { this.nombre = nombre; }
+
+    /** @return Apellido del usuario */
+    public String getApellido() { return apellido; }
+    /** @param apellido Apellido a establecer */
+    public void setApellido(String apellido) { this.apellido = apellido; }
 
     /** @return Correo electrónico del usuario */
     public String getCorreo() { return correo; }

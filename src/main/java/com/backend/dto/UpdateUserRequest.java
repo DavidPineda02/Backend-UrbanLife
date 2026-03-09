@@ -10,6 +10,8 @@ public class UpdateUserRequest {
 
     /** Nuevo nombre del usuario (opcional) */
     private String nombre;
+    /** Nuevo apellido del usuario (opcional) */
+    private String apellido;
     /** Nuevo correo electrónico (opcional, debe ser único) */
     private String correo;
     /** Nuevo estado del usuario como String "true"/"false" (opcional) */
@@ -39,6 +41,11 @@ public class UpdateUserRequest {
     public String getNombre() { return nombre; }
     /** @param nombre Nombre a establecer */
     public void setNombre(String nombre) { this.nombre = nombre; }
+
+    /** @return Apellido del usuario */
+    public String getApellido() { return apellido; }
+    /** @param apellido Apellido a establecer */
+    public void setApellido(String apellido) { this.apellido = apellido; }
 
     /** @return Correo electrónico del usuario */
     public String getCorreo() { return correo; }
