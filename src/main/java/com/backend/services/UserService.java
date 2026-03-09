@@ -45,17 +45,17 @@ public class UserService {
      * @param contrasena Contraseña del usuario
      * @return JsonObject con el resultado de la creación y JWT si es exitoso
      */
-    public static JsonObject validateAndCreate(String nombre, String correo, String contrasena) {
+    public static JsonObject validateAndCreate(String nombre, String apellido, String correo, String contrasena) {
         // Crear objeto de respuesta
         JsonObject respuesta = new JsonObject();
 
-        // Validar que los tres campos obligatorios no sean nulos ni vacios
-        if (nombre == null || nombre.isBlank() || correo == null || correo.isBlank()
-                || contrasena == null || contrasena.isBlank()) {
+        // Validar que los cuatro campos obligatorios no sean nulos ni vacios
+        if (nombre == null || nombre.isBlank() || apellido == null || apellido.isBlank()
+                || correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
             // Indicar fallo
             respuesta.addProperty("success", false);
             // Mensaje de error
-            respuesta.addProperty("message", "Nombre, correo y contraseña son requeridos");
+            respuesta.addProperty("message", "Nombre, apellido, correo y contraseña son requeridos");
             // Código HTTP 400
             respuesta.addProperty("status", 400);
             // Retornar respuesta de error
@@ -89,7 +89,7 @@ public class UserService {
         }
 
         // Crear la entidad usuario con la contrasena hasheada y estado activo
-        Usuario nuevoUsuario = new Usuario(nombre, correo,
+        Usuario nuevoUsuario = new Usuario(nombre, apellido, correo,
                 PasswordHelper.hashPassword(contrasena), true);
 
         // Persistir el usuario en la base de datos
@@ -115,6 +115,7 @@ public class UserService {
             respuesta.addProperty("message", "Usuario registrado exitosamente");
             respuesta.addProperty("token", token);
             respuesta.addProperty("nombre", usuarioCreado.getNombre());
+            respuesta.addProperty("apellido", usuarioCreado.getApellido());
             respuesta.addProperty("correo", usuarioCreado.getCorreo());
             respuesta.addProperty("rol", nombreRol);
             respuesta.addProperty("status", 201);
@@ -138,7 +139,7 @@ public class UserService {
      * @param estado Nuevo estado activo/inactivo del usuario
      * @return JsonObject con success, message y status del resultado de la operación
      */
-    public static JsonObject validateAndUpdate(int id, String nombre, String correo, String contrasena, boolean estado) {
+    public static JsonObject validateAndUpdate(int id, String nombre, String apellido, String correo, String contrasena, boolean estado) {
         JsonObject respuesta = new JsonObject();
 
         // Verificar que el usuario existe antes de intentar actualizar
@@ -150,10 +151,10 @@ public class UserService {
             return respuesta;
         }
 
-        // En PUT, nombre y correo son obligatorios (reemplazo completo)
-        if (nombre == null || nombre.isBlank() || correo == null || correo.isBlank()) {
+        // En PUT, nombre, apellido y correo son obligatorios (reemplazo completo)
+        if (nombre == null || nombre.isBlank() || apellido == null || apellido.isBlank() || correo == null || correo.isBlank()) {
             respuesta.addProperty("success", false);
-            respuesta.addProperty("message", "Nombre y correo son obligatorios en PUT");
+            respuesta.addProperty("message", "Nombre, apellido y correo son obligatorios en PUT");
             respuesta.addProperty("status", 400);
             return respuesta;
         }
@@ -178,6 +179,7 @@ public class UserService {
 
         // Actualizar los campos del objeto usuario en memoria
         usuario.setNombre(nombre);
+        usuario.setApellido(apellido);
         usuario.setCorreo(correo);
         usuario.setEstado(estado);
 
@@ -221,7 +223,7 @@ public class UserService {
      * @param estado Nuevo estado (opcional)
      * @return JsonObject con el resultado de la actualización parcial
      */
-    public static JsonObject partialUpdate(int id, String nombre, String correo, String contrasena, Boolean estado) {
+    public static JsonObject partialUpdate(int id, String nombre, String apellido, String correo, String contrasena, Boolean estado) {
         JsonObject respuesta = new JsonObject();
 
         // Verificar que el usuario existe antes de intentar actualizar
@@ -251,9 +253,10 @@ public class UserService {
         }
 
         // Actualizar solo los campos que no sean nulos ni vacios
-        if (nombre != null && !nombre.isBlank()) usuario.setNombre(nombre);   // Actualizar nombre si vino
-        if (correo != null && !correo.isBlank()) usuario.setCorreo(correo);   // Actualizar correo si vino
-        if (estado != null) usuario.setEstado(estado);                         // Actualizar estado si vino
+        if (nombre != null && !nombre.isBlank()) usuario.setNombre(nombre);
+        if (apellido != null && !apellido.isBlank()) usuario.setApellido(apellido);
+        if (correo != null && !correo.isBlank()) usuario.setCorreo(correo);
+        if (estado != null) usuario.setEstado(estado);
 
         // Persistir los cambios en la base de datos
         if (!UsuarioDAO.update(usuario)) {
