@@ -16,6 +16,8 @@ public class LoginResponse {
     private String token;
     /** Nombre del usuario autenticado */
     private String nombre;
+    /** Apellido del usuario autenticado */
+    private String apellido;
     /** Correo del usuario autenticado */
     private String correo;
     /** Rol del usuario en el sistema (SUPER_ADMIN, ADMIN, EMPLEADO) */
@@ -50,18 +52,13 @@ public class LoginResponse {
      * @param correo Correo del usuario
      * @param rol Rol del usuario
      */
-    public LoginResponse(boolean success, String message, String token, String nombre, String correo, String rol) {
-        // Asignar resultado
+    public LoginResponse(boolean success, String message, String token, String nombre, String apellido, String correo, String rol) {
         this.success = success;
-        // Asignar mensaje
         this.message = message;
-        // Asignar token
         this.token = token;
-        // Asignar nombre
         this.nombre = nombre;
-        // Asignar correo
+        this.apellido = apellido;
         this.correo = correo;
-        // Asignar rol
         this.rol = rol;
     }
 
@@ -84,6 +81,11 @@ public class LoginResponse {
     public String getNombre() { return nombre; }
     /** @param nombre Establecer nombre del usuario */
     public void setNombre(String nombre) { this.nombre = nombre; }
+
+    /** @return Apellido del usuario autenticado */
+    public String getApellido() { return apellido; }
+    /** @param apellido Establecer apellido del usuario */
+    public void setApellido(String apellido) { this.apellido = apellido; }
 
     /** @return Correo del usuario autenticado */
     public String getCorreo() { return correo; }
