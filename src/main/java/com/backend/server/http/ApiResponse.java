@@ -42,7 +42,7 @@ public class ApiResponse {
         // Permitir solicitudes desde cualquier origen (CORS)
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         // Indicar los metodos HTTP permitidos en el CORS
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
         // Indicar los encabezados permitidos en el CORS
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
@@ -117,7 +117,7 @@ public class ApiResponse {
         // Agregar los encabezados CORS necesarios para el preflight del navegador
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         // Header CORS methods
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
         // Header CORS headers
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
         // Responder con 204 No Content (sin cuerpo) para confirmar que el CORS es valido
