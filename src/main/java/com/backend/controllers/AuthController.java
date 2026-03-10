@@ -7,6 +7,10 @@ import com.backend.server.http.ApiRequest;
 import com.backend.server.http.ApiResponse;
 // Servicio que contiene la logica de validacion del login
 import com.backend.services.AuthService;
+// Servicio con la logica de creacion de usuarios
+import com.backend.services.UserService;
+// DTO para deserializar el body del registro
+import com.backend.dto.CreateUserRequest;
 // Para parsear el JSON del body de la peticion
 import com.google.gson.Gson;
 // Para construir y manipular objetos JSON
@@ -71,6 +75,44 @@ public class AuthController {
             respuesta.remove("status");
 
             // Enviar respuesta
+            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
+        };
+    }
+
+    /**
+     * Handler para POST /api/auth/register.
+     * Registra un nuevo usuario público con rol EMPLEADO y retorna JWT (auto-login).
+     * @return HttpHandler que procesa la solicitud de registro
+     */
+    public static HttpHandler register() {
+        return exchange -> {
+            // Log de petición
+            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/register");
+
+            // Leer y validar que el body no este vacio
+            ApiRequest peticion = new ApiRequest(exchange);
+            String cuerpo = peticion.readBody();
+
+            if (cuerpo.isEmpty()) {
+                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
+                return;
+            }
+
+            // Deserializar el JSON al DTO
+            CreateUserRequest request;
+            try {
+                request = new Gson().fromJson(cuerpo, CreateUserRequest.class);
+            } catch (Exception e) {
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                return;
+            }
+
+            // Delegar la validacion, creacion y generacion de JWT al servicio
+            JsonObject respuesta = UserService.validateAndCreate(
+                    request.getNombre(), request.getApellido(), request.getCorreo(), request.getContrasena());
+            int codigoHttp = respuesta.get("status").getAsInt();
+            respuesta.remove("status");
+
             ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }

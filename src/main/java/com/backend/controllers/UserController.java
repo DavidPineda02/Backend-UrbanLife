@@ -3,8 +3,6 @@ package com.backend.controllers;
 
 // Para acceder directamente a la BD y listar/buscar usuarios
 import com.backend.dao.UsuarioDAO;
-// DTO que mapea el JSON del body al crear un usuario
-import com.backend.dto.CreateUserRequest;
 // Entidad que representa un usuario del sistema
 import com.backend.models.Usuario;
 // Para leer el cuerpo de la peticion HTTP
@@ -121,56 +119,6 @@ public class UserController {
             usuario.setContrasena(null);
             // Enviar respuesta
             ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", usuario));
-        };
-    }
-
-    /**
-     * Handler para POST /api/users.
-     * Crea un nuevo usuario con rol EMPLEADO por defecto.
-     * Valida datos y crea usuario con contraseña hasheada.
-     * @return HttpHandler que procesa la solicitud de crear usuario
-     */
-    public static HttpHandler create() {
-        return exchange -> {
-            // Log de petición
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
-
-            // Leer y validar que el body no este vacio
-            ApiRequest peticion = new ApiRequest(exchange);
-            // Leer cuerpo de la petición
-            String cuerpo = peticion.readBody();
-
-            // Validar que el cuerpo no esté vacío
-            if (cuerpo.isEmpty()) {
-                // Error 400
-                ApiResponse.error(exchange, 400, "El cuerpo de la peticion esta vacio");
-                // Salir del handler
-                return;
-            }
-
-            // Deserializar el JSON al DTO CreateUserRequest (nombre, correo, contrasena)
-            CreateUserRequest request;
-            try {
-                // Parsear a DTO
-                request = new Gson().fromJson(cuerpo, CreateUserRequest.class);
-            // Capturar errores de parseo
-            } catch (Exception e) {
-                // Error 400
-                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
-                // Salir del handler
-                return;
-            }
-
-            // Delegar la validacion, creacion y generacion de JWT al servicio
-            JsonObject respuesta = UserService.validateAndCreate(
-                    request.getNombre(), request.getApellido(), request.getCorreo(), request.getContrasena());
-            // Obtener código HTTP
-            int codigoHttp = respuesta.get("status").getAsInt();
-            // Limpiar campo interno
-            respuesta.remove("status");
-
-            // Enviar respuesta
-            ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
         };
     }
 

@@ -34,6 +34,8 @@ public class Routes {
         // ========== RUTAS DE AUTH ==========
         // Login con correo y contrasena (publico)
         router.post("/api/auth/login", AuthController.login());
+        // Registro de nuevo usuario con rol EMPLEADO (publico)
+        router.post("/api/auth/register", AuthController.register());
         // Login con token de Google (publico)
         router.post("/api/auth/google", GoogleAuthController.loginWithGoogle());
         // Retorna datos del usuario autenticado (requiere JWT)
@@ -50,8 +52,6 @@ public class Routes {
         // ========== RUTAS DE USUARIOS ==========
         // Listar todos los usuarios
         router.get("/api/users",    auth.protect(UserController.listAll(), "SUPER_ADMIN", "ADMIN"));
-        // Crear nuevo usuario
-        router.post("/api/users",   auth.protect(UserController.create(),  "SUPER_ADMIN", "ADMIN"));
         // Obtener usuario por ID
         router.get("/api/users/id", auth.protect(UserController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
         // Actualizar usuario completo (PUT)
@@ -63,13 +63,13 @@ public class Routes {
         // Imprimir en consola las rutas activas al iniciar el servidor
         System.out.println("Rutas registradas:");
         System.out.println("  POST   /api/auth/login                      (publico)");
+        System.out.println("  POST   /api/auth/register                   (publico)");
         System.out.println("  POST   /api/auth/google                     (publico)");
         System.out.println("  GET    /api/auth/me                         (autenticado)");
         System.out.println("  POST   /api/auth/forgot-password            (publico)");
         System.out.println("  GET    /api/auth/reset-password/validate    (publico)");
         System.out.println("  POST   /api/auth/reset-password             (publico)");
         System.out.println("  GET    /api/users                           (SUPER_ADMIN, ADMIN)");
-        System.out.println("  POST   /api/users                           (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
         System.out.println("  PUT    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
         System.out.println("  PATCH  /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
