@@ -49,16 +49,24 @@ public class LoginResponse {
      * @param message Mensaje descriptivo
      * @param token JWT generado
      * @param nombre Nombre del usuario
+     * @param apellido Apellido del usuario
      * @param correo Correo del usuario
      * @param rol Rol del usuario
      */
     public LoginResponse(boolean success, String message, String token, String nombre, String apellido, String correo, String rol) {
+        // Asignar el resultado del login (true = exitoso)
         this.success = success;
+        // Asignar el mensaje descriptivo del resultado
         this.message = message;
+        // Asignar el JWT generado para el usuario autenticado
         this.token = token;
+        // Asignar el nombre del usuario autenticado
         this.nombre = nombre;
+        // Asignar el apellido del usuario autenticado
         this.apellido = apellido;
+        // Asignar el correo del usuario autenticado
         this.correo = correo;
+        // Asignar el rol del usuario en el sistema
         this.rol = rol;
     }
 
