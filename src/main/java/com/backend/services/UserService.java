@@ -21,6 +21,8 @@ import com.backend.models.UsuarioRol;
 import com.google.gson.Gson;
 // Para construir el objeto JSON de respuesta
 import com.google.gson.JsonObject;
+// Para las expresiones regulares y políticas de validación compartidas
+import com.backend.helpers.ValidationHelper;
 
 /**
  * Servicio con la lógica de negocio para el CRUD de usuarios.
@@ -31,13 +33,6 @@ public class UserService {
 
     /** Gson compartido para serializar objetos Usuario en la respuesta */
     private static final Gson gson = new Gson();
-
-    /** Expresión regular para validar el formato del correo electrónico */
-    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
-    /** Política de contraseña: min 8 chars, al menos una mayúscula, una minúscula y un número */
-    private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$";
-    /** Solo letras (incluye acentos, ñ y espacios para nombres compuestos) */
-    private static final String NOMBRE_REGEX = "^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ ]+$";
 
     /**
      * Valida, crea el usuario, le asigna rol EMPLEADO y retorna JWT (auto-login).
@@ -70,7 +65,7 @@ public class UserService {
             respuesta.addProperty("status", 400);
             return respuesta;
         }
-        if (!nombre.trim().matches(NOMBRE_REGEX)) {
+        if (!nombre.trim().matches(ValidationHelper.NOMBRE_REGEX)) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "El nombre solo puede contener letras");
             respuesta.addProperty("status", 400);
@@ -96,7 +91,7 @@ public class UserService {
             respuesta.addProperty("status", 400);
             return respuesta;
         }
-        if (!apellido.trim().matches(NOMBRE_REGEX)) {
+        if (!apellido.trim().matches(ValidationHelper.NOMBRE_REGEX)) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "El apellido solo puede contener letras");
             respuesta.addProperty("status", 400);
@@ -116,7 +111,7 @@ public class UserService {
             respuesta.addProperty("status", 400);
             return respuesta;
         }
-        if (!correo.matches(EMAIL_REGEX)) {
+        if (!correo.matches(ValidationHelper.EMAIL_REGEX)) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "El formato del correo no es válido");
             respuesta.addProperty("status", 400);
@@ -136,7 +131,7 @@ public class UserService {
             respuesta.addProperty("status", 400);
             return respuesta;
         }
-        if (!contrasena.matches(PASSWORD_REGEX)) {
+        if (!contrasena.matches(ValidationHelper.PASSWORD_REGEX)) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
             respuesta.addProperty("status", 400);
@@ -223,7 +218,7 @@ public class UserService {
         }
 
         // Validar el formato del nuevo correo
-        if (!correo.matches(EMAIL_REGEX)) {
+        if (!correo.matches(ValidationHelper.EMAIL_REGEX)) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "El formato del correo no es válido");
             respuesta.addProperty("status", 400);
@@ -236,6 +231,16 @@ public class UserService {
                 respuesta.addProperty("success", false);
                 respuesta.addProperty("message", "El correo ya está en uso por otro usuario");
                 respuesta.addProperty("status", 409);
+                return respuesta;
+            }
+        }
+
+        // Validar la contrasena ANTES de persistir cualquier cambio
+        if (contrasena != null && !contrasena.isBlank()) {
+            if (!contrasena.matches(ValidationHelper.PASSWORD_REGEX)) {
+                respuesta.addProperty("success", false);
+                respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+                respuesta.addProperty("status", 400);
                 return respuesta;
             }
         }
@@ -254,14 +259,8 @@ public class UserService {
             return respuesta;
         }
 
-        // Si se envio una nueva contrasena, validar politica y hashearla
+        // Hashear y guardar la nueva contrasena si fue proporcionada (ya validada arriba)
         if (contrasena != null && !contrasena.isBlank()) {
-            if (!contrasena.matches(PASSWORD_REGEX)) {
-                respuesta.addProperty("success", false);
-                respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
-                respuesta.addProperty("status", 400);
-                return respuesta;
-            }
             UsuarioDAO.updatePassword(id, PasswordHelper.hashPassword(contrasena));
         }
 
@@ -300,7 +299,7 @@ public class UserService {
 
         // Si el correo vino en el body, validarlo
         if (correo != null && !correo.isBlank()) {
-            if (!correo.matches(EMAIL_REGEX)) {
+            if (!correo.matches(ValidationHelper.EMAIL_REGEX)) {
                 respuesta.addProperty("success", false);
                 respuesta.addProperty("message", "El formato del correo no es válido");
                 respuesta.addProperty("status", 400);
@@ -311,6 +310,16 @@ public class UserService {
                 respuesta.addProperty("success", false);
                 respuesta.addProperty("message", "El correo ya está en uso por otro usuario");
                 respuesta.addProperty("status", 409);
+                return respuesta;
+            }
+        }
+
+        // Validar la contrasena ANTES de persistir cualquier cambio
+        if (contrasena != null && !contrasena.isBlank()) {
+            if (!contrasena.matches(ValidationHelper.PASSWORD_REGEX)) {
+                respuesta.addProperty("success", false);
+                respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+                respuesta.addProperty("status", 400);
                 return respuesta;
             }
         }
@@ -329,14 +338,8 @@ public class UserService {
             return respuesta;
         }
 
-        // Si se envio una nueva contrasena, validar politica y hashearla
+        // Hashear y guardar la nueva contrasena si fue proporcionada (ya validada arriba)
         if (contrasena != null && !contrasena.isBlank()) {
-            if (!contrasena.matches(PASSWORD_REGEX)) {
-                respuesta.addProperty("success", false);
-                respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
-                respuesta.addProperty("status", 400);
-                return respuesta;
-            }
             UsuarioDAO.updatePassword(id, PasswordHelper.hashPassword(contrasena));
         }
 
@@ -353,57 +356,4 @@ public class UserService {
 
     // ============================================================
     // DELETE (soft delete) — Desactivar usuario (estado = false)
-    // Comentado: se maneja el estado por true/false, no se elimina de la BD
-    // ============================================================
-    // public static JsonObject deleteUser(int id, String idUsuarioToken) {
-    //     JsonObject respuesta = new JsonObject();
-    //
-    //     // Evitar que el admin se desactive a si mismo por accidente
-    //     if (idUsuarioToken.equals(String.valueOf(id))) {
-    //         respuesta.addProperty("success", false);
-    //         respuesta.addProperty("message", "No puedes desactivar tu propia cuenta");
-    //         respuesta.addProperty("status", 403);
-    //         return respuesta;
-    //     }
-    //
-    //     // Verificar que el usuario a desactivar existe en la BD
-    //     Usuario usuario = UsuarioDAO.findById(id);
-    //     if (usuario == null) {
-    //         respuesta.addProperty("success", false);
-    //         respuesta.addProperty("message", "Usuario no encontrado");
-    //         respuesta.addProperty("status", 404);
-    //         return respuesta;
-    //     }
-    //
-    //     // No tiene sentido desactivar un usuario que ya esta inactivo
-    //     if (!usuario.isEstado()) {
-    //         respuesta.addProperty("success", false);
-    //         respuesta.addProperty("message", "El usuario ya está inactivo");
-    //         respuesta.addProperty("status", 409);
-    //         return respuesta;
-    //     }
-    //
-    //     // Proteger las cuentas SUPER_ADMIN de ser desactivadas
-    //     String rolUsuario = UsuarioDAO.findRolByUsuarioId(id);
-    //     if ("SUPER_ADMIN".equalsIgnoreCase(rolUsuario)) {
-    //         respuesta.addProperty("success", false);
-    //         respuesta.addProperty("message", "No se puede desactivar a un SUPER_ADMIN");
-    //         respuesta.addProperty("status", 403);
-    //         return respuesta;
-    //     }
-    //
-    //     // Ejecutar el soft delete: actualizar estado = false en la BD
-    //     if (UsuarioDAO.updateStatus(id)) {
-    //         respuesta.addProperty("success", true);
-    //         respuesta.addProperty("message", "Usuario desactivado exitosamente");
-    //         respuesta.addProperty("status", 200);
-    //     } else {
-    //         // Error al ejecutar el UPDATE en la BD
-    //         respuesta.addProperty("success", false);
-    //         respuesta.addProperty("message", "Error al desactivar el usuario");
-    //         respuesta.addProperty("status", 500);
-    //     }
-    //
-    //     return respuesta;
-    // }
 }
