@@ -6,6 +6,7 @@ import com.backend.controllers.AuthController;
 import com.backend.controllers.CategoriaController;
 import com.backend.controllers.GoogleAuthController;
 import com.backend.controllers.PasswordResetController;
+import com.backend.controllers.ProductoController;
 import com.backend.controllers.UserController;
 // Middleware para proteger rutas con autenticacion JWT y control de roles
 import com.backend.middlewares.AuthMiddleware;
@@ -72,6 +73,18 @@ public class Routes {
         // Cambiar estado activo/inactivo
         router.patch("/api/categorias/id", auth.protect(CategoriaController.patch(), "SUPER_ADMIN", "ADMIN"));
 
+        // ========== RUTAS DE PRODUCTOS ==========
+        // Listar todos los productos
+        router.get("/api/productos",    auth.protect(ProductoController.listAll(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Obtener producto por ID
+        router.get("/api/productos/id", auth.protect(ProductoController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Crear nuevo producto
+        router.post("/api/productos",   auth.protect(ProductoController.create(),  "SUPER_ADMIN", "ADMIN"));
+        // Actualizar producto completo
+        router.put("/api/productos/id", auth.protect(ProductoController.update(),  "SUPER_ADMIN", "ADMIN"));
+        // Cambiar estado activo/inactivo
+        router.patch("/api/productos/id", auth.protect(ProductoController.patch(), "SUPER_ADMIN", "ADMIN"));
+
         // Imprimir en consola las rutas activas al iniciar el servidor
         System.out.println("Rutas registradas:");
         System.out.println("  POST   /api/auth/login                      (publico)");
@@ -90,6 +103,11 @@ public class Routes {
         System.out.println("  POST   /api/categorias                       (SUPER_ADMIN, ADMIN)");
         System.out.println("  PUT    /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
         System.out.println("  PATCH  /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/productos                         (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  GET    /api/productos/id?id=X                 (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  POST   /api/productos                         (SUPER_ADMIN, ADMIN)");
+        System.out.println("  PUT    /api/productos/id?id=X                 (SUPER_ADMIN, ADMIN)");
+        System.out.println("  PATCH  /api/productos/id?id=X                 (SUPER_ADMIN, ADMIN)");
 
         // Retornar el router ya configurado para registrarlo en el servidor HTTP
         return router;
