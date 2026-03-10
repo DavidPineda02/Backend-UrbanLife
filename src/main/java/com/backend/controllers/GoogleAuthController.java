@@ -46,9 +46,13 @@ public class GoogleAuthController {
             }
 
             // Parsear el cuerpo como JSON para extraer el token de Google
-            Gson gson = new Gson();
-            // Parsear JSON
-            JsonObject datosJson = gson.fromJson(cuerpo, JsonObject.class);
+            JsonObject datosJson;
+            try {
+                datosJson = new Gson().fromJson(cuerpo, JsonObject.class);
+            } catch (Exception e) {
+                ApiResponse.error(exchange, 400, "El cuerpo debe ser JSON valido");
+                return;
+            }
 
             // Extraer el campo "credential" que contiene el id_token de Google Sign-In
             String idToken = datosJson.has("credential") ? datosJson.get("credential").getAsString() : "";
