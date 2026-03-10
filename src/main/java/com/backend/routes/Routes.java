@@ -3,6 +3,7 @@ package com.backend.routes;
 
 // Importar todos los controllers que manejan las rutas registradas
 import com.backend.controllers.AuthController;
+import com.backend.controllers.CategoriaController;
 import com.backend.controllers.GoogleAuthController;
 import com.backend.controllers.PasswordResetController;
 import com.backend.controllers.UserController;
@@ -58,7 +59,18 @@ public class Routes {
         router.put("/api/users/id", auth.protect(UserController.update(),  "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
         // Actualizar usuario parcial (PATCH)
         router.patch("/api/users/id", auth.protect(UserController.patch(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
-        // router.delete("/api/users/id", auth.protect(UserController.delete(), "SUPER_ADMIN", "ADMIN")); // Desactivar usuario (soft delete) - pendiente de habilitar
+        
+        // ========== RUTAS DE CATEGORIAS ==========
+        // Listar todas las categorías
+        router.get("/api/categorias",    auth.protect(CategoriaController.listAll(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Obtener categoría por ID
+        router.get("/api/categorias/id", auth.protect(CategoriaController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Crear nueva categoría
+        router.post("/api/categorias",   auth.protect(CategoriaController.create(),  "SUPER_ADMIN", "ADMIN"));
+        // Actualizar categoría completa
+        router.put("/api/categorias/id", auth.protect(CategoriaController.update(),  "SUPER_ADMIN", "ADMIN"));
+        // Cambiar estado activo/inactivo
+        router.patch("/api/categorias/id", auth.protect(CategoriaController.patch(), "SUPER_ADMIN", "ADMIN"));
 
         // Imprimir en consola las rutas activas al iniciar el servidor
         System.out.println("Rutas registradas:");
@@ -73,7 +85,11 @@ public class Routes {
         System.out.println("  GET    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
         System.out.println("  PUT    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
         System.out.println("  PATCH  /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
-        // System.out.println("  DELETE /api/users/id?id=X                   (SUPER_ADMIN, ADMIN)"); // Ruta eliminar (comentada)
+        System.out.println("  GET    /api/categorias                       (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  GET    /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  POST   /api/categorias                       (SUPER_ADMIN, ADMIN)");
+        System.out.println("  PUT    /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
+        System.out.println("  PATCH  /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
 
         // Retornar el router ya configurado para registrarlo en el servidor HTTP
         return router;
