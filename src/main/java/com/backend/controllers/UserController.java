@@ -32,29 +32,6 @@ public class UserController {
 
     /**
      * Handler para GET /api/users.
-     * Retorna todos los usuarios del sistema.
-     * @return HttpHandler que procesa la solicitud de listar usuarios
-     */
-    public static HttpHandler findAll() {
-        return exchange -> {
-            // Log de petición
-            System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users");
-
-            try {
-                // Obtener todos los usuarios
-                List<Usuario> usuarios = UsuarioDAO.findAll();
-                // Enviar respuesta
-                ApiResponse.send(exchange, new Gson().toJson(usuarios), 200);
-            // Capturar errores de base de datos
-            } catch (Exception excepcion) {
-                // Error 500
-                ApiResponse.error(exchange, 500, "Error al obtener usuarios: " + excepcion.getMessage());
-            }
-        };
-    }
-
-    /**
-     * Handler para GET /api/users (versión mejorada).
      * Retorna todos los usuarios del sistema sin contraseñas.
      * @return HttpHandler que procesa la solicitud de listar usuarios
      */
@@ -295,32 +272,4 @@ public class UserController {
         };
     }
 
-    // ============================================================
-    // DELETE /api/users/id?id=X — Desactivar usuario (soft delete)
-    // Comentado: se maneja el estado por true/false, no se elimina de la BD
-    // Roles permitidos: SUPER_ADMIN, ADMIN
-    // ============================================================
-    // public static HttpHandler delete() {
-    //     return exchange -> {
-    //         System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/users/id");
-    //
-    //         // Validar que el parametro id este presente y sea un numero entero
-    //         String parametrosUrl = exchange.getRequestURI().getQuery();
-    //         if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
-    //             ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
-    //             return;
-    //         }
-    //         int id = Integer.parseInt(parametrosUrl.split("=")[1]);
-    //
-    //         // Leer el id del usuario autenticado para validar que no se desactive a si mismo
-    //         String idUsuarioToken = (String) exchange.getAttribute("userId");
-    //
-    //         // Delegar al servicio las validaciones y la desactivacion (estado = false)
-    //         JsonObject respuesta = UserService.deleteUser(id, idUsuarioToken);
-    //         int codigoHttp = respuesta.get("status").getAsInt();
-    //         respuesta.remove("status");
-    //
-    //         ApiResponse.send(exchange, respuesta.toString(), codigoHttp);
-    //     };
-    // }
 }
