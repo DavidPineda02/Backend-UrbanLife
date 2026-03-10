@@ -10,6 +10,8 @@ import com.backend.helpers.PasswordHelper;
 import com.backend.models.Usuario;
 // Para construir el objeto JSON de respuesta
 import com.google.gson.JsonObject;
+// Para las expresiones regulares y políticas de validación compartidas
+import com.backend.helpers.ValidationHelper;
 
 // Para calcular la fecha de expiracion del token (1 hora desde ahora)
 import java.time.LocalDateTime;
@@ -28,9 +30,6 @@ public class PasswordResetService {
     public static JsonObject solicitarRecuperacion(String correo) {
         JsonObject respuesta = new JsonObject();
 
-        /** Expresión regular para validar el formato del correo electrónico */
-        final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
-
         // Validar que el correo no venga vacio
         if (correo == null || correo.isBlank()) {
             respuesta.addProperty("success", false);
@@ -48,7 +47,7 @@ public class PasswordResetService {
         }
 
         // Validar formato del correo
-        if (!correo.matches(EMAIL_REGEX)) {
+        if (!correo.matches(ValidationHelper.EMAIL_REGEX)) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "El formato del correo no es válido");
             respuesta.addProperty("status", 400);
@@ -65,13 +64,13 @@ public class PasswordResetService {
             return respuesta;
         }
 
-        // Si el usuario se registró con Google y aún no tiene contraseña asignada,
-        // no puede usar el flujo de recuperación. Si ya asignó una contraseña
-        // (contrasena != null), se permite continuar normalmente.
+        // Si el usuario se registró con Google y no tiene contraseña asignada,
+        // no se genera el token pero se responde con el mensaje genérico para no
+        // revelar que existe una cuenta con ese correo vinculada a Google.
         if (usuario.getContrasena() == null) {
-            respuesta.addProperty("success", false);
-            respuesta.addProperty("message", "Tu cuenta fue creada con Google y no tiene contraseña asignada. Inicia sesión con el botón de Google.");
-            respuesta.addProperty("status", 400);
+            respuesta.addProperty("success", true);
+            respuesta.addProperty("message", "Si el correo está registrado, recibirás un enlace en breve");
+            respuesta.addProperty("status", 200);
             return respuesta;
         }
 
@@ -167,7 +166,7 @@ public class PasswordResetService {
         }
 
         // Validar que la nueva contrasena cumpla la politica: min 8 chars, mayuscula, minuscula y numero
-        if (!nuevaContrasena.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$")) {
+        if (!nuevaContrasena.matches(ValidationHelper.PASSWORD_REGEX)) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
             respuesta.addProperty("status", 400);

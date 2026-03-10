@@ -11,6 +11,8 @@ import com.backend.helpers.PasswordHelper;
 import com.backend.models.Usuario;
 // Para construir el objeto JSON de respuesta
 import com.google.gson.JsonObject;
+// Para las expresiones regulares y políticas de validación compartidas
+import com.backend.helpers.ValidationHelper;
 
 /**
  * Servicio que contiene la lógica de validación y autenticación del login.
@@ -18,9 +20,6 @@ import com.google.gson.JsonObject;
  * Centraliza toda la lógica de autenticación del sistema.
  */
 public class AuthService {
-
-    /** Expresión regular para validar el formato del correo electrónico */
-    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
 
     /**
      * Valida las credenciales y retorna un JWT si el login es exitoso.
@@ -50,7 +49,7 @@ public class AuthService {
         }
 
         // Validar correo: formato
-        if (!correo.matches(EMAIL_REGEX)) {
+        if (!correo.matches(ValidationHelper.EMAIL_REGEX)) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "El formato del correo no es válido");
             respuesta.addProperty("status", 400);
