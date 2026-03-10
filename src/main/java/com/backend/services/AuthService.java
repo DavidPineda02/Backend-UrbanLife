@@ -33,27 +33,43 @@ public class AuthService {
         // Crear objeto de respuesta
         JsonObject respuesta = new JsonObject();
 
-        // Verificar que correo y contrasena no sean nulos ni vacios
-        if (correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
-            // Indicar fallo
+        // Validar correo: requerido
+        if (correo == null || correo.isBlank()) {
             respuesta.addProperty("success", false);
-            // Mensaje de error
-            respuesta.addProperty("message", "Correo y contraseña son requeridos");
-            // Código HTTP 400
+            respuesta.addProperty("message", "El correo es requerido");
             respuesta.addProperty("status", 400);
-            // Retornar respuesta de error
             return respuesta;
         }
 
-        // Validar el formato del correo con la expresion regular
-        if (!correo.matches(EMAIL_REGEX)) {
-            // Indicar fallo
+        // Validar correo: longitud máxima
+        if (correo.length() > 100) {
             respuesta.addProperty("success", false);
-            // Mensaje de error
-            respuesta.addProperty("message", "El formato del correo no es válido");
-            // Código HTTP 400
+            respuesta.addProperty("message", "El correo no puede superar los 100 caracteres");
             respuesta.addProperty("status", 400);
-            // Retornar respuesta de error
+            return respuesta;
+        }
+
+        // Validar correo: formato
+        if (!correo.matches(EMAIL_REGEX)) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El formato del correo no es válido");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+
+        // Validar contraseña: requerida
+        if (contrasena == null || contrasena.isBlank()) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "La contraseña es requerida");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+
+        // Validar contraseña: longitud máxima (previene ataques de denegación de servicio con BCrypt)
+        if (contrasena.length() > 128) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "La contraseña no puede superar los 128 caracteres");
+            respuesta.addProperty("status", 400);
             return respuesta;
         }
 

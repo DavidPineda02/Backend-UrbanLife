@@ -36,6 +36,8 @@ public class UserService {
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
     /** Política de contraseña: min 8 chars, al menos una mayúscula, una minúscula y un número */
     private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$";
+    /** Solo letras (incluye acentos, ñ y espacios para nombres compuestos) */
+    private static final String NOMBRE_REGEX = "^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ ]+$";
 
     /**
      * Valida, crea el usuario, le asigna rol EMPLEADO y retorna JWT (auto-login).
@@ -49,30 +51,91 @@ public class UserService {
         // Crear objeto de respuesta
         JsonObject respuesta = new JsonObject();
 
-        // Validar que los cuatro campos obligatorios no sean nulos ni vacios
-        if (nombre == null || nombre.isBlank() || apellido == null || apellido.isBlank()
-                || correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
-            // Indicar fallo
+        // ----- Nombre -----
+        if (nombre == null || nombre.isBlank()) {
             respuesta.addProperty("success", false);
-            // Mensaje de error
-            respuesta.addProperty("message", "Nombre, apellido, correo y contraseña son requeridos");
-            // Código HTTP 400
+            respuesta.addProperty("message", "El nombre es requerido");
             respuesta.addProperty("status", 400);
-            // Retornar respuesta de error
+            return respuesta;
+        }
+        if (nombre.trim().length() < 2) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El nombre debe tener al menos 2 caracteres");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+        if (nombre.trim().length() > 50) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El nombre no puede superar los 50 caracteres");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+        if (!nombre.trim().matches(NOMBRE_REGEX)) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El nombre solo puede contener letras");
+            respuesta.addProperty("status", 400);
             return respuesta;
         }
 
-        // Validar el formato del correo con regex
-        if (!correo.matches(EMAIL_REGEX)) {
-            // Indicar fallo
+        // ----- Apellido -----
+        if (apellido == null || apellido.isBlank()) {
             respuesta.addProperty("success", false);
-            // Mensaje de error
+            respuesta.addProperty("message", "El apellido es requerido");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+        if (apellido.trim().length() < 2) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El apellido debe tener al menos 2 caracteres");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+        if (apellido.trim().length() > 50) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El apellido no puede superar los 50 caracteres");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+        if (!apellido.trim().matches(NOMBRE_REGEX)) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El apellido solo puede contener letras");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+
+        // ----- Correo -----
+        if (correo == null || correo.isBlank()) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El correo es requerido");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+        if (correo.length() > 100) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El correo no puede superar los 100 caracteres");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+        if (!correo.matches(EMAIL_REGEX)) {
+            respuesta.addProperty("success", false);
             respuesta.addProperty("message", "El formato del correo no es válido");
             respuesta.addProperty("status", 400);
             return respuesta;
         }
 
-        // Validar que la contrasena cumpla la politica de seguridad
+        // ----- Contraseña -----
+        if (contrasena == null || contrasena.isBlank()) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "La contraseña es requerida");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+        if (contrasena.length() > 128) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "La contraseña no puede superar los 128 caracteres");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
         if (!contrasena.matches(PASSWORD_REGEX)) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");

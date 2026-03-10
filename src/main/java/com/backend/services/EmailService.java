@@ -85,7 +85,7 @@ public class EmailService {
      */
     public static boolean enviarCorreoRecuperacion(String correoDestino, String token) {
         // Construir el link de recuperacion con el token UUID como parametro
-        String link = "http://localhost:5500/reset-password.html?token=" + token;
+        String link = "http://localhost:5173/view/nueva-password.html?token=" + token;
         String asunto = "Recuperacion de contrasena - UrbanLife";
         // Plantilla HTML del correo con el boton de restablecimiento y el link alternativo
         // .formatted(link, link) reemplaza los dos %s con el link: uno en el boton y otro como texto
