@@ -5,24 +5,24 @@ package com.backend.services;
 import com.backend.dao.RolDAO;
 // Para operaciones CRUD de usuarios en la base de datos
 import com.backend.dao.UsuarioDAO;
-// Para crear el registro en la tabla de relacion usuario-rol
+// Para crear el registro en la tabla de relación usuario-rol
 import com.backend.dao.UsuarioRolDAO;
 // Para generar el JWT al crear un usuario (auto-login)
 import com.backend.helpers.JwtHelper;
-// Para hashear la contrasena con BCrypt
+// Para hashear la contraseña con BCrypt
 import com.backend.helpers.PasswordHelper;
+// Para las expresiones regulares y políticas de validación compartidas
+import com.backend.helpers.ValidationHelper;
 // Entidad del rol del sistema
 import com.backend.models.Rol;
 // Entidad del usuario del sistema
 import com.backend.models.Usuario;
-// Entidad de la relacion usuario-rol
+// Entidad de la relación usuario-rol
 import com.backend.models.UsuarioRol;
 // Para serializar objetos Java a JSON (respuesta con data)
 import com.google.gson.Gson;
 // Para construir el objeto JSON de respuesta
 import com.google.gson.JsonObject;
-// Para las expresiones regulares y políticas de validación compartidas
-import com.backend.helpers.ValidationHelper;
 
 /**
  * Servicio con la lógica de negocio para el CRUD de usuarios.
@@ -36,321 +36,507 @@ public class UserService {
 
     /**
      * Valida, crea el usuario, le asigna rol EMPLEADO y retorna JWT (auto-login).
-     * Realiza validaciones completas y crea usuario con rol por defecto.
+     * El usuario queda autenticado inmediatamente después del registro.
      * @param nombre Nombre del usuario
+     * @param apellido Apellido del usuario
      * @param correo Correo electrónico del usuario
-     * @param contrasena Contraseña del usuario
+     * @param contrasena Contraseña del usuario en texto plano
      * @return JsonObject con el resultado de la creación y JWT si es exitoso
      */
     public static JsonObject validateAndCreate(String nombre, String apellido, String correo, String contrasena) {
-        // Crear objeto de respuesta
+        // Crear el objeto de respuesta que se retornará al controller
         JsonObject respuesta = new JsonObject();
 
-        // ----- Nombre -----
+        // ----- Validaciones del campo Nombre -----
+
+        // Verificar que el nombre no sea nulo ni esté vacío
         if (nombre == null || nombre.isBlank()) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando que el nombre es obligatorio
             respuesta.addProperty("message", "El nombre es requerido");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que el nombre tenga al menos 2 caracteres
         if (nombre.trim().length() < 2) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando el mínimo de caracteres requeridos
             respuesta.addProperty("message", "El nombre debe tener al menos 2 caracteres");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que el nombre no supere los 50 caracteres
         if (nombre.trim().length() > 50) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando el máximo de caracteres permitidos
             respuesta.addProperty("message", "El nombre no puede superar los 50 caracteres");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que el nombre solo contenga letras (sin números ni caracteres especiales)
         if (!nombre.trim().matches(ValidationHelper.NOMBRE_REGEX)) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando que solo se permiten letras
             respuesta.addProperty("message", "El nombre solo puede contener letras");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // ----- Apellido -----
+        // ----- Validaciones del campo Apellido -----
+
+        // Verificar que el apellido no sea nulo ni esté vacío
         if (apellido == null || apellido.isBlank()) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando que el apellido es obligatorio
             respuesta.addProperty("message", "El apellido es requerido");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que el apellido tenga al menos 2 caracteres
         if (apellido.trim().length() < 2) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando el mínimo de caracteres requeridos
             respuesta.addProperty("message", "El apellido debe tener al menos 2 caracteres");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que el apellido no supere los 50 caracteres
         if (apellido.trim().length() > 50) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando el máximo de caracteres permitidos
             respuesta.addProperty("message", "El apellido no puede superar los 50 caracteres");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que el apellido solo contenga letras (sin números ni caracteres especiales)
         if (!apellido.trim().matches(ValidationHelper.NOMBRE_REGEX)) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando que solo se permiten letras
             respuesta.addProperty("message", "El apellido solo puede contener letras");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // ----- Correo -----
+        // ----- Validaciones del campo Correo -----
+
+        // Verificar que el correo no sea nulo ni esté vacío
         if (correo == null || correo.isBlank()) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando que el correo es obligatorio
             respuesta.addProperty("message", "El correo es requerido");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que el correo no supere la longitud máxima
         if (correo.length() > 100) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando el máximo de caracteres
             respuesta.addProperty("message", "El correo no puede superar los 100 caracteres");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que el correo tenga un formato válido usando la expresión regular compartida
         if (!correo.matches(ValidationHelper.EMAIL_REGEX)) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando el formato inválido del correo
             respuesta.addProperty("message", "El formato del correo no es válido");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // ----- Contraseña -----
+        // ----- Validaciones del campo Contraseña -----
+
+        // Verificar que la contraseña no sea nula ni esté vacía
         if (contrasena == null || contrasena.isBlank()) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando que la contraseña es obligatoria
             respuesta.addProperty("message", "La contraseña es requerida");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que la contraseña no supere la longitud máxima (previene ataques con BCrypt)
         if (contrasena.length() > 128) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando el máximo de caracteres
             respuesta.addProperty("message", "La contraseña no puede superar los 128 caracteres");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
+        // Verificar que la contraseña cumpla la política: min 8 chars, mayúscula, minúscula y número
         if (!contrasena.matches(ValidationHelper.PASSWORD_REGEX)) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje explicando los requisitos mínimos de la contraseña
             respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // Verificar unicidad del correo: no puede existir otro usuario con el mismo
+        // ----- Verificar unicidad del correo -----
+
+        // Verificar que no exista otro usuario con el mismo correo en la BD
         if (UsuarioDAO.findByCorreo(correo) != null) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando que el correo ya está en uso
             respuesta.addProperty("message", "El correo ya está registrado");
+            // Código HTTP 409 Conflict
             respuesta.addProperty("status", 409);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // Crear la entidad usuario con la contrasena hasheada y estado activo
+        // ----- Crear y persistir el usuario -----
+
+        // Construir el objeto Usuario con la contraseña hasheada y estado activo por defecto
         Usuario nuevoUsuario = new Usuario(nombre, apellido, correo,
                 PasswordHelper.hashPassword(contrasena), true);
 
-        // Persistir el usuario en la base de datos
+        // Persistir el nuevo usuario en la base de datos
         Usuario usuarioCreado = UsuarioDAO.create(nuevoUsuario);
 
+        // Verificar si la creación del usuario fue exitosa
         if (usuarioCreado != null) {
-            // Buscar el rol EMPLEADO para asignarselo por defecto al nuevo usuario
+            // Buscar el rol EMPLEADO para asignárselo por defecto al nuevo usuario
             Rol rolEmpleado = RolDAO.findByNombre("EMPLEADO");
-            String nombreRol = "Sin rol"; // Fallback si por algun motivo no existe el rol
+            // Valor por defecto si por algún motivo el rol no existe en la BD
+            String nombreRol = "Sin rol";
+            // Verificar que el rol EMPLEADO existe en la BD
             if (rolEmpleado != null) {
-                // Crear el registro de relacion usuario-rol en la tabla de union
+                // Crear el registro de relación usuario-rol en la tabla de unión
                 UsuarioRolDAO.create(new UsuarioRol(usuarioCreado.getIdUsuario(), rolEmpleado.getIdRoles()));
-                nombreRol = rolEmpleado.getNombre(); // "EMPLEADO"
+                // Asignar el nombre del rol para incluirlo en el JWT y la respuesta
+                nombreRol = rolEmpleado.getNombre();
             } else {
+                // Si no existe el rol, imprimir advertencia en consola
                 System.out.println("Advertencia: no se encontro el rol EMPLEADO para asignar al nuevo usuario");
             }
 
-            // Generar JWT para hacer auto-login inmediatamente despues del registro
+            // Generar JWT para hacer auto-login inmediatamente después del registro
             String token = JwtHelper.generateToken(usuarioCreado.getIdUsuario(), usuarioCreado.getCorreo(), nombreRol);
 
-            // Construir respuesta exitosa con 201 Created
+            // Indicar que la operación fue exitosa
             respuesta.addProperty("success", true);
+            // Mensaje confirmando el registro exitoso
             respuesta.addProperty("message", "Usuario registrado exitosamente");
+            // Token JWT para auto-login inmediato tras el registro
             respuesta.addProperty("token", token);
+            // Nombre del usuario creado
             respuesta.addProperty("nombre", usuarioCreado.getNombre());
+            // Apellido del usuario creado
             respuesta.addProperty("apellido", usuarioCreado.getApellido());
+            // Correo del usuario creado
             respuesta.addProperty("correo", usuarioCreado.getCorreo());
+            // Rol asignado al usuario creado
             respuesta.addProperty("rol", nombreRol);
+            // Código HTTP 201 Created
             respuesta.addProperty("status", 201);
         } else {
-            // Error al insertar en la base de datos
+            // Error al insertar el usuario en la base de datos
             respuesta.addProperty("success", false);
+            // Mensaje de error interno del servidor
             respuesta.addProperty("message", "Error al crear el usuario");
+            // Código HTTP 500 Internal Server Error
             respuesta.addProperty("status", 500);
         }
 
+        // Retornar la respuesta (exitosa o de error)
         return respuesta;
     }
 
     /**
      * Valida y ejecuta la actualización completa de un usuario (PUT).
-     * Nombre y correo son obligatorios; contraseña es opcional (se hashea si se proporciona).
+     * Nombre, apellido y correo son obligatorios; contraseña es opcional.
      * @param id Identificador del usuario a actualizar
-     * @param nombre Nuevo nombre completo del usuario (obligatorio)
-     * @param correo Nuevo correo electrónico del usuario (obligatorio, debe ser único)
+     * @param nombre Nuevo nombre del usuario (obligatorio)
+     * @param apellido Nuevo apellido del usuario (obligatorio)
+     * @param correo Nuevo correo electrónico (obligatorio, debe ser único)
      * @param contrasena Nueva contraseña en texto plano (opcional, se hashea antes de guardar)
      * @param estado Nuevo estado activo/inactivo del usuario
-     * @return JsonObject con success, message y status del resultado de la operación
+     * @return JsonObject con el resultado de la actualización
      */
     public static JsonObject validateAndUpdate(int id, String nombre, String apellido, String correo, String contrasena, boolean estado) {
+        // Crear el objeto de respuesta
         JsonObject respuesta = new JsonObject();
 
-        // Verificar que el usuario existe antes de intentar actualizar
+        // ----- Verificar que el usuario existe -----
+
+        // Buscar el usuario en la BD por su ID antes de intentar actualizar
         Usuario usuario = UsuarioDAO.findById(id);
+        // Si el usuario no existe, retornar error 404
         if (usuario == null) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando que el usuario no fue encontrado
             respuesta.addProperty("message", "Usuario no encontrado");
+            // Código HTTP 404 Not Found
             respuesta.addProperty("status", 404);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // En PUT, nombre, apellido y correo son obligatorios (reemplazo completo)
+        // En PUT, nombre, apellido y correo son obligatorios (actualización completa)
         if (nombre == null || nombre.isBlank() || apellido == null || apellido.isBlank() || correo == null || correo.isBlank()) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando los campos obligatorios en PUT
             respuesta.addProperty("message", "Nombre, apellido y correo son obligatorios en PUT");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // Validar el formato del nuevo correo
+        // Verificar que el nuevo correo tenga un formato válido
         if (!correo.matches(ValidationHelper.EMAIL_REGEX)) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando el formato inválido del correo
             respuesta.addProperty("message", "El formato del correo no es válido");
+            // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // Solo verificar unicidad del correo si cambio respecto al actual
+        // Verificar unicidad del correo solo si cambió respecto al correo actual del usuario
         if (!correo.equals(usuario.getCorreo())) {
+            // El correo cambió: verificar que no esté en uso por otro usuario
             if (UsuarioDAO.findByCorreo(correo) != null) {
+                // Indicar que la operación falló
                 respuesta.addProperty("success", false);
+                // Mensaje indicando que el correo ya está en uso
                 respuesta.addProperty("message", "El correo ya está en uso por otro usuario");
+                // Código HTTP 409 Conflict
                 respuesta.addProperty("status", 409);
+                // Retornar respuesta de error
                 return respuesta;
             }
         }
 
-        // Validar la contrasena ANTES de persistir cualquier cambio
+        // Validar la contraseña ANTES de persistir cualquier cambio (si fue proporcionada)
         if (contrasena != null && !contrasena.isBlank()) {
+            // Verificar que la contraseña cumpla la política de seguridad
             if (!contrasena.matches(ValidationHelper.PASSWORD_REGEX)) {
+                // Indicar que la operación falló
                 respuesta.addProperty("success", false);
+                // Mensaje explicando los requisitos mínimos de la contraseña
                 respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+                // Código HTTP 400 Bad Request
                 respuesta.addProperty("status", 400);
+                // Retornar respuesta de error
                 return respuesta;
             }
         }
 
-        // Actualizar los campos del objeto usuario en memoria
+        // ----- Aplicar cambios y persistir -----
+
+        // Actualizar el nombre en el objeto usuario en memoria
         usuario.setNombre(nombre);
+        // Actualizar el apellido en el objeto usuario en memoria
         usuario.setApellido(apellido);
+        // Actualizar el correo en el objeto usuario en memoria
         usuario.setCorreo(correo);
+        // Actualizar el estado en el objeto usuario en memoria
         usuario.setEstado(estado);
 
-        // Persistir los cambios en la base de datos
+        // Persistir los cambios de nombre, apellido, correo y estado en la base de datos
         if (!UsuarioDAO.update(usuario)) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje de error interno al actualizar el usuario
             respuesta.addProperty("message", "Error al actualizar el usuario");
+            // Código HTTP 500 Internal Server Error
             respuesta.addProperty("status", 500);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // Hashear y guardar la nueva contrasena si fue proporcionada (ya validada arriba)
+        // Hashear y guardar la nueva contraseña si fue proporcionada (ya validada arriba)
         if (contrasena != null && !contrasena.isBlank()) {
+            // Actualizar la contraseña hasheada en la BD de forma separada
             UsuarioDAO.updatePassword(id, PasswordHelper.hashPassword(contrasena));
         }
 
+        // ----- Construir respuesta exitosa -----
+
         // Obtener el usuario actualizado desde la BD para retornarlo en la respuesta
         Usuario usuarioActualizado = UsuarioDAO.findById(id);
-        usuarioActualizado.setContrasena(null); // No exponer el hash al cliente
+        // Ocultar el hash de la contraseña antes de enviarlo al cliente
+        usuarioActualizado.setContrasena(null);
+        // Indicar que la operación fue exitosa
         respuesta.addProperty("success", true);
+        // Mensaje confirmando la actualización exitosa
         respuesta.addProperty("message", "Usuario actualizado exitosamente");
-        respuesta.add("data", gson.toJsonTree(usuarioActualizado)); // Serializar el usuario actualizado
+        // Agregar los datos actualizados del usuario serializados como JSON
+        respuesta.add("data", gson.toJsonTree(usuarioActualizado));
+        // Código HTTP 200 OK
         respuesta.addProperty("status", 200);
 
+        // Retornar la respuesta exitosa con los datos del usuario actualizado
         return respuesta;
     }
 
     /**
-     * Actualización parcial: solo se actualizan los campos que vengan (no nulos).
-     * Permite modificar nombre, correo, contraseña y estado de forma independiente.
+     * Actualización parcial de un usuario (PATCH): solo se actualizan los campos que vengan.
+     * Permite modificar nombre, apellido, correo, contraseña y estado de forma independiente.
      * @param id ID del usuario a actualizar
-     * @param nombre Nuevo nombre (opcional)
-     * @param correo Nuevo correo (opcional)
-     * @param contrasena Nueva contraseña (opcional)
-     * @param estado Nuevo estado (opcional)
+     * @param nombre Nuevo nombre (opcional, null = no actualizar)
+     * @param apellido Nuevo apellido (opcional, null = no actualizar)
+     * @param correo Nuevo correo (opcional, null = no actualizar)
+     * @param contrasena Nueva contraseña en texto plano (opcional, null = no actualizar)
+     * @param estado Nuevo estado (opcional, null = no actualizar)
      * @return JsonObject con el resultado de la actualización parcial
      */
     public static JsonObject partialUpdate(int id, String nombre, String apellido, String correo, String contrasena, Boolean estado) {
+        // Crear el objeto de respuesta
         JsonObject respuesta = new JsonObject();
 
-        // Verificar que el usuario existe antes de intentar actualizar
+        // ----- Verificar que el usuario existe -----
+
+        // Buscar el usuario en la BD por su ID antes de intentar actualizar
         Usuario usuario = UsuarioDAO.findById(id);
+        // Si el usuario no existe, retornar error 404
         if (usuario == null) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje indicando que el usuario no fue encontrado
             respuesta.addProperty("message", "Usuario no encontrado");
+            // Código HTTP 404 Not Found
             respuesta.addProperty("status", 404);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // Si el correo vino en el body, validarlo
+        // ----- Validar el correo si fue enviado -----
+
+        // Si el correo vino en el body, validarlo antes de continuar
         if (correo != null && !correo.isBlank()) {
+            // Verificar que el nuevo correo tenga un formato válido
             if (!correo.matches(ValidationHelper.EMAIL_REGEX)) {
+                // Indicar que la operación falló
                 respuesta.addProperty("success", false);
+                // Mensaje indicando el formato inválido del correo
                 respuesta.addProperty("message", "El formato del correo no es válido");
+                // Código HTTP 400 Bad Request
                 respuesta.addProperty("status", 400);
+                // Retornar respuesta de error
                 return respuesta;
             }
-            // Verificar unicidad solo si el correo cambio respecto al actual
+            // Verificar unicidad del correo solo si cambió respecto al correo actual del usuario
             if (!correo.equals(usuario.getCorreo()) && UsuarioDAO.findByCorreo(correo) != null) {
+                // Indicar que la operación falló
                 respuesta.addProperty("success", false);
+                // Mensaje indicando que el correo ya está en uso
                 respuesta.addProperty("message", "El correo ya está en uso por otro usuario");
+                // Código HTTP 409 Conflict
                 respuesta.addProperty("status", 409);
+                // Retornar respuesta de error
                 return respuesta;
             }
         }
 
-        // Validar la contrasena ANTES de persistir cualquier cambio
+        // Validar la contraseña ANTES de persistir cualquier cambio (si fue proporcionada)
         if (contrasena != null && !contrasena.isBlank()) {
+            // Verificar que la contraseña cumpla la política de seguridad
             if (!contrasena.matches(ValidationHelper.PASSWORD_REGEX)) {
+                // Indicar que la operación falló
                 respuesta.addProperty("success", false);
+                // Mensaje explicando los requisitos mínimos de la contraseña
                 respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+                // Código HTTP 400 Bad Request
                 respuesta.addProperty("status", 400);
+                // Retornar respuesta de error
                 return respuesta;
             }
         }
 
-        // Actualizar solo los campos que no sean nulos ni vacios
+        // ----- Aplicar solo los campos que no sean nulos ni vacíos -----
+
+        // Actualizar el nombre solo si fue enviado en el body
         if (nombre != null && !nombre.isBlank()) usuario.setNombre(nombre);
+        // Actualizar el apellido solo si fue enviado en el body
         if (apellido != null && !apellido.isBlank()) usuario.setApellido(apellido);
+        // Actualizar el correo solo si fue enviado en el body
         if (correo != null && !correo.isBlank()) usuario.setCorreo(correo);
+        // Actualizar el estado solo si fue enviado en el body (Boolean objeto permite null = no actualizar)
         if (estado != null) usuario.setEstado(estado);
 
         // Persistir los cambios en la base de datos
         if (!UsuarioDAO.update(usuario)) {
+            // Indicar que la operación falló
             respuesta.addProperty("success", false);
+            // Mensaje de error interno al actualizar el usuario
             respuesta.addProperty("message", "Error al actualizar el usuario");
+            // Código HTTP 500 Internal Server Error
             respuesta.addProperty("status", 500);
+            // Retornar respuesta de error
             return respuesta;
         }
 
-        // Hashear y guardar la nueva contrasena si fue proporcionada (ya validada arriba)
+        // Hashear y guardar la nueva contraseña si fue proporcionada (ya validada arriba)
         if (contrasena != null && !contrasena.isBlank()) {
+            // Actualizar la contraseña hasheada en la BD de forma separada
             UsuarioDAO.updatePassword(id, PasswordHelper.hashPassword(contrasena));
         }
 
-        // Obtener el usuario actualizado desde la BD para retornarlo
+        // ----- Construir respuesta exitosa -----
+
+        // Obtener el usuario actualizado desde la BD para retornarlo en la respuesta
         Usuario usuarioActualizado = UsuarioDAO.findById(id);
-        usuarioActualizado.setContrasena(null); // No exponer el hash al cliente
+        // Ocultar el hash de la contraseña antes de enviarlo al cliente
+        usuarioActualizado.setContrasena(null);
+        // Indicar que la operación fue exitosa
         respuesta.addProperty("success", true);
+        // Mensaje confirmando la actualización parcial exitosa
         respuesta.addProperty("message", "Usuario actualizado parcialmente");
-        respuesta.add("data", gson.toJsonTree(usuarioActualizado)); // Serializar el usuario actualizado
+        // Agregar los datos actualizados del usuario serializados como JSON
+        respuesta.add("data", gson.toJsonTree(usuarioActualizado));
+        // Código HTTP 200 OK
         respuesta.addProperty("status", 200);
 
+        // Retornar la respuesta exitosa con los datos del usuario actualizado
         return respuesta;
     }
 
