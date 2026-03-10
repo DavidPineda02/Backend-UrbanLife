@@ -28,10 +28,29 @@ public class PasswordResetService {
     public static JsonObject solicitarRecuperacion(String correo) {
         JsonObject respuesta = new JsonObject();
 
+        /** Expresión regular para validar el formato del correo electrónico */
+        final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
+
         // Validar que el correo no venga vacio
         if (correo == null || correo.isBlank()) {
             respuesta.addProperty("success", false);
             respuesta.addProperty("message", "El correo es requerido");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+
+        // Validar longitud máxima del correo
+        if (correo.length() > 100) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El correo no puede superar los 100 caracteres");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+
+        // Validar formato del correo
+        if (!correo.matches(EMAIL_REGEX)) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "El formato del correo no es válido");
             respuesta.addProperty("status", 400);
             return respuesta;
         }
@@ -46,12 +65,13 @@ public class PasswordResetService {
             return respuesta;
         }
 
-        // Las cuentas de Google no tienen contrasena, no pueden usar este flujo.
-        // Respuesta generica para no revelar que el correo existe con cuenta Google.
+        // Si el usuario se registró con Google y aún no tiene contraseña asignada,
+        // no puede usar el flujo de recuperación. Si ya asignó una contraseña
+        // (contrasena != null), se permite continuar normalmente.
         if (usuario.getContrasena() == null) {
-            respuesta.addProperty("success", true);
-            respuesta.addProperty("message", "Si el correo está registrado, recibirás un enlace en breve");
-            respuesta.addProperty("status", 200);
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "Tu cuenta fue creada con Google y no tiene contraseña asignada. Inicia sesión con el botón de Google.");
+            respuesta.addProperty("status", 400);
             return respuesta;
         }
 
@@ -83,7 +103,7 @@ public class PasswordResetService {
             // Si falla el correo, mostrar el link en consola para pruebas locales
             System.out.println("==============================");
             System.out.println("LINK RECUPERACION (fallo email):");
-            System.out.println("http://localhost:5500/reset-password.html?token=" + token);
+            System.out.println("http://localhost:5173/view/nueva-password.html?token=" + token);
             System.out.println("==============================");
         }
 
@@ -124,9 +144,24 @@ public class PasswordResetService {
         JsonObject respuesta = new JsonObject();
 
         // Validar que ambos campos vengan con valor
-        if (token == null || token.isBlank() || nuevaContrasena == null || nuevaContrasena.isBlank()) {
+        if (token == null || token.isBlank()) {
             respuesta.addProperty("success", false);
-            respuesta.addProperty("message", "Token y nueva contrasena son requeridos");
+            respuesta.addProperty("message", "El token de recuperación es requerido");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+
+        if (nuevaContrasena == null || nuevaContrasena.isBlank()) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "La contraseña es requerida");
+            respuesta.addProperty("status", 400);
+            return respuesta;
+        }
+
+        // Validar longitud máxima de la contraseña
+        if (nuevaContrasena.length() > 128) {
+            respuesta.addProperty("success", false);
+            respuesta.addProperty("message", "La contraseña no puede superar los 128 caracteres");
             respuesta.addProperty("status", 400);
             return respuesta;
         }
