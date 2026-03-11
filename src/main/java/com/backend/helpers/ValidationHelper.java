@@ -15,4 +15,13 @@ public class ValidationHelper {
 
     /** Solo letras (incluye acentos, ñ y espacios para nombres compuestos) */
     public static final String NOMBRE_REGEX = "^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ ]+$";
+
+    /** Formato de fecha ISO: YYYY-MM-DD (año-mes-día) */
+    public static final String FECHA_REGEX = "^\\d{4}-\\d{2}-\\d{2}$";
+
+    /** Teléfono colombiano: entre 7 y 10 dígitos numéricos */
+    public static final String TELEFONO_REGEX = "^\\d{7,10}$";
+
+    /** NIT colombiano: 9 dígitos, guion opcional y 1 dígito de verificación */
+    public static final String NIT_REGEX = "^\\d{9}-?\\d{1}$";
 }
