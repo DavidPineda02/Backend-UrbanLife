@@ -10,6 +10,10 @@ import com.backend.controllers.PasswordResetController;
 import com.backend.controllers.ProductoController;
 import com.backend.controllers.ProveedorController;
 import com.backend.controllers.UserController;
+import com.backend.controllers.VentaController;
+import com.backend.controllers.CompraController;
+// Controller para gestionar gastos adicionales del negocio
+import com.backend.controllers.GastoAdicionalController;
 // Middleware para proteger rutas con autenticacion JWT y control de roles
 import com.backend.middlewares.AuthMiddleware;
 // Interfaz del manejador HTTP de Java
@@ -17,7 +21,7 @@ import com.sun.net.httpserver.HttpHandler;
 
 /**
  * Clase que registra todas las rutas de la API en el Router.
- * Configura endpoints de autenticación, usuarios, categorías, productos, clientes y proveedores.
+ * Configura endpoints de autenticación, usuarios, categorías, productos, clientes, proveedores, ventas, compras y gastos adicionales.
  * Centraliza la configuración y protección por roles de todas las rutas del sistema.
  */
 public class Routes {
@@ -111,6 +115,32 @@ public class Routes {
         // Cambiar estado activo/inactivo
         router.patch("/api/proveedores/id", auth.protect(ProveedorController.patch(), "SUPER_ADMIN", "ADMIN"));
 
+        // ========== RUTAS DE VENTAS ==========
+        // Listar todas las ventas
+        router.get("/api/ventas",    auth.protect(VentaController.listAll(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Obtener venta por ID (incluye detalles)
+        router.get("/api/ventas/id", auth.protect(VentaController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Registrar nueva venta (transacción atómica)
+        router.post("/api/ventas",   auth.protect(VentaController.create(),  "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+
+        // ========== RUTAS DE COMPRAS ==========
+        // Listar todas las compras
+        router.get("/api/compras",    auth.protect(CompraController.listAll(), "SUPER_ADMIN", "ADMIN"));
+        // Obtener compra por ID (incluye detalles)
+        router.get("/api/compras/id", auth.protect(CompraController.getById(), "SUPER_ADMIN", "ADMIN"));
+        // Registrar nueva compra (transacción atómica)
+        router.post("/api/compras",   auth.protect(CompraController.create(),  "SUPER_ADMIN", "ADMIN"));
+
+        // ========== RUTAS DE GASTOS ADICIONALES ==========
+        // Listar todos los gastos adicionales
+        router.get("/api/gastos",    auth.protect(GastoAdicionalController.listAll(), "SUPER_ADMIN", "ADMIN"));
+        // Obtener gasto adicional por ID
+        router.get("/api/gastos/id", auth.protect(GastoAdicionalController.getById(), "SUPER_ADMIN", "ADMIN"));
+        // Registrar nuevo gasto adicional (transacción atómica)
+        router.post("/api/gastos",   auth.protect(GastoAdicionalController.create(),  "SUPER_ADMIN", "ADMIN"));
+        // Listar todos los tipos de gasto (para dropdown del frontend)
+        router.get("/api/gastos/tipos", auth.protect(GastoAdicionalController.listTipos(), "SUPER_ADMIN", "ADMIN"));
+
         // Imprimir en consola las rutas activas al iniciar el servidor
         System.out.println("Rutas registradas:");
         System.out.println("  POST   /api/auth/login                      (publico)");
@@ -144,6 +174,16 @@ public class Routes {
         System.out.println("  POST   /api/proveedores                         (SUPER_ADMIN, ADMIN)");
         System.out.println("  PUT    /api/proveedores/id?id=X                 (SUPER_ADMIN, ADMIN)");
         System.out.println("  PATCH  /api/proveedores/id?id=X                 (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/ventas                                (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  GET    /api/ventas/id?id=X                        (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  POST   /api/ventas                                (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  GET    /api/compras                               (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/compras/id?id=X                       (SUPER_ADMIN, ADMIN)");
+        System.out.println("  POST   /api/compras                               (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/gastos                                (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/gastos/id?id=X                        (SUPER_ADMIN, ADMIN)");
+        System.out.println("  POST   /api/gastos                                (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/gastos/tipos                          (SUPER_ADMIN, ADMIN)");
 
         // Retornar el router ya configurado para registrarlo en el servidor HTTP
         return router;
