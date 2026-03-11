@@ -4,9 +4,11 @@ package com.backend.routes;
 // Importar todos los controllers que manejan las rutas registradas
 import com.backend.controllers.AuthController;
 import com.backend.controllers.CategoriaController;
+import com.backend.controllers.ClienteController;
 import com.backend.controllers.GoogleAuthController;
 import com.backend.controllers.PasswordResetController;
 import com.backend.controllers.ProductoController;
+import com.backend.controllers.ProveedorController;
 import com.backend.controllers.UserController;
 // Middleware para proteger rutas con autenticacion JWT y control de roles
 import com.backend.middlewares.AuthMiddleware;
@@ -85,6 +87,30 @@ public class Routes {
         // Cambiar estado activo/inactivo
         router.patch("/api/productos/id", auth.protect(ProductoController.patch(), "SUPER_ADMIN", "ADMIN"));
 
+        // ========== RUTAS DE CLIENTES ==========
+        // Listar todos los clientes
+        router.get("/api/clientes",    auth.protect(ClienteController.listAll(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Obtener cliente por ID
+        router.get("/api/clientes/id", auth.protect(ClienteController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Crear nuevo cliente
+        router.post("/api/clientes",   auth.protect(ClienteController.create(),  "SUPER_ADMIN", "ADMIN"));
+        // Actualizar cliente completo
+        router.put("/api/clientes/id", auth.protect(ClienteController.update(),  "SUPER_ADMIN", "ADMIN"));
+        // Cambiar estado activo/inactivo
+        router.patch("/api/clientes/id", auth.protect(ClienteController.patch(), "SUPER_ADMIN", "ADMIN"));
+
+        // ========== RUTAS DE PROVEEDORES ==========
+        // Listar todos los proveedores
+        router.get("/api/proveedores",    auth.protect(ProveedorController.listAll(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Obtener proveedor por ID
+        router.get("/api/proveedores/id", auth.protect(ProveedorController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Crear nuevo proveedor
+        router.post("/api/proveedores",   auth.protect(ProveedorController.create(),  "SUPER_ADMIN", "ADMIN"));
+        // Actualizar proveedor completo
+        router.put("/api/proveedores/id", auth.protect(ProveedorController.update(),  "SUPER_ADMIN", "ADMIN"));
+        // Cambiar estado activo/inactivo
+        router.patch("/api/proveedores/id", auth.protect(ProveedorController.patch(), "SUPER_ADMIN", "ADMIN"));
+
         // Imprimir en consola las rutas activas al iniciar el servidor
         System.out.println("Rutas registradas:");
         System.out.println("  POST   /api/auth/login                      (publico)");
@@ -108,6 +134,16 @@ public class Routes {
         System.out.println("  POST   /api/productos                         (SUPER_ADMIN, ADMIN)");
         System.out.println("  PUT    /api/productos/id?id=X                 (SUPER_ADMIN, ADMIN)");
         System.out.println("  PATCH  /api/productos/id?id=X                 (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/clientes                           (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  GET    /api/clientes/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  POST   /api/clientes                           (SUPER_ADMIN, ADMIN)");
+        System.out.println("  PUT    /api/clientes/id?id=X                   (SUPER_ADMIN, ADMIN)");
+        System.out.println("  PATCH  /api/clientes/id?id=X                   (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/proveedores                         (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  GET    /api/proveedores/id?id=X                 (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  POST   /api/proveedores                         (SUPER_ADMIN, ADMIN)");
+        System.out.println("  PUT    /api/proveedores/id?id=X                 (SUPER_ADMIN, ADMIN)");
+        System.out.println("  PATCH  /api/proveedores/id?id=X                 (SUPER_ADMIN, ADMIN)");
 
         // Retornar el router ya configurado para registrarlo en el servidor HTTP
         return router;
