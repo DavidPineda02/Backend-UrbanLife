@@ -3,6 +3,8 @@ package com.backend.server;
 
 // Importar la clase que registra todas las rutas de la API
 import com.backend.routes.Routes;
+// Manejador de archivos estáticos para servir las imágenes subidas
+import com.backend.server.StaticFileHandler;
 // Interfaz que representa un manejador de peticiones HTTP
 import com.sun.net.httpserver.HttpHandler;
 // Clase del servidor HTTP nativo de Java (com.sun.net.httpserver)
@@ -41,6 +43,10 @@ public class serverConnection {
             Routes routes = new Routes();
             // Configurar todas las rutas
             HttpHandler router = routes.configureRoutes();
+
+            // Registrar el manejador de archivos estáticos ANTES del router principal
+            // Sirve imágenes desde /uploads/ con el Content-Type correcto
+            server.createContext("/uploads/", new StaticFileHandler());
 
             // Registrar el router como manejador de TODAS las peticiones entrantes
             server.createContext("/", router);
