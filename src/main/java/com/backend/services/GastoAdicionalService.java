@@ -245,7 +245,7 @@ public class GastoAdicionalService {
         GastoAdicional nuevoGasto = new GastoAdicional(monto, descripcion.trim(),
                 fechaRegistro.trim(), metodoPago.trim(), compraId, tipoGastoId, usuarioId);
         // Ejecutar la transacción atómica en el DAO (INSERT gasto + INSERT movimiento financiero)
-        GastoAdicional gastoCreado = GastoAdicionalDAO.createConMovimiento(nuevoGasto);
+        GastoAdicional gastoCreado = GastoAdicionalDAO.create(nuevoGasto);
 
         // Verificar si la transacción falló
         if (gastoCreado == null) {

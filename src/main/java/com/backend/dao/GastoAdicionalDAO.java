@@ -72,12 +72,13 @@ public class GastoAdicionalDAO {
     /**
      * Crea un gasto adicional y su movimiento financiero de forma atómica.
      * Pasos: (1) INSERT en Gastos_Adicionales,
-     * (2) INSERT en Movimientos_Financieros con tipo_movimiento_id=3 (Gasto Adicional/Egreso).
+     * (2) Registrar movimiento financiero vía MovimientoFinancieroDAO.insertEnTransaccion()
+     *     con tipo_movimiento_id=3 (Gasto Adicional/Egreso).
      * Si cualquier paso falla se hace rollback de toda la operación.
      * @param gasto Objeto GastoAdicional con los datos a insertar
      * @return El GastoAdicional con su ID asignado, o null si la transacción falló
      */
-    public static GastoAdicional createConMovimiento(GastoAdicional gasto) {
+    public static GastoAdicional create(GastoAdicional gasto) {
         // Declarar la conexión fuera del try para poder acceder en catch y finally
         Connection conexion = null;
         try {
@@ -120,33 +121,20 @@ public class GastoAdicionalDAO {
             // Cerrar el statement del gasto para liberar recursos
             stmtGasto.close();
 
-            // ===== PASO 2: INSERT en Movimientos_Financieros =====
-            // SQL para registrar el movimiento financiero de tipo Gasto Adicional (Egreso)
-            String sqlMovimiento = "INSERT INTO movimientos_financieros (fecha_movimiento, concepto, monto, metodo_pago, tipo_movimiento_id, usuario_id, venta_id, compra_id, gasto_adicional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            // Preparar la consulta del movimiento financiero
-            PreparedStatement stmtMovimiento = conexion.prepareStatement(sqlMovimiento);
-            // Asignar la fecha del movimiento (misma que la del gasto)
-            stmtMovimiento.setString(1, gasto.getFechaRegistro());
-            // Asignar el concepto del movimiento identificando el número de gasto
-            stmtMovimiento.setString(2, "Gasto #" + gasto.getIdGastosAdic());
-            // Asignar el monto del movimiento (monto del gasto)
-            stmtMovimiento.setDouble(3, gasto.getMonto());
-            // Asignar el método de pago del movimiento
-            stmtMovimiento.setString(4, gasto.getMetodoPago());
-            // Asignar el tipo de movimiento: 3 = Gasto Adicional (Egreso)
-            stmtMovimiento.setInt(5, 3);
-            // Asignar el ID del usuario que generó el movimiento
-            stmtMovimiento.setInt(6, gasto.getUsuarioId());
-            // Asignar NULL al campo venta_id (no aplica para gastos)
-            stmtMovimiento.setNull(7, Types.INTEGER);
-            // Asignar NULL al campo compra_id del movimiento (no aplica aquí)
-            stmtMovimiento.setNull(8, Types.INTEGER);
-            // Asignar el ID del gasto adicional asociado al movimiento
-            stmtMovimiento.setInt(9, gasto.getIdGastosAdic());
-            // Ejecutar INSERT del movimiento financiero
-            stmtMovimiento.executeUpdate();
-            // Cerrar el statement del movimiento para liberar recursos
-            stmtMovimiento.close();
+            // ===== PASO 2: Registrar movimiento financiero en la misma transacción =====
+            // Delegar al MovimientoFinancieroDAO pasando la conexión activa para mantener la atomicidad
+            // tipo_movimiento_id = 3 → Gasto Adicional (Egreso); venta_id y compra_id son null
+            MovimientoFinancieroDAO.insertEnTransaccion(
+                    conexion,
+                    gasto.getFechaRegistro(),
+                    "Gasto #" + gasto.getIdGastosAdic(),
+                    gasto.getMonto(),
+                    gasto.getMetodoPago(),
+                    3,
+                    gasto.getUsuarioId(),
+                    null,
+                    null,
+                    gasto.getIdGastosAdic());
 
             // Confirmar todos los cambios de la transacción en la BD
             conexion.commit();

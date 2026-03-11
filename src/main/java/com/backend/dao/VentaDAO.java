@@ -185,33 +185,20 @@ public class VentaDAO {
                 stmtStock.close();
             }
 
-            // ===== PASO 4: INSERT en Movimientos_Financieros =====
-            // SQL para registrar el movimiento financiero de tipo Venta (Ingreso)
-            String sqlMovimiento = "INSERT INTO movimientos_financieros (fecha_movimiento, concepto, monto, metodo_pago, tipo_movimiento_id, usuario_id, venta_id, compra_id, gasto_adicional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            // Preparar la consulta del movimiento financiero
-            PreparedStatement stmtMovimiento = conexion.prepareStatement(sqlMovimiento);
-            // Asignar la fecha del movimiento (misma que la venta)
-            stmtMovimiento.setString(1, venta.getFechaVenta());
-            // Asignar el concepto del movimiento identificando el número de venta
-            stmtMovimiento.setString(2, "Venta #" + venta.getIdVenta());
-            // Asignar el monto del movimiento (total de la venta)
-            stmtMovimiento.setDouble(3, venta.getTotalVenta());
-            // Asignar el método de pago del movimiento
-            stmtMovimiento.setString(4, venta.getMetodoPago());
-            // Asignar el tipo de movimiento: 1 = Venta (Ingreso)
-            stmtMovimiento.setInt(5, 1);
-            // Asignar el ID del usuario que generó el movimiento
-            stmtMovimiento.setInt(6, venta.getUsuarioId());
-            // Asignar el ID de la venta asociada al movimiento
-            stmtMovimiento.setInt(7, venta.getIdVenta());
-            // Asignar NULL al campo compra_id (no aplica para ventas)
-            stmtMovimiento.setNull(8, Types.INTEGER);
-            // Asignar NULL al campo gasto_adicional_id (no aplica para ventas)
-            stmtMovimiento.setNull(9, Types.INTEGER);
-            // Ejecutar INSERT del movimiento financiero
-            stmtMovimiento.executeUpdate();
-            // Cerrar el statement del movimiento para liberar recursos
-            stmtMovimiento.close();
+            // ===== PASO 4: Registrar movimiento financiero en la misma transacción =====
+            // Delegar al MovimientoFinancieroDAO pasando la conexión activa para mantener la atomicidad
+            // tipo_movimiento_id = 1 → Venta (Ingreso); compra_id y gasto_adicional_id son null
+            MovimientoFinancieroDAO.insertEnTransaccion(
+                    conexion,
+                    venta.getFechaVenta(),
+                    "Venta #" + venta.getIdVenta(),
+                    venta.getTotalVenta(),
+                    venta.getMetodoPago(),
+                    1,
+                    venta.getUsuarioId(),
+                    venta.getIdVenta(),
+                    null,
+                    null);
 
             // Confirmar todos los cambios de la transacción en la BD
             conexion.commit();
