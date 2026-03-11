@@ -16,6 +16,8 @@ import com.backend.controllers.CompraController;
 import com.backend.controllers.GastoAdicionalController;
 // Controller para el módulo de reportes y métricas del dashboard
 import com.backend.controllers.DashboardController;
+// Controller para el módulo de imágenes de productos
+import com.backend.controllers.ImagenProductoController;
 // Middleware para proteger rutas con autenticacion JWT y control de roles
 import com.backend.middlewares.AuthMiddleware;
 // Interfaz del manejador HTTP de Java
@@ -143,6 +145,14 @@ public class Routes {
         // Listar todos los tipos de gasto (para dropdown del frontend)
         router.get("/api/gastos/tipos", auth.protect(GastoAdicionalController.listTipos(), "SUPER_ADMIN", "ADMIN"));
 
+        // ========== RUTAS DE IMÁGENES DE PRODUCTOS ==========
+        // Subir imagen a un producto (Base64 JSON)
+        router.post("/api/productos/imagen",   auth.protect(ImagenProductoController.upload(),         "SUPER_ADMIN", "ADMIN"));
+        // Obtener imágenes de un producto
+        router.get("/api/productos/imagen",    auth.protect(ImagenProductoController.getByProductoId(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Eliminar imagen por ID
+        router.delete("/api/productos/imagen", auth.protect(ImagenProductoController.delete(),          "SUPER_ADMIN", "ADMIN"));
+
         // ========== RUTAS DE DASHBOARD ==========
         // Tarjetas: ingresos/egresos del día, ingresos/egresos/ganancia del mes, contadores
         router.get("/api/dashboard/resumen",             auth.protect(DashboardController.getResumen(),           "SUPER_ADMIN", "ADMIN"));
@@ -198,6 +208,9 @@ public class Routes {
         System.out.println("  GET    /api/gastos/id?id=X                        (SUPER_ADMIN, ADMIN)");
         System.out.println("  POST   /api/gastos                                (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/gastos/tipos                          (SUPER_ADMIN, ADMIN)");
+        System.out.println("  POST   /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  DELETE /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/dashboard/resumen                     (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/dashboard/ventas-semanales            (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/dashboard/resumen-semanal             (SUPER_ADMIN, ADMIN)");
