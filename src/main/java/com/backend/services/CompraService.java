@@ -1,6 +1,8 @@
 // Paquete de servicios de lógica de negocio
 package com.backend.services;
 
+// Constantes de validación centralizadas (FECHA_REGEX, etc.)
+import com.backend.helpers.ValidationHelper;
 // Para ejecutar la transacción atómica de creación de compra
 import com.backend.dao.CompraDAO;
 // Para verificar que cada producto existe y está activo
@@ -127,7 +129,7 @@ public class CompraService {
             return respuesta;
         }
         // Verificar que la fecha tenga el formato correcto YYYY-MM-DD
-        if (!fechaCompra.trim().matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+        if (!fechaCompra.trim().matches(ValidationHelper.FECHA_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato requerido

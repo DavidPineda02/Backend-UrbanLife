@@ -154,7 +154,7 @@ public class ProveedorService {
             return respuesta;
         }
         // Verificar que el NIT tenga formato colombiano: 9 dígitos, guión opcional, 1 dígito verificador (ej: 900123456-1)
-        if (!nit.trim().matches("^\\d{9}-?\\d{1}$")) {
+        if (!nit.trim().matches(ValidationHelper.NIT_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano del NIT
@@ -182,7 +182,7 @@ public class ProveedorService {
         // ----- Validaciones del campo Teléfono (opcional) -----
 
         // Verificar que el teléfono (si viene) sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
-        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches("^\\d{7,10}$")) {
+        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano requerido
@@ -376,7 +376,7 @@ public class ProveedorService {
             return respuesta;
         }
         // Verificar que el NIT tenga formato colombiano: 9 dígitos, guión opcional, 1 dígito verificador (ej: 900123456-1)
-        if (!nit.trim().matches("^\\d{9}-?\\d{1}$")) {
+        if (!nit.trim().matches(ValidationHelper.NIT_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano del NIT
@@ -404,7 +404,7 @@ public class ProveedorService {
         // ----- Validaciones del campo Teléfono (opcional) -----
 
         // Verificar que el teléfono (si viene) sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
-        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches("^\\d{7,10}$")) {
+        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano requerido

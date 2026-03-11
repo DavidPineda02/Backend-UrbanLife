@@ -1,6 +1,8 @@
 // Paquete de servicios de lógica de negocio
 package com.backend.services;
 
+// Constantes de validación centralizadas (FECHA_REGEX, etc.)
+import com.backend.helpers.ValidationHelper;
 // Para verificar que el cliente existe en la BD
 import com.backend.dao.ClienteDAO;
 // Para verificar que cada producto existe, está activo y tiene stock suficiente
@@ -127,7 +129,7 @@ public class VentaService {
             return respuesta;
         }
         // Verificar que la fecha tenga el formato correcto YYYY-MM-DD
-        if (!fechaVenta.trim().matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+        if (!fechaVenta.trim().matches(ValidationHelper.FECHA_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato requerido

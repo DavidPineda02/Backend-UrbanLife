@@ -1,6 +1,8 @@
 // Paquete de servicios de lógica de negocio
 package com.backend.services;
 
+// Constantes de validación centralizadas (FECHA_REGEX, etc.)
+import com.backend.helpers.ValidationHelper;
 // Para verificar que el tipo de gasto existe en la BD
 import com.backend.dao.TipoGastoDAO;
 // Para verificar que la compra asociada existe (si aplica)
@@ -155,7 +157,7 @@ public class GastoAdicionalService {
             return respuesta;
         }
         // Verificar que la fecha tenga el formato correcto YYYY-MM-DD
-        if (!fechaRegistro.trim().matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+        if (!fechaRegistro.trim().matches(ValidationHelper.FECHA_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato requerido
