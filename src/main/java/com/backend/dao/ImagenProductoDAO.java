@@ -182,6 +182,29 @@ public class ImagenProductoDAO {
     }
 
     /**
+     * Cuenta cuántas imágenes tiene un producto.
+     * @param productoId ID del producto
+     * @return número de imágenes registradas
+     */
+    public static int countByProductoId(int productoId) {
+        // SQL para contar las imágenes de un producto
+        String sql = "SELECT COUNT(*) FROM imagenes_producto WHERE producto_id = ?";
+        // Abrir conexión y preparar consulta con auto-cierre
+        try (Connection conexion = dbConnection.getConnection();
+             PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            // Asignar ID del producto
+            consulta.setInt(1, productoId);
+            // Ejecutar consulta y retornar el conteo
+            ResultSet resultado = consulta.executeQuery();
+            if (resultado.next()) return resultado.getInt(1);
+        } catch (Exception excepcion) {
+            // Registrar error en consola
+            System.out.println("Error ImagenProductoDAO.countByProductoId: " + excepcion.getMessage());
+        }
+        return 0;
+    }
+
+    /**
      * Mapea una fila del ResultSet a un objeto ImagenProducto.
      * @param resultado ResultSet posicionado en la fila a mapear
      * @return Objeto ImagenProducto con los datos de la fila
