@@ -1,138 +1,119 @@
+// Paquete de Data Access Objects (DAOs) de la aplicación
 package com.backend.dao;
 
+// Clase para obtener conexión a la base de datos
 import com.backend.config.dbConnection;
+// Modelo que representa un movimiento financiero del negocio
 import com.backend.models.MovimientoFinanciero;
 
+// Clases JDBC para conexión, consultas preparadas, resultados y tipos SQL
 import java.sql.*;
+// Lista dinámica para retornar múltiples registros
 import java.util.ArrayList;
+// Interfaz de lista genérica
 import java.util.List;
 
+/**
+ * DAO (Data Access Object) para consultas de solo lectura sobre Movimientos_Financieros.
+ * La creación de movimientos se maneja dentro de las transacciones atómicas
+ * de VentaDAO, CompraDAO y GastoAdicionalDAO.
+ * Este DAO se utiliza para consultar el historial contable del negocio.
+ */
 public class MovimientoFinancieroDAO {
 
+    /**
+     * Busca un movimiento financiero por su ID.
+     * @param id ID del movimiento a buscar
+     * @return MovimientoFinanciero encontrado o null si no existe
+     */
     public static MovimientoFinanciero findById(int id) {
+        // SQL para seleccionar un movimiento por su clave primaria
         String sql = "SELECT * FROM movimientos_financieros WHERE id_movs_financieros = ?";
+        // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            // Asignar el ID como parámetro de búsqueda
             consulta.setInt(1, id);
+            // Ejecutar consulta y obtener resultado
             ResultSet resultado = consulta.executeQuery();
+            // Si se encontró un registro, mapearlo y retornarlo
             if (resultado.next()) return mapRow(resultado);
         } catch (Exception excepcion) {
+            // Registrar error en consola
             System.out.println("Error MovimientoFinancieroDAO.findById: " + excepcion.getMessage());
         }
+        // Retornar null si no se encontró el movimiento
         return null;
     }
 
+    /**
+     * Obtiene todos los movimientos financieros ordenados por fecha descendente.
+     * @return Lista de movimientos (vacía si no hay ninguno)
+     */
     public static List<MovimientoFinanciero> findAll() {
+        // Lista donde se acumularán los movimientos encontrados
         List<MovimientoFinanciero> lista = new ArrayList<>();
-        String sql = "SELECT * FROM movimientos_financieros ORDER BY id_movs_financieros ASC";
+        // SQL para seleccionar todos los movimientos ordenados por fecha descendente
+        String sql = "SELECT * FROM movimientos_financieros ORDER BY fecha_movimiento DESC, id_movs_financieros DESC";
+        // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
              ResultSet resultado = consulta.executeQuery()) {
+            // Recorrer todos los registros y agregar cada movimiento a la lista
             while (resultado.next()) lista.add(mapRow(resultado));
         } catch (Exception excepcion) {
+            // Registrar error en consola
             System.out.println("Error MovimientoFinancieroDAO.findAll: " + excepcion.getMessage());
         }
+        // Retornar la lista con todos los movimientos encontrados
         return lista;
     }
 
-    public static List<MovimientoFinanciero> findByUsuarioId(int usuarioId) {
-        List<MovimientoFinanciero> lista = new ArrayList<>();
-        String sql = "SELECT * FROM movimientos_financieros WHERE usuario_id = ? ORDER BY id_movs_financieros DESC";
-        try (Connection conexion = dbConnection.getConnection();
-             PreparedStatement consulta = conexion.prepareStatement(sql)) {
-            consulta.setInt(1, usuarioId);
-            ResultSet resultado = consulta.executeQuery();
-            while (resultado.next()) lista.add(mapRow(resultado));
-        } catch (Exception excepcion) {
-            System.out.println("Error MovimientoFinancieroDAO.findByUsuarioId: " + excepcion.getMessage());
-        }
-        return lista;
-    }
-
-    public static MovimientoFinanciero create(MovimientoFinanciero movimientoFinanciero) {
-        String sql = "INSERT INTO movimientos_financieros (fecha_movimiento, concepto, monto, metodo_pago, tipo_movimiento_id, usuario_id, venta_id, compra_id, gasto_adicional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conexion = dbConnection.getConnection();
-             PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            consulta.setDate(1, Date.valueOf(movimientoFinanciero.getFechaMovimiento()));
-            consulta.setString(2, movimientoFinanciero.getConcepto());
-            consulta.setDouble(3, movimientoFinanciero.getMonto());
-            consulta.setString(4, movimientoFinanciero.getMetodoPago());
-            consulta.setInt(5, movimientoFinanciero.getTipoMovimientoId());
-            consulta.setInt(6, movimientoFinanciero.getUsuarioId());
-            if (movimientoFinanciero.getVentaId() == null) consulta.setNull(7, Types.INTEGER);
-            else consulta.setInt(7, movimientoFinanciero.getVentaId());
-            if (movimientoFinanciero.getCompraId() == null) consulta.setNull(8, Types.INTEGER);
-            else consulta.setInt(8, movimientoFinanciero.getCompraId());
-            if (movimientoFinanciero.getGastoAdicionalId() == null) consulta.setNull(9, Types.INTEGER);
-            else consulta.setInt(9, movimientoFinanciero.getGastoAdicionalId());
-
-            if (consulta.executeUpdate() > 0) {
-                ResultSet clavesGeneradas = consulta.getGeneratedKeys();
-                if (clavesGeneradas.next()) movimientoFinanciero.setIdMovsFinancieros(clavesGeneradas.getInt(1));
-                return movimientoFinanciero;
-            }
-        } catch (Exception excepcion) {
-            System.out.println("Error MovimientoFinancieroDAO.create: " + excepcion.getMessage());
-        }
-        return null;
-    }
-
-    public static boolean update(MovimientoFinanciero movimientoFinanciero) {
-        String sql = "UPDATE movimientos_financieros SET fecha_movimiento = ?, concepto = ?, monto = ?, metodo_pago = ?, tipo_movimiento_id = ?, usuario_id = ?, venta_id = ?, compra_id = ?, gasto_adicional_id = ? WHERE id_movs_financieros = ?";
-        try (Connection conexion = dbConnection.getConnection();
-             PreparedStatement consulta = conexion.prepareStatement(sql)) {
-            consulta.setDate(1, Date.valueOf(movimientoFinanciero.getFechaMovimiento()));
-            consulta.setString(2, movimientoFinanciero.getConcepto());
-            consulta.setDouble(3, movimientoFinanciero.getMonto());
-            consulta.setString(4, movimientoFinanciero.getMetodoPago());
-            consulta.setInt(5, movimientoFinanciero.getTipoMovimientoId());
-            consulta.setInt(6, movimientoFinanciero.getUsuarioId());
-            if (movimientoFinanciero.getVentaId() == null) consulta.setNull(7, Types.INTEGER);
-            else consulta.setInt(7, movimientoFinanciero.getVentaId());
-            if (movimientoFinanciero.getCompraId() == null) consulta.setNull(8, Types.INTEGER);
-            else consulta.setInt(8, movimientoFinanciero.getCompraId());
-            if (movimientoFinanciero.getGastoAdicionalId() == null) consulta.setNull(9, Types.INTEGER);
-            else consulta.setInt(9, movimientoFinanciero.getGastoAdicionalId());
-            consulta.setInt(10, movimientoFinanciero.getIdMovsFinancieros());
-            return consulta.executeUpdate() > 0;
-        } catch (Exception excepcion) {
-            System.out.println("Error MovimientoFinancieroDAO.update: " + excepcion.getMessage());
-        }
-        return false;
-    }
-
-    public static boolean delete(int id) {
-        String sql = "DELETE FROM movimientos_financieros WHERE id_movs_financieros = ?";
-        try (Connection conexion = dbConnection.getConnection();
-             PreparedStatement consulta = conexion.prepareStatement(sql)) {
-            consulta.setInt(1, id);
-            return consulta.executeUpdate() > 0;
-        } catch (Exception excepcion) {
-            System.out.println("Error MovimientoFinancieroDAO.delete: " + excepcion.getMessage());
-        }
-        return false;
-    }
-
+    /**
+     * Convierte una fila del ResultSet en un objeto MovimientoFinanciero.
+     * Maneja las columnas nullable (venta_id, compra_id, gasto_adicional_id)
+     * usando el patrón getInt + wasNull para obtener Integer nullable.
+     * @param resultado ResultSet posicionado en la fila a mapear
+     * @return Objeto MovimientoFinanciero con todos los campos del registro
+     * @throws SQLException si ocurre un error al leer las columnas
+     */
     private static MovimientoFinanciero mapRow(ResultSet resultado) throws SQLException {
-        int ventaId = resultado.getInt("venta_id");
-        Integer idVenta = resultado.wasNull() ? null : ventaId;
+        // Leer el venta_id como int primitivo (retorna 0 si es NULL)
+        int ventaIdValor = resultado.getInt("venta_id");
+        // Convertir a Integer nullable: null si era NULL en la BD
+        Integer ventaId = resultado.wasNull() ? null : ventaIdValor;
 
-        int compraId = resultado.getInt("compra_id");
-        Integer idCompra = resultado.wasNull() ? null : compraId;
+        // Leer el compra_id como int primitivo (retorna 0 si es NULL)
+        int compraIdValor = resultado.getInt("compra_id");
+        // Convertir a Integer nullable: null si era NULL en la BD
+        Integer compraId = resultado.wasNull() ? null : compraIdValor;
 
-        int gastoAdicionalId = resultado.getInt("gasto_adicional_id");
-        Integer idGastoAdicional = resultado.wasNull() ? null : gastoAdicionalId;
+        // Leer el gasto_adicional_id como int primitivo (retorna 0 si es NULL)
+        int gastoIdValor = resultado.getInt("gasto_adicional_id");
+        // Convertir a Integer nullable: null si era NULL en la BD
+        Integer gastoAdicionalId = resultado.wasNull() ? null : gastoIdValor;
 
+        // Construir y retornar un MovimientoFinanciero con los datos del registro
         return new MovimientoFinanciero(
+                // Leer el ID del movimiento desde la columna id_movs_financieros
                 resultado.getInt("id_movs_financieros"),
-                resultado.getDate("fecha_movimiento").toLocalDate(),
+                // Leer la fecha del movimiento como String desde la columna fecha_movimiento
+                resultado.getString("fecha_movimiento"),
+                // Leer el concepto desde la columna concepto
                 resultado.getString("concepto"),
+                // Leer el monto desde la columna monto
                 resultado.getDouble("monto"),
+                // Leer el método de pago desde la columna metodo_pago
                 resultado.getString("metodo_pago"),
+                // Leer el ID del tipo de movimiento desde la columna tipo_movimiento_id
                 resultado.getInt("tipo_movimiento_id"),
+                // Leer el ID del usuario desde la columna usuario_id
                 resultado.getInt("usuario_id"),
-                idVenta,
-                idCompra,
-                idGastoAdicional);
+                // Asignar el ID de la venta (nullable)
+                ventaId,
+                // Asignar el ID de la compra (nullable)
+                compraId,
+                // Asignar el ID del gasto adicional (nullable)
+                gastoAdicionalId);
     }
 }
