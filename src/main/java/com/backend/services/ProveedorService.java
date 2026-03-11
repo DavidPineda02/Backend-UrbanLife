@@ -3,6 +3,8 @@ package com.backend.services;
 
 // Para operaciones CRUD de proveedores en la base de datos
 import com.backend.dao.ProveedorDAO;
+// Constantes de validación centralizadas (EMAIL_REGEX, etc.)
+import com.backend.helpers.ValidationHelper;
 // Entidad del proveedor del sistema
 import com.backend.models.Proveedor;
 // Para serializar objetos Java a JSON
@@ -165,8 +167,8 @@ public class ProveedorService {
 
         // ----- Validaciones del campo Correo (opcional) -----
 
-        // Verificar que el correo (si viene) tenga formato válido
-        if (correo != null && !correo.isBlank() && !correo.matches("^[\\w._%+\\-]+@[\\w.\\-]+\\.[a-zA-Z]{2,}$")) {
+        // Verificar que el correo (si viene) tenga formato válido usando el regex centralizado
+        if (correo != null && !correo.isBlank() && !correo.matches(ValidationHelper.EMAIL_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato inválido
@@ -387,8 +389,8 @@ public class ProveedorService {
 
         // ----- Validaciones del campo Correo (opcional) -----
 
-        // Verificar que el correo (si viene) tenga formato válido
-        if (correo != null && !correo.isBlank() && !correo.matches("^[\\w._%+\\-]+@[\\w.\\-]+\\.[a-zA-Z]{2,}$")) {
+        // Verificar que el correo (si viene) tenga formato válido usando el regex centralizado
+        if (correo != null && !correo.isBlank() && !correo.matches(ValidationHelper.EMAIL_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato inválido
