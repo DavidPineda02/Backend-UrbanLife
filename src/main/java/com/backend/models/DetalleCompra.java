@@ -20,6 +20,9 @@ public class DetalleCompra {
     private int compraId;
     // ID del producto comprado en este ítem (FK a Producto)
     private int productoId;
+    // Costo promedio ponderado calculado en el Service antes de persistir (no se mapea a la BD)
+    // Se usa para que el DAO aplique el UPDATE sin necesidad de hacer un SELECT extra dentro de la transacción
+    private double costoPromedioNuevo;
 
     /**
      * Constructor completo con ID (usado al leer desde la base de datos).
@@ -176,5 +179,25 @@ public class DetalleCompra {
     public void setProductoId(int productoId) {
         // Asignar el ID del producto
         this.productoId = productoId;
+    }
+
+    /**
+     * Retorna el costo promedio ponderado calculado por el Service antes de persistir.
+     * Este valor no está en la BD; se usa para que CompraDAO aplique el UPDATE sin recalcular.
+     * @return Costo promedio nuevo calculado en CompraService
+     */
+    public double getCostoPromedioNuevo() {
+        // Retornar el costo promedio calculado por el servicio
+        return costoPromedioNuevo;
+    }
+
+    /**
+     * Establece el costo promedio ponderado calculado en CompraService.
+     * Se llama justo antes de pasar el detalle al DAO para persistir.
+     * @param costoPromedioNuevo Valor calculado: (stockActual * costoActual + cantidad * costoCompra) / stockTotal
+     */
+    public void setCostoPromedioNuevo(double costoPromedioNuevo) {
+        // Asignar el costo promedio calculado por el servicio
+        this.costoPromedioNuevo = costoPromedioNuevo;
     }
 }
