@@ -178,7 +178,7 @@ public class ClienteService {
         // ----- Validaciones del campo Teléfono (opcional) -----
 
         // Verificar que el teléfono (si viene) sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
-        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches("^\\d{7,10}$")) {
+        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano requerido
@@ -394,7 +394,7 @@ public class ClienteService {
         // ----- Validaciones del campo Teléfono (opcional) -----
 
         // Verificar que el teléfono (si viene) sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
-        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches("^\\d{7,10}$")) {
+        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano requerido
