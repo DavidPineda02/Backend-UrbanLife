@@ -14,6 +14,8 @@ import com.backend.controllers.VentaController;
 import com.backend.controllers.CompraController;
 // Controller para gestionar gastos adicionales del negocio
 import com.backend.controllers.GastoAdicionalController;
+// Controller para el módulo de reportes y métricas del dashboard
+import com.backend.controllers.DashboardController;
 // Middleware para proteger rutas con autenticacion JWT y control de roles
 import com.backend.middlewares.AuthMiddleware;
 // Interfaz del manejador HTTP de Java
@@ -141,6 +143,18 @@ public class Routes {
         // Listar todos los tipos de gasto (para dropdown del frontend)
         router.get("/api/gastos/tipos", auth.protect(GastoAdicionalController.listTipos(), "SUPER_ADMIN", "ADMIN"));
 
+        // ========== RUTAS DE DASHBOARD ==========
+        // Tarjetas: ingresos/egresos del día, ingresos/egresos/ganancia del mes, contadores
+        router.get("/api/dashboard/resumen",             auth.protect(DashboardController.getResumen(),           "SUPER_ADMIN", "ADMIN"));
+        // Gráfico de barras: ventas por día en los últimos 7 días
+        router.get("/api/dashboard/ventas-semanales",    auth.protect(DashboardController.getVentasSemanales(),   "SUPER_ADMIN", "ADMIN"));
+        // Gráfico de barras agrupadas: ingresos, egresos y ganancia neta por día (últimos 7 días)
+        router.get("/api/dashboard/resumen-semanal",     auth.protect(DashboardController.getResumenSemanal(),    "SUPER_ADMIN", "ADMIN"));
+        // Gráfico de dona: stock total agrupado por categoría (solo productos activos)
+        router.get("/api/dashboard/stock-categorias",    auth.protect(DashboardController.getStockPorCategoria(), "SUPER_ADMIN", "ADMIN"));
+        // Lista: top 10 productos más rentables por margen absoluto
+        router.get("/api/dashboard/productos-rentables", auth.protect(DashboardController.getProductosRentables(),"SUPER_ADMIN", "ADMIN"));
+
         // Imprimir en consola las rutas activas al iniciar el servidor
         System.out.println("Rutas registradas:");
         System.out.println("  POST   /api/auth/login                      (publico)");
@@ -184,6 +198,11 @@ public class Routes {
         System.out.println("  GET    /api/gastos/id?id=X                        (SUPER_ADMIN, ADMIN)");
         System.out.println("  POST   /api/gastos                                (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/gastos/tipos                          (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/dashboard/resumen                     (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/dashboard/ventas-semanales            (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/dashboard/resumen-semanal             (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/dashboard/stock-categorias            (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/dashboard/productos-rentables         (SUPER_ADMIN, ADMIN)");
 
         // Retornar el router ya configurado para registrarlo en el servidor HTTP
         return router;
