@@ -236,12 +236,12 @@ public class PasswordResetService {
             return respuesta;
         }
 
-        // Verificar que la nueva contraseña cumpla la política: min 8 chars, mayúscula, minúscula y número
+        // Verificar que la nueva contraseña cumpla la política: entre 8 y 20 chars sin espacios, mayúscula, minúscula y número
         if (!nuevaContrasena.matches(ValidationHelper.PASSWORD_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
-            // Mensaje explicando los requisitos mínimos de la contraseña
-            respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+            // Mensaje explicando los requisitos de la contraseña
+            respuesta.addProperty("message", "La contraseña debe tener entre 8 y 20 caracteres, sin espacios, una mayúscula, una minúscula y un número");
             // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
             // Retornar respuesta de error

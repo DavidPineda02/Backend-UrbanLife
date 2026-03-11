@@ -206,7 +206,7 @@ public class UserService {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje explicando los requisitos mínimos de la contraseña
-            respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+            respuesta.addProperty("message", "La contraseña debe tener entre 8 y 20 caracteres, sin espacios, una mayúscula, una minúscula y un número");
             // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
             // Retornar respuesta de error
@@ -362,7 +362,7 @@ public class UserService {
                 // Indicar que la operación falló
                 respuesta.addProperty("success", false);
                 // Mensaje explicando los requisitos mínimos de la contraseña
-                respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+                respuesta.addProperty("message", "La contraseña debe tener entre 8 y 20 caracteres, sin espacios, una mayúscula, una minúscula y un número");
                 // Código HTTP 400 Bad Request
                 respuesta.addProperty("status", 400);
                 // Retornar respuesta de error
@@ -484,7 +484,7 @@ public class UserService {
                 // Indicar que la operación falló
                 respuesta.addProperty("success", false);
                 // Mensaje explicando los requisitos mínimos de la contraseña
-                respuesta.addProperty("message", "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número");
+                respuesta.addProperty("message", "La contraseña debe tener entre 8 y 20 caracteres, sin espacios, una mayúscula, una minúscula y un número");
                 // Código HTTP 400 Bad Request
                 respuesta.addProperty("status", 400);
                 // Retornar respuesta de error
