@@ -334,8 +334,23 @@ public class CompraService {
             // Acumular el subtotal en el total general de la compra
             totalCompra += subtotal;
 
+            // ===== LÓGICA DE NEGOCIO: Costo promedio ponderado =====
+            // Fórmula: (stockActual * costoActual + cantidadComprada * costoCompra) / stockTotal
+            // El objeto 'producto' ya fue leído arriba en la validación, se reutiliza aquí
+            int stockActual = producto.getStock();
+            // Leer el costo promedio actual del producto antes de registrar esta compra
+            double costoPromedioActual = producto.getCostoPromedio();
+            // Calcular el stock total resultante después de sumar las unidades compradas
+            int stockTotal = stockActual + cantidad;
+            // Calcular el nuevo costo promedio ponderado con el nuevo lote recibido
+            // Si stockActual es 0 (producto sin existencias), el resultado es simplemente costoUnitario
+            double costoPromedioNuevo = ((stockActual * costoPromedioActual) + (cantidad * costoUnitario)) / stockTotal;
+            // ===== FIN LÓGICA DE NEGOCIO =====
+
             // Construir el objeto DetalleCompra sin ID (se asignará en la transacción)
             DetalleCompra detalle = new DetalleCompra(cantidad, costoUnitario, subtotal, 0, productoId);
+            // Establecer el costo promedio calculado para que CompraDAO lo aplique sin recalcular
+            detalle.setCostoPromedioNuevo(costoPromedioNuevo);
             // Agregar el detalle validado a la lista
             detalles.add(detalle);
         }
