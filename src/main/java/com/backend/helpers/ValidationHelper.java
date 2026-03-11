@@ -10,11 +10,11 @@ public class ValidationHelper {
     /** Expresión regular para validar el formato del correo electrónico */
     public static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$";
 
-    /** Política de contraseña: min 8 chars, al menos una mayúscula, una minúscula y un número */
-    public static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,20}$";
+    /** Política de contraseña: entre 8 y 20 caracteres sin espacios, al menos una mayúscula, una minúscula y un número */
+    public static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)\\S{8,20}$";
 
-    /** Solo letras (incluye acentos, ñ y espacios para nombres compuestos) */
-    public static final String NOMBRE_REGEX = "^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ ]+$";
+    /** Solo letras sin espacios (incluye acentos y ñ, pero no admite espacios ni caracteres especiales) */
+    public static final String NOMBRE_REGEX = "^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ]+$";
 
     /** Formato de fecha ISO: YYYY-MM-DD (año-mes-día) */
     public static final String FECHA_REGEX = "^\\d{4}-\\d{2}-\\d{2}$";
