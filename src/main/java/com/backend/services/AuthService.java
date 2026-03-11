@@ -84,12 +84,12 @@ public class AuthService {
             return respuesta;
         }
 
-        // Verificar longitud máxima (previene ataques de denegación de servicio con BCrypt)
-        if (contrasena.length() > 128) {
+        // Verificar longitud máxima permitida por la política de contraseñas del sistema
+        if (contrasena.length() > 20) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
-            // Mensaje indicando el máximo de caracteres
-            respuesta.addProperty("message", "La contraseña no puede superar los 128 caracteres");
+            // Mensaje indicando el máximo de caracteres permitidos
+            respuesta.addProperty("message", "La contraseña no puede superar los 20 caracteres");
             // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
             // Retornar respuesta de error
