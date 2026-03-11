@@ -17,8 +17,8 @@ import com.sun.net.httpserver.HttpHandler;
 
 /**
  * Clase que registra todas las rutas de la API en el Router.
- * Configura endpoints de autenticación, usuarios y recuperación de contraseña.
- * Centraliza la configuración de todas las rutas del sistema.
+ * Configura endpoints de autenticación, usuarios, categorías, productos, clientes y proveedores.
+ * Centraliza la configuración y protección por roles de todas las rutas del sistema.
  */
 public class Routes {
 
