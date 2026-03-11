@@ -14,10 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO (Data Access Object) para consultas de solo lectura sobre Movimientos_Financieros.
- * La creación de movimientos se maneja dentro de las transacciones atómicas
- * de VentaDAO, CompraDAO y GastoAdicionalDAO.
- * Este DAO se utiliza para consultar el historial contable del negocio.
+ * DAO (Data Access Object) para operaciones sobre Movimientos_Financieros.
+ * Centraliza tanto las consultas de lectura como la inserción transaccional de movimientos.
+ * El método insertEnTransaccion() es invocado por VentaDAO, CompraDAO y GastoAdicionalDAO
+ * dentro de sus transacciones atómicas, pasando la conexión activa para mantener la atomicidad.
  */
 public class MovimientoFinancieroDAO {
 
@@ -67,6 +67,59 @@ public class MovimientoFinancieroDAO {
         }
         // Retornar la lista con todos los movimientos encontrados
         return lista;
+    }
+
+    /**
+     * Inserta un movimiento financiero usando una conexión activa de una transacción externa.
+     * Se invoca desde VentaDAO, CompraDAO y GastoAdicionalDAO para centralizar el SQL
+     * del INSERT en un solo lugar y mantener la atomicidad de la transacción padre.
+     * Lanza SQLException para que el DAO invocador pueda hacer rollback si falla.
+     *
+     * @param conexion          Conexión activa con auto-commit desactivado (de la transacción padre)
+     * @param fecha             Fecha del movimiento en formato "YYYY-MM-DD"
+     * @param concepto          Descripción del movimiento (ej: "Venta #5", "Compra #3")
+     * @param monto             Monto del movimiento financiero
+     * @param metodoPago        Método de pago ("Transferencia" o "Efectivo")
+     * @param tipoMovimientoId  1=Venta(Ingreso), 2=Compra(Egreso), 3=Gasto(Egreso)
+     * @param usuarioId         ID del usuario que generó el movimiento
+     * @param ventaId           ID de la venta asociada, o null si no aplica
+     * @param compraId          ID de la compra asociada, o null si no aplica
+     * @param gastoAdicionalId  ID del gasto asociado, o null si no aplica
+     * @throws SQLException si el INSERT falla, para que el DAO padre haga rollback
+     */
+    public static void insertEnTransaccion(Connection conexion, String fecha, String concepto,
+                                            double monto, String metodoPago, int tipoMovimientoId,
+                                            int usuarioId, Integer ventaId, Integer compraId,
+                                            Integer gastoAdicionalId) throws SQLException {
+        // SQL para insertar el movimiento financiero en la transacción activa
+        String sql = "INSERT INTO movimientos_financieros " +
+                "(fecha_movimiento, concepto, monto, metodo_pago, tipo_movimiento_id, " +
+                "usuario_id, venta_id, compra_id, gasto_adicional_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // Preparar la consulta usando la conexión de la transacción activa (no abrir una nueva)
+        PreparedStatement stmt = conexion.prepareStatement(sql);
+        // Asignar la fecha del movimiento
+        stmt.setString(1, fecha);
+        // Asignar el concepto descriptivo del movimiento
+        stmt.setString(2, concepto);
+        // Asignar el monto del movimiento financiero
+        stmt.setDouble(3, monto);
+        // Asignar el método de pago del movimiento
+        stmt.setString(4, metodoPago);
+        // Asignar el tipo de movimiento (1=Venta, 2=Compra, 3=Gasto)
+        stmt.setInt(5, tipoMovimientoId);
+        // Asignar el ID del usuario que originó el movimiento
+        stmt.setInt(6, usuarioId);
+        // Asignar el ID de la venta o NULL si el movimiento no es de tipo venta
+        if (ventaId != null) stmt.setInt(7, ventaId); else stmt.setNull(7, Types.INTEGER);
+        // Asignar el ID de la compra o NULL si el movimiento no es de tipo compra
+        if (compraId != null) stmt.setInt(8, compraId); else stmt.setNull(8, Types.INTEGER);
+        // Asignar el ID del gasto adicional o NULL si el movimiento no es de tipo gasto
+        if (gastoAdicionalId != null) stmt.setInt(9, gastoAdicionalId); else stmt.setNull(9, Types.INTEGER);
+        // Ejecutar el INSERT del movimiento financiero dentro de la transacción padre
+        stmt.executeUpdate();
+        // Cerrar el statement para liberar recursos (la conexión sigue abierta para la transacción)
+        stmt.close();
     }
 
     /**

@@ -145,10 +145,9 @@ public class CompraDAO {
             // ===== PASOS 2 y 3: INSERT Detalle_Compra y UPDATE stock por cada ítem =====
             // SQL para insertar cada ítem del detalle de compra
             String sqlDetalle = "INSERT INTO detalle_compra (cantidad, costo_unitario, subtotal, compra_id, producto_id) VALUES (?, ?, ?, ?, ?)";
-            // SQL para sumar la cantidad comprada al stock y recalcular el costo promedio
+            // SQL para sumar la cantidad comprada al stock y aplicar el costo promedio ya calculado
+            // El costo promedio ponderado NO se calcula aquí — viene pre-calculado desde CompraService
             String sqlStock = "UPDATE producto SET stock = stock + ?, costo_promedio = ? WHERE id_producto = ?";
-            // SQL para obtener el stock y costo promedio actual del producto
-            String sqlProducto = "SELECT stock, costo_promedio FROM producto WHERE id_producto = ?";
             // Recorrer cada ítem para insertarlo y actualizar el stock
             for (DetalleCompra detalle : detalles) {
                 // Asignar el ID de la compra recién creada al detalle
@@ -175,32 +174,12 @@ public class CompraDAO {
                 // Cerrar el statement del detalle para liberar recursos
                 stmtDetalle.close();
 
-                // Consultar el stock y costo promedio actual del producto para recalcular
-                PreparedStatement stmtProducto = conexion.prepareStatement(sqlProducto);
-                // Asignar el ID del producto a consultar
-                stmtProducto.setInt(1, detalle.getProductoId());
-                // Ejecutar consulta del producto
-                ResultSet rsProducto = stmtProducto.executeQuery();
-                // Leer los valores actuales del producto
-                rsProducto.next();
-                // Obtener el stock actual antes de sumar la compra
-                int stockActual = rsProducto.getInt("stock");
-                // Obtener el costo promedio actual del producto
-                double costoPromedioActual = rsProducto.getDouble("costo_promedio");
-                // Cerrar el statement del producto para liberar recursos
-                stmtProducto.close();
-
-                // Calcular el nuevo costo promedio ponderado: (stockActual * costoActual + cantidadComprada * costoCompra) / stockTotal
-                int stockTotal = stockActual + detalle.getCantidad();
-                // Calcular el costo promedio ponderado con el nuevo lote
-                double nuevoCostoPromedio = ((stockActual * costoPromedioActual) + (detalle.getCantidad() * detalle.getCostoUnitario())) / stockTotal;
-
-                // Preparar la consulta para actualizar stock y costo promedio del producto
+                // Preparar la consulta para sumar stock y aplicar el costo promedio pre-calculado
                 PreparedStatement stmtStock = conexion.prepareStatement(sqlStock);
                 // Asignar la cantidad a sumar al stock
                 stmtStock.setInt(1, detalle.getCantidad());
-                // Asignar el nuevo costo promedio calculado
-                stmtStock.setDouble(2, nuevoCostoPromedio);
+                // Usar el costo promedio ponderado calculado en CompraService (no se recalcula aquí)
+                stmtStock.setDouble(2, detalle.getCostoPromedioNuevo());
                 // Asignar el ID del producto cuyo stock se actualiza
                 stmtStock.setInt(3, detalle.getProductoId());
                 // Ejecutar UPDATE del stock y costo promedio del producto
@@ -209,33 +188,20 @@ public class CompraDAO {
                 stmtStock.close();
             }
 
-            // ===== PASO 4: INSERT en Movimientos_Financieros =====
-            // SQL para registrar el movimiento financiero de tipo Compra (Egreso)
-            String sqlMovimiento = "INSERT INTO movimientos_financieros (fecha_movimiento, concepto, monto, metodo_pago, tipo_movimiento_id, usuario_id, venta_id, compra_id, gasto_adicional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            // Preparar la consulta del movimiento financiero
-            PreparedStatement stmtMovimiento = conexion.prepareStatement(sqlMovimiento);
-            // Asignar la fecha del movimiento (misma que la compra)
-            stmtMovimiento.setString(1, compra.getFechaCompra());
-            // Asignar el concepto del movimiento identificando el número de compra
-            stmtMovimiento.setString(2, "Compra #" + compra.getIdCompra());
-            // Asignar el monto del movimiento (total de la compra)
-            stmtMovimiento.setDouble(3, compra.getTotalCompra());
-            // Asignar el método de pago del movimiento
-            stmtMovimiento.setString(4, compra.getMetodoPago());
-            // Asignar el tipo de movimiento: 2 = Compra (Egreso)
-            stmtMovimiento.setInt(5, 2);
-            // Asignar el ID del usuario que generó el movimiento
-            stmtMovimiento.setInt(6, compra.getUsuarioId());
-            // Asignar NULL al campo venta_id (no aplica para compras)
-            stmtMovimiento.setNull(7, Types.INTEGER);
-            // Asignar el ID de la compra asociada al movimiento
-            stmtMovimiento.setInt(8, compra.getIdCompra());
-            // Asignar NULL al campo gasto_adicional_id (no aplica para compras)
-            stmtMovimiento.setNull(9, Types.INTEGER);
-            // Ejecutar INSERT del movimiento financiero
-            stmtMovimiento.executeUpdate();
-            // Cerrar el statement del movimiento para liberar recursos
-            stmtMovimiento.close();
+            // ===== PASO 4: Registrar movimiento financiero en la misma transacción =====
+            // Delegar al MovimientoFinancieroDAO pasando la conexión activa para mantener la atomicidad
+            // tipo_movimiento_id = 2 → Compra (Egreso); venta_id y gasto_adicional_id son null
+            MovimientoFinancieroDAO.insertEnTransaccion(
+                    conexion,
+                    compra.getFechaCompra(),
+                    "Compra #" + compra.getIdCompra(),
+                    compra.getTotalCompra(),
+                    compra.getMetodoPago(),
+                    2,
+                    compra.getUsuarioId(),
+                    null,
+                    compra.getIdCompra(),
+                    null);
 
             // Confirmar todos los cambios de la transacción en la BD
             conexion.commit();
