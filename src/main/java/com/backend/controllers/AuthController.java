@@ -1,6 +1,10 @@
 // Paquete de controladores HTTP de la aplicación
 package com.backend.controllers;
 
+// Para acceder a la BD y consultar datos completos del usuario
+import com.backend.dao.UsuarioDAO;
+// Entidad que representa un usuario del sistema
+import com.backend.models.Usuario;
 // Para leer el cuerpo de la peticion HTTP
 import com.backend.server.http.ApiRequest;
 // Para enviar respuestas HTTP estandarizadas
@@ -119,7 +123,8 @@ public class AuthController {
 
     /**
      * Handler para GET /api/auth/me.
-     * Retorna los datos del usuario autenticado via JWT.
+     * Retorna los datos completos del usuario autenticado via JWT.
+     * Consulta la BD para obtener nombre, apellido, tieneContrasena y googleId.
      * Este endpoint es protegido por AuthMiddleware que inyecta los atributos userId, correo y rol.
      * @return HttpHandler que procesa la solicitud de verificación de usuario
      */
@@ -128,23 +133,42 @@ public class AuthController {
             // Log de petición
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/auth/me");
 
-            // Leer los datos del usuario que el AuthMiddleware extrajo del JWT y guardo como atributos
+            // Leer el ID del usuario que el AuthMiddleware extrajo del JWT
             String idUsuario = (String) exchange.getAttribute("userId");
-            // Correo del usuario desde JWT
-            String correo = (String) exchange.getAttribute("correo");
             // Rol del usuario desde JWT
             String rol = (String) exchange.getAttribute("rol");
 
-            // Construir la respuesta con los datos de identidad del usuario autenticado
+            // Parsear el ID del usuario de String a int para consultar la BD
+            int userId = Integer.parseInt(idUsuario);
+            // Buscar el usuario completo en la base de datos por su ID
+            Usuario usuario = UsuarioDAO.findById(userId);
+
+            // Verificar si el usuario existe en la BD (podría haberse eliminado)
+            if (usuario == null) {
+                // Error 404 si el usuario ya no existe
+                ApiResponse.error(exchange, 404, "Usuario no encontrado");
+                // Salir del handler sin continuar
+                return;
+            }
+
+            // Construir la respuesta con los datos completos del perfil del usuario
             JsonObject respuesta = new JsonObject();
             // Indicar éxito
             respuesta.addProperty("success", true);
             // Agregar ID del usuario
             respuesta.addProperty("userId", idUsuario);
-            // Agregar correo del usuario
-            respuesta.addProperty("correo", correo);
-            // Agregar rol del usuario
+            // Agregar nombre del usuario desde la BD
+            respuesta.addProperty("nombre", usuario.getNombre());
+            // Agregar apellido del usuario desde la BD
+            respuesta.addProperty("apellido", usuario.getApellido());
+            // Agregar correo principal del usuario desde la BD
+            respuesta.addProperty("correo", usuario.getCorreo());
+            // Agregar rol del usuario desde JWT
             respuesta.addProperty("rol", rol);
+            // Indicar si el usuario tiene contraseña establecida (true si no es null ni vacía)
+            respuesta.addProperty("tieneContrasena", usuario.getContrasena() != null && !usuario.getContrasena().isEmpty());
+            // Indicar si el usuario tiene cuenta de Google vinculada (true si googleId no es null)
+            respuesta.addProperty("tieneGoogle", usuario.getGoogleId() != null && !usuario.getGoogleId().isEmpty());
 
             // Enviar respuesta 200
             ApiResponse.send(exchange, respuesta.toString(), 200);

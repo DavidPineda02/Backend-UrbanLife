@@ -14,6 +14,10 @@ import com.backend.controllers.VentaController;
 import com.backend.controllers.CompraController;
 // Controller para gestionar gastos adicionales del negocio
 import com.backend.controllers.GastoAdicionalController;
+// Controller para gestionar correos adicionales del perfil de usuario
+import com.backend.controllers.CorreoUsuarioController;
+// Controller para gestionar números telefónicos del perfil de usuario
+import com.backend.controllers.NumeroUsuarioController;
 // Controller para el módulo de reportes y métricas del dashboard
 import com.backend.controllers.DashboardController;
 // Controller para el módulo de imágenes de productos
@@ -153,6 +157,22 @@ public class Routes {
         // Eliminar imagen por ID
         router.delete("/api/productos/imagen", auth.protect(ImagenProductoController.delete(),          "SUPER_ADMIN", "ADMIN"));
 
+        // ========== RUTAS DE CORREOS DE USUARIO (PERFIL) ==========
+        // Listar correos adicionales del usuario autenticado
+        router.get("/api/correos-usuario",       auth.protect(CorreoUsuarioController.listByUsuario(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Agregar un correo adicional al perfil
+        router.post("/api/correos-usuario",      auth.protect(CorreoUsuarioController.create(),        "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Eliminar un correo adicional del perfil
+        router.delete("/api/correos-usuario",    auth.protect(CorreoUsuarioController.delete(),        "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+
+        // ========== RUTAS DE NÚMEROS DE USUARIO (PERFIL) ==========
+        // Listar números telefónicos del usuario autenticado
+        router.get("/api/numeros-usuario",       auth.protect(NumeroUsuarioController.listByUsuario(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Agregar un número telefónico al perfil
+        router.post("/api/numeros-usuario",      auth.protect(NumeroUsuarioController.create(),        "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Eliminar un número telefónico del perfil
+        router.delete("/api/numeros-usuario",    auth.protect(NumeroUsuarioController.delete(),        "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+
         // ========== RUTAS DE DASHBOARD ==========
         // Tarjetas: ingresos/egresos del día, ingresos/egresos/ganancia del mes, contadores
         router.get("/api/dashboard/resumen",             auth.protect(DashboardController.getResumen(),           "SUPER_ADMIN", "ADMIN"));
@@ -211,6 +231,12 @@ public class Routes {
         System.out.println("  POST   /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN, EMPLEADO)");
         System.out.println("  DELETE /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/correos-usuario                        (autenticado)");
+        System.out.println("  POST   /api/correos-usuario                        (autenticado)");
+        System.out.println("  DELETE /api/correos-usuario?id=X                   (autenticado)");
+        System.out.println("  GET    /api/numeros-usuario                        (autenticado)");
+        System.out.println("  POST   /api/numeros-usuario                        (autenticado)");
+        System.out.println("  DELETE /api/numeros-usuario?id=X                   (autenticado)");
         System.out.println("  GET    /api/dashboard/resumen                     (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/dashboard/ventas-semanales            (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/dashboard/resumen-semanal             (SUPER_ADMIN, ADMIN)");
