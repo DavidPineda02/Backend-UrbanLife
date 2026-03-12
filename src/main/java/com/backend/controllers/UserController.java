@@ -3,8 +3,16 @@ package com.backend.controllers;
 
 // Para acceder directamente a la BD y listar/buscar usuarios
 import com.backend.dao.UsuarioDAO;
+// Para obtener los roles asignados a cada usuario
+import com.backend.dao.UsuarioRolDAO;
+// Para obtener el nombre del rol por su ID
+import com.backend.dao.RolDAO;
 // Entidad que representa un usuario del sistema
 import com.backend.models.Usuario;
+// Entidad que representa la relación usuario-rol
+import com.backend.models.UsuarioRol;
+// Entidad que representa un rol del sistema
+import com.backend.models.Rol;
 // Para leer el cuerpo de la peticion HTTP
 import com.backend.server.http.ApiRequest;
 // Para enviar respuestas HTTP estandarizadas
@@ -20,6 +28,10 @@ import com.sun.net.httpserver.HttpHandler;
 
 // Para la lista de usuarios retornada por findAll
 import java.util.List;
+// Para construir listas dinámicas de respuesta
+import java.util.ArrayList;
+// Para construir mapas ordenados de respuesta
+import java.util.LinkedHashMap;
 // Para construir el mapa de respuesta con Map.of()
 import java.util.Map;
 
@@ -32,7 +44,8 @@ public class UserController {
 
     /**
      * Handler para GET /api/users.
-     * Retorna todos los usuarios del sistema sin contraseñas.
+     * Retorna todos los usuarios del sistema con información de rol y método de acceso.
+     * No expone contraseñas ni googleId, solo booleanos tieneContrasena y tieneGoogle.
      * @return HttpHandler que procesa la solicitud de listar usuarios
      */
     public static HttpHandler listAll() {
@@ -42,10 +55,49 @@ public class UserController {
 
             // Obtener la lista completa de usuarios desde la base de datos
             List<Usuario> lista = UsuarioDAO.findAll();
-            // Eliminar la contrasena de cada usuario antes de enviarla al cliente
-            lista.forEach(usuario -> usuario.setContrasena(null));
-            // Enviar la lista de usuarios serializada como JSON con codigo 200
-            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", lista));
+
+            // Construir una lista de mapas con los datos de cada usuario más su rol
+            List<Map<String, Object>> datosUsuarios = new ArrayList<>();
+
+            // Recorrer cada usuario para construir su representación con rol
+            for (Usuario usuario : lista) {
+                // Crear un mapa ordenado para mantener el orden de los campos en el JSON
+                Map<String, Object> datos = new LinkedHashMap<>();
+                // Agregar el ID del usuario
+                datos.put("idUsuario", usuario.getIdUsuario());
+                // Agregar el nombre del usuario
+                datos.put("nombre", usuario.getNombre());
+                // Agregar el apellido del usuario
+                datos.put("apellido", usuario.getApellido());
+                // Agregar el correo del usuario
+                datos.put("correo", usuario.getCorreo());
+                // Agregar el estado activo/inactivo del usuario
+                datos.put("estado", usuario.isEstado());
+                // Indicar si el usuario tiene contraseña configurada (sin exponer el hash)
+                datos.put("tieneContrasena", usuario.getContrasena() != null && !usuario.getContrasena().isEmpty());
+                // Indicar si el usuario tiene cuenta de Google vinculada (sin exponer el googleId)
+                datos.put("tieneGoogle", usuario.getGoogleId() != null && !usuario.getGoogleId().isEmpty());
+
+                // Obtener los roles asignados al usuario desde la tabla usuario_rol
+                List<UsuarioRol> rolesUsuario = UsuarioRolDAO.findByUsuarioId(usuario.getIdUsuario());
+
+                // Verificar si el usuario tiene al menos un rol asignado
+                if (!rolesUsuario.isEmpty()) {
+                    // Obtener el primer rol del usuario (un usuario solo tiene un rol en este sistema)
+                    Rol rol = RolDAO.findById(rolesUsuario.get(0).getRolId());
+                    // Agregar el nombre del rol o "Sin rol" si no se encontró
+                    datos.put("rol", rol != null ? rol.getNombre() : "Sin rol");
+                } else {
+                    // Usuario sin rol asignado
+                    datos.put("rol", "Sin rol");
+                }
+
+                // Agregar el mapa del usuario a la lista de respuesta
+                datosUsuarios.add(datos);
+            }
+
+            // Enviar la lista de usuarios con rol serializada como JSON con codigo 200
+            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", datosUsuarios));
         };
     }
 
