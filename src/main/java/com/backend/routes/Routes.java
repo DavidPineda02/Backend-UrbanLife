@@ -76,10 +76,10 @@ public class Routes {
         router.patch("/api/users/id", auth.protect(UserController.patch(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
         
         // ========== RUTAS DE CATEGORIAS ==========
-        // Listar todas las categorías
-        router.get("/api/categorias",    auth.protect(CategoriaController.listAll(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
-        // Obtener categoría por ID
-        router.get("/api/categorias/id", auth.protect(CategoriaController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Listar todas las categorías (solo administradores)
+        router.get("/api/categorias",    auth.protect(CategoriaController.listAll(), "SUPER_ADMIN", "ADMIN"));
+        // Obtener categoría por ID (solo administradores)
+        router.get("/api/categorias/id", auth.protect(CategoriaController.getById(), "SUPER_ADMIN", "ADMIN"));
         // Crear nueva categoría
         router.post("/api/categorias",   auth.protect(CategoriaController.create(),  "SUPER_ADMIN", "ADMIN"));
         // Actualizar categoría completa
@@ -104,18 +104,18 @@ public class Routes {
         router.get("/api/clientes",    auth.protect(ClienteController.listAll(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
         // Obtener cliente por ID
         router.get("/api/clientes/id", auth.protect(ClienteController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
-        // Crear nuevo cliente
-        router.post("/api/clientes",   auth.protect(ClienteController.create(),  "SUPER_ADMIN", "ADMIN"));
+        // Crear nuevo cliente (empleados también pueden agregar clientes)
+        router.post("/api/clientes",   auth.protect(ClienteController.create(),  "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
         // Actualizar cliente completo
         router.put("/api/clientes/id", auth.protect(ClienteController.update(),  "SUPER_ADMIN", "ADMIN"));
         // Cambiar estado activo/inactivo
         router.patch("/api/clientes/id", auth.protect(ClienteController.patch(), "SUPER_ADMIN", "ADMIN"));
 
         // ========== RUTAS DE PROVEEDORES ==========
-        // Listar todos los proveedores
-        router.get("/api/proveedores",    auth.protect(ProveedorController.listAll(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
-        // Obtener proveedor por ID
-        router.get("/api/proveedores/id", auth.protect(ProveedorController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Listar todos los proveedores (solo administradores)
+        router.get("/api/proveedores",    auth.protect(ProveedorController.listAll(), "SUPER_ADMIN", "ADMIN"));
+        // Obtener proveedor por ID (solo administradores)
+        router.get("/api/proveedores/id", auth.protect(ProveedorController.getById(), "SUPER_ADMIN", "ADMIN"));
         // Crear nuevo proveedor
         router.post("/api/proveedores",   auth.protect(ProveedorController.create(),  "SUPER_ADMIN", "ADMIN"));
         // Actualizar proveedor completo
@@ -146,8 +146,6 @@ public class Routes {
         router.get("/api/gastos/id", auth.protect(GastoAdicionalController.getById(), "SUPER_ADMIN", "ADMIN"));
         // Registrar nuevo gasto adicional (transacción atómica)
         router.post("/api/gastos",   auth.protect(GastoAdicionalController.create(),  "SUPER_ADMIN", "ADMIN"));
-        // Listar todos los tipos de gasto (para dropdown del frontend)
-        router.get("/api/gastos/tipos", auth.protect(GastoAdicionalController.listTipos(), "SUPER_ADMIN", "ADMIN"));
 
         // ========== RUTAS DE IMÁGENES DE PRODUCTOS ==========
         // Subir imagen a un producto (Base64 JSON)
@@ -198,8 +196,8 @@ public class Routes {
         System.out.println("  GET    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
         System.out.println("  PUT    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
         System.out.println("  PATCH  /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
-        System.out.println("  GET    /api/categorias                       (SUPER_ADMIN, ADMIN, EMPLEADO)");
-        System.out.println("  GET    /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  GET    /api/categorias                       (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
         System.out.println("  POST   /api/categorias                       (SUPER_ADMIN, ADMIN)");
         System.out.println("  PUT    /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
         System.out.println("  PATCH  /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
@@ -210,11 +208,11 @@ public class Routes {
         System.out.println("  PATCH  /api/productos/id?id=X                 (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/clientes                           (SUPER_ADMIN, ADMIN, EMPLEADO)");
         System.out.println("  GET    /api/clientes/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO)");
-        System.out.println("  POST   /api/clientes                           (SUPER_ADMIN, ADMIN)");
+        System.out.println("  POST   /api/clientes                           (SUPER_ADMIN, ADMIN, EMPLEADO)");
         System.out.println("  PUT    /api/clientes/id?id=X                   (SUPER_ADMIN, ADMIN)");
         System.out.println("  PATCH  /api/clientes/id?id=X                   (SUPER_ADMIN, ADMIN)");
-        System.out.println("  GET    /api/proveedores                         (SUPER_ADMIN, ADMIN, EMPLEADO)");
-        System.out.println("  GET    /api/proveedores/id?id=X                 (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  GET    /api/proveedores                         (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/proveedores/id?id=X                 (SUPER_ADMIN, ADMIN)");
         System.out.println("  POST   /api/proveedores                         (SUPER_ADMIN, ADMIN)");
         System.out.println("  PUT    /api/proveedores/id?id=X                 (SUPER_ADMIN, ADMIN)");
         System.out.println("  PATCH  /api/proveedores/id?id=X                 (SUPER_ADMIN, ADMIN)");
@@ -227,7 +225,6 @@ public class Routes {
         System.out.println("  GET    /api/gastos                                (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/gastos/id?id=X                        (SUPER_ADMIN, ADMIN)");
         System.out.println("  POST   /api/gastos                                (SUPER_ADMIN, ADMIN)");
-        System.out.println("  GET    /api/gastos/tipos                          (SUPER_ADMIN, ADMIN)");
         System.out.println("  POST   /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN, EMPLEADO)");
         System.out.println("  DELETE /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN)");
