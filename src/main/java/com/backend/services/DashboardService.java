@@ -223,11 +223,13 @@ public class DashboardService {
     }
 
     /**
-     * Obtiene los 10 productos más rentables con sus márgenes calculados.
-     * Solicita al DAO los datos crudos { nombre, precioVenta, costoPromedio } y aplica
-     * aquí la lógica de negocio:
-     * - margen = precioVenta - costoPromedio
+     * Obtiene los 10 productos más rentables basados en ventas reales.
+     * Solicita al DAO los datos crudos { nombre, precioVenta, costoPromedio, unidadesVendidas }
+     * y aplica aquí la lógica de negocio:
+     * - margenUnitario = precioVenta - costoPromedio
+     * - gananciaTotal = margenUnitario × unidadesVendidas
      * - margenPorcentaje = ((precioVenta - costoPromedio) / precioVenta) * 100
+     * Ordena por gananciaTotal descendente para reflejar el impacto real en el negocio.
      * Usado para la lista "Productos Más Rentables" del dashboard.
      *
      * @return JsonObject con { success, message, data: [...], status }
@@ -236,26 +238,30 @@ public class DashboardService {
         // Objeto de respuesta estandarizada que se retornará al controller
         JsonObject respuesta = new JsonObject();
         try {
-            // Solicitar al DAO el array de datos crudos (nombre, precioVenta, costoPromedio)
+            // Solicitar al DAO el array de datos crudos (nombre, precioVenta, costoPromedio, unidadesVendidas)
             JsonArray datosCrudos = DashboardDAO.getProductosRentables();
 
             // Lista intermedia para poder ordenar los productos antes de armar el JsonArray
             List<JsonObject> listaProductos = new ArrayList<>();
 
             // ===== LÓGICA DE NEGOCIO =====
-            // Recorrer cada producto retornado por el DAO para calcular sus márgenes
+            // Recorrer cada producto retornado por el DAO para calcular sus márgenes y ganancia real
             for (int i = 0; i < datosCrudos.size(); i++) {
                 // Obtener el objeto JSON del producto actual desde el array del DAO
                 JsonObject productoCrudo = datosCrudos.get(i).getAsJsonObject();
                 // Leer el precio de venta del producto desde los datos crudos del DAO
-                double precioVenta   = productoCrudo.get("precioVenta").getAsDouble();
+                double precioVenta     = productoCrudo.get("precioVenta").getAsDouble();
                 // Leer el costo promedio del producto desde los datos crudos del DAO
-                double costoPromedio = productoCrudo.get("costoPromedio").getAsDouble();
+                double costoPromedio   = productoCrudo.get("costoPromedio").getAsDouble();
+                // Leer las unidades totales vendidas del producto desde los datos crudos del DAO
+                int unidadesVendidas   = productoCrudo.get("unidadesVendidas").getAsInt();
 
-                // Calcular el margen absoluto (ganancia bruta por unidad vendida)
-                double margen = precioVenta - costoPromedio;
+                // Calcular el margen unitario (ganancia bruta por unidad vendida)
+                double margenUnitario = precioVenta - costoPromedio;
+                // Calcular la ganancia total real (margen × unidades vendidas)
+                double gananciaTotal = margenUnitario * unidadesVendidas;
                 // Calcular el margen porcentual y redondearlo a 2 decimales
-                double margenPorcentaje = Math.round(((margen / precioVenta) * 100) * 100.0) / 100.0;
+                double margenPorcentaje = Math.round(((margenUnitario / precioVenta) * 100) * 100.0) / 100.0;
 
                 // Crear el objeto de respuesta del producto con todos los campos
                 JsonObject producto = new JsonObject();
@@ -265,17 +271,21 @@ public class DashboardService {
                 producto.addProperty("precioVenta",      precioVenta);
                 // Agregar el costo promedio tal como lo retornó la BD
                 producto.addProperty("costoPromedio",    costoPromedio);
-                // Agregar el margen absoluto calculado por el servicio
-                producto.addProperty("margen",           margen);
+                // Agregar las unidades totales vendidas del producto
+                producto.addProperty("unidadesVendidas", unidadesVendidas);
+                // Agregar el margen unitario calculado por el servicio
+                producto.addProperty("margenUnitario",   margenUnitario);
+                // Agregar la ganancia total real calculada por el servicio
+                producto.addProperty("gananciaTotal",    gananciaTotal);
                 // Agregar el margen porcentual calculado y redondeado por el servicio
                 producto.addProperty("margenPorcentaje", margenPorcentaje);
                 // Añadir el producto a la lista intermedia para ordenar después
                 listaProductos.add(producto);
             }
 
-            // Ordenar la lista por margen absoluto de mayor a menor (regla de negocio: top más rentables)
+            // Ordenar la lista por ganancia total real de mayor a menor (impacto real en el negocio)
             listaProductos.sort(Comparator.comparingDouble(
-                    p -> -p.get("margen").getAsDouble()
+                    p -> -p.get("gananciaTotal").getAsDouble()
             ));
 
             // Tomar solo los 10 primeros (top 10 más rentables) — regla de negocio aplicada en el Service
@@ -284,6 +294,7 @@ public class DashboardService {
             int limite = Math.min(listaProductos.size(), 10);
             // Agregar los primeros 'limite' productos ya ordenados al array de respuesta final
             for (int i = 0; i < limite; i++) {
+                // Añadir el producto procesado al array de respuesta
                 datosConMargenes.add(listaProductos.get(i));
             }
             // ===== FIN LÓGICA DE NEGOCIO =====
@@ -292,7 +303,7 @@ public class DashboardService {
             respuesta.addProperty("success", true);
             // Mensaje descriptivo de la operación completada
             respuesta.addProperty("message", "Productos más rentables obtenidos correctamente");
-            // Adjuntar el array procesado (con márgenes calculados) en el campo data
+            // Adjuntar el array procesado (con márgenes y ganancias calculados) en el campo data
             respuesta.add("data", datosConMargenes);
             // Código HTTP 200 para respuesta exitosa
             respuesta.addProperty("status", 200);

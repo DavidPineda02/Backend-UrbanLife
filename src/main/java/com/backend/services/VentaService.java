@@ -251,11 +251,24 @@ public class VentaService {
                 // Retornar respuesta de error
                 return respuesta;
             }
+            // Verificar que el ítem tenga el campo precioUnitario
+            if (!item.has("precioUnitario")) {
+                // Indicar que la operación falló
+                respuesta.addProperty("success", false);
+                // Mensaje indicando que cada ítem debe tener precioUnitario
+                respuesta.addProperty("message", "Cada item debe tener un precioUnitario");
+                // Código HTTP 400 Bad Request
+                respuesta.addProperty("status", 400);
+                // Retornar respuesta de error
+                return respuesta;
+            }
 
             // Extraer el ID del producto del ítem
             int productoId = item.get("productoId").getAsInt();
             // Extraer la cantidad del ítem
             int cantidad = item.get("cantidad").getAsInt();
+            // Extraer el precio unitario ingresado por el usuario
+            double precioUnitario = item.get("precioUnitario").getAsDouble();
 
             // Verificar que el ID del producto sea un valor positivo
             if (productoId <= 0) {
@@ -316,8 +329,18 @@ public class VentaService {
                 return respuesta;
             }
 
-            // Obtener el precio de venta del producto desde la BD (evita manipulación del frontend)
-            double precioUnitario = producto.getPrecioVenta();
+            // Validar que el precio unitario ingresado sea mayor a 0
+            if (precioUnitario <= 0) {
+                // Indicar que la operación falló
+                respuesta.addProperty("success", false);
+                // Mensaje indicando que el precio debe ser positivo
+                respuesta.addProperty("message", "El precio unitario debe ser mayor a 0");
+                // Código HTTP 400 Bad Request
+                respuesta.addProperty("status", 400);
+                // Retornar respuesta de error
+                return respuesta;
+            }
+
             // Calcular el subtotal del ítem multiplicando precio por cantidad
             double subtotal = precioUnitario * cantidad;
             // Acumular el subtotal en el total general de la venta

@@ -75,10 +75,10 @@ public class DashboardDAO {
                 "AND YEAR(fecha_movimiento) = YEAR(CURDATE())";
 
         // SQL: conteo de productos con estado activo (estado = true)
-        String sqlProductos = "SELECT COUNT(*) AS total FROM producto WHERE estado = true";
+        String sqlProductos = "SELECT COUNT(*) AS total FROM Producto WHERE ESTADO = true";
 
         // SQL: conteo de clientes con estado activo (estado = true)
-        String sqlClientes = "SELECT COUNT(*) AS total FROM clientes WHERE estado = true";
+        String sqlClientes = "SELECT COUNT(*) AS total FROM Clientes WHERE ESTADO = true";
 
         // Abrir una sola conexión y reutilizarla para todas las consultas del resumen
         try (Connection conexion = dbConnection.getConnection()) {
@@ -251,11 +251,11 @@ public class DashboardDAO {
         // GROUP BY agrupa todos los productos de la misma categoría en un solo registro
         // SUM(p.stock) acumula el stock total de todos los productos de cada categoría
         // ORDER BY totalStock DESC muestra primero las categorías con más stock
-        String sql = "SELECT c.nombre_categoria AS categoria, COALESCE(SUM(p.stock), 0) AS totalStock " +
-                "FROM producto p " +
-                "JOIN categoria c ON p.categoria_id = c.id_categoria " +
-                "WHERE p.estado = true " +
-                "GROUP BY c.id_categoria, c.nombre_categoria " +
+        String sql = "SELECT c.NOMBRE AS categoria, COALESCE(SUM(p.STOCK), 0) AS totalStock " +
+                "FROM Producto p " +
+                "JOIN Categoria c ON p.CATEGORIA_ID = c.ID_CATEGORIA " +
+                "WHERE p.ESTADO = true " +
+                "GROUP BY c.ID_CATEGORIA, c.NOMBRE " +
                 "ORDER BY totalStock DESC";
 
         // Abrir conexión, preparar la consulta y ejecutarla con auto-cierre de recursos
@@ -285,43 +285,53 @@ public class DashboardDAO {
     }
 
     /**
-     * Retorna los datos crudos de precio y costo de los 10 productos más rentables.
-     * Retorna: nombre, precioVenta y costoPromedio directamente desde la tabla producto.
-     * El cálculo de margen absoluto y margen porcentual se delega a DashboardService.
-     * Solo incluye productos activos con precio_venta mayor a 0.
+     * Retorna los datos crudos de los productos más rentables basados en ventas reales.
+     * Hace JOIN con Detalle_Venta para obtener las unidades vendidas de cada producto.
+     * Retorna: nombre, precioVenta, costoPromedio y unidadesVendidas.
+     * El cálculo de ganancia total y margen porcentual se delega a DashboardService.
+     * Solo incluye productos activos que hayan sido vendidos al menos una vez.
      * Usado para la lista "Productos Más Rentables" del dashboard.
      *
-     * @return JsonArray con objetos { nombre, precioVenta, costoPromedio } por producto
+     * @return JsonArray con objetos { nombre, precioVenta, costoPromedio, unidadesVendidas } por producto
      */
     public static JsonArray getProductosRentables() {
         // Lista donde se acumularán los datos crudos de los productos retornados por la BD
         JsonArray resultado = new JsonArray();
 
-        // SQL: selecciona los campos base de precio y costo de cada producto activo
-        // WHERE precio_venta > 0 evita productos sin precio que causarían división por cero en el servicio
+        // SQL: JOIN de Producto con Detalle_Venta para obtener unidades realmente vendidas
+        // SUM(dv.CANTIDAD) acumula todas las unidades vendidas de cada producto en todas las ventas
+        // WHERE p.ESTADO = true filtra solo productos activos
+        // WHERE p.PRECIO_VENTA > 0 evita productos sin precio que causarían división por cero
+        // HAVING asegura que solo se incluyan productos con al menos una venta registrada
         // Sin ORDER BY ni LIMIT — el ordenamiento y la selección del top 10 se delegan al Service
         String sql = "SELECT " +
-                "    nombre_producto AS nombre, " +
-                "    precio_venta AS precioVenta, " +
-                "    costo_promedio AS costoPromedio " +
-                "FROM producto " +
-                "WHERE estado = true AND precio_venta > 0";
+                "    p.NOMBRE AS nombre, " +
+                "    p.PRECIO_VENTA AS precioVenta, " +
+                "    p.COSTO_PROMEDIO AS costoPromedio, " +
+                "    SUM(dv.CANTIDAD) AS unidadesVendidas " +
+                "FROM Producto p " +
+                "JOIN Detalle_Venta dv ON p.ID_PRODUCTO = dv.PRODUCTO_ID " +
+                "WHERE p.ESTADO = true AND p.PRECIO_VENTA > 0 " +
+                "GROUP BY p.ID_PRODUCTO, p.NOMBRE, p.PRECIO_VENTA, p.COSTO_PROMEDIO " +
+                "HAVING SUM(dv.CANTIDAD) > 0";
 
         // Abrir conexión, preparar la consulta y ejecutarla con auto-cierre de recursos
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement stmt = conexion.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
-            // Recorrer cada fila del resultado (un registro por producto)
+            // Recorrer cada fila del resultado (un registro por producto vendido)
             while (rs.next()) {
                 // Crear un objeto JSON para representar los datos crudos del producto
                 JsonObject producto = new JsonObject();
-                // Agregar el nombre del producto desde la columna nombre_producto
-                producto.addProperty("nombre",        rs.getString("nombre"));
-                // Agregar el precio de venta actual del producto desde la columna precio_venta
-                producto.addProperty("precioVenta",   rs.getDouble("precioVenta"));
-                // Agregar el costo promedio ponderado del producto desde la columna costo_promedio
-                producto.addProperty("costoPromedio", rs.getDouble("costoPromedio"));
+                // Agregar el nombre del producto desde la columna nombre
+                producto.addProperty("nombre",           rs.getString("nombre"));
+                // Agregar el precio de venta actual del producto desde la columna precioVenta
+                producto.addProperty("precioVenta",      rs.getDouble("precioVenta"));
+                // Agregar el costo promedio ponderado del producto desde la columna costoPromedio
+                producto.addProperty("costoPromedio",    rs.getDouble("costoPromedio"));
+                // Agregar las unidades totales vendidas del producto desde la columna unidadesVendidas
+                producto.addProperty("unidadesVendidas", rs.getInt("unidadesVendidas"));
                 // Añadir el producto al array de resultados sin calcular márgenes aquí
                 resultado.add(producto);
             }
@@ -331,7 +341,7 @@ public class DashboardDAO {
             System.out.println("Error DashboardDAO.getProductosRentables: " + excepcion.getMessage());
         }
 
-        // Retornar el array con los datos crudos de los 10 productos al servicio para su procesamiento
+        // Retornar el array con los datos crudos de los productos al servicio para su procesamiento
         return resultado;
     }
 }
