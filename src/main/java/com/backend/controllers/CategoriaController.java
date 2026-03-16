@@ -110,10 +110,10 @@ public class CategoriaController {
                 return;
             }
 
-            // Extraer el nombre del JSON, usar "" si no viene en el body
-            String nombre      = datosJson.has("nombre")      ? datosJson.get("nombre").getAsString()      : "";
-            // Extraer la descripción del JSON, usar null si no viene en el body
-            String descripcion = datosJson.has("descripcion") ? datosJson.get("descripcion").getAsString() : null;
+            // Extraer el nombre del JSON, usar "" si no viene en el body (verificar que no sea JsonNull)
+            String nombre      = datosJson.has("nombre") && !datosJson.get("nombre").isJsonNull()           ? datosJson.get("nombre").getAsString()      : "";
+            // Extraer la descripción del JSON, usar null si no viene en el body (verificar que no sea JsonNull)
+            String descripcion = datosJson.has("descripcion") && !datosJson.get("descripcion").isJsonNull() ? datosJson.get("descripcion").getAsString() : null;
 
             // Delegar al servicio la validación y creación de la categoría
             JsonObject respuesta = CategoriaService.create(nombre, descripcion);
@@ -173,10 +173,10 @@ public class CategoriaController {
                 return;
             }
 
-            // Extraer el nombre del JSON, usar "" si no viene en el body
-            String nombre      = datosJson.has("nombre")      ? datosJson.get("nombre").getAsString()      : "";
-            // Extraer la descripción del JSON, usar null si no viene en el body
-            String descripcion = datosJson.has("descripcion") ? datosJson.get("descripcion").getAsString() : null;
+            // Extraer el nombre del JSON, usar "" si no viene en el body (verificar que no sea JsonNull)
+            String nombre      = datosJson.has("nombre") && !datosJson.get("nombre").isJsonNull()           ? datosJson.get("nombre").getAsString()      : "";
+            // Extraer la descripción del JSON, usar null si no viene en el body (verificar que no sea JsonNull)
+            String descripcion = datosJson.has("descripcion") && !datosJson.get("descripcion").isJsonNull() ? datosJson.get("descripcion").getAsString() : null;
             // Extraer el estado del JSON, usar true por defecto si no viene en el body
             boolean estado     = datosJson.has("estado")      ? datosJson.get("estado").getAsBoolean()     : true;
 
