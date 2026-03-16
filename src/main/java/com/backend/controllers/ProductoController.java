@@ -111,17 +111,17 @@ public class ProductoController {
             }
 
             // Extraer el nombre del JSON, usar "" si no viene en el body
-            String nombre        = datosJson.has("nombre")        ? datosJson.get("nombre").getAsString()        : "";
+            String nombre        = datosJson.has("nombre")        && !datosJson.get("nombre").isJsonNull()        ? datosJson.get("nombre").getAsString()        : "";
             // Extraer la descripción del JSON, usar null si no viene en el body
-            String descripcion   = datosJson.has("descripcion")   ? datosJson.get("descripcion").getAsString()   : null;
+            String descripcion   = datosJson.has("descripcion")   && !datosJson.get("descripcion").isJsonNull()   ? datosJson.get("descripcion").getAsString()   : null;
             // Extraer el precio de venta del JSON, usar 0 si no viene en el body
-            double precioVenta   = datosJson.has("precioVenta")   ? datosJson.get("precioVenta").getAsDouble()   : 0;
+            double precioVenta   = datosJson.has("precioVenta")   && !datosJson.get("precioVenta").isJsonNull()   ? datosJson.get("precioVenta").getAsDouble()   : 0;
             // Extraer el costo promedio del JSON, usar 0 si no viene en el body
-            double costoPromedio = datosJson.has("costoPromedio") ? datosJson.get("costoPromedio").getAsDouble() : 0;
+            double costoPromedio = datosJson.has("costoPromedio") && !datosJson.get("costoPromedio").isJsonNull() ? datosJson.get("costoPromedio").getAsDouble() : 0;
             // Extraer el stock del JSON, usar 0 si no viene en el body
-            int stock            = datosJson.has("stock")         ? datosJson.get("stock").getAsInt()            : 0;
+            int stock            = datosJson.has("stock")         && !datosJson.get("stock").isJsonNull()         ? datosJson.get("stock").getAsInt()            : 0;
             // Extraer el ID de categoría del JSON, usar 0 si no viene en el body
-            int categoriaId      = datosJson.has("categoriaId")   ? datosJson.get("categoriaId").getAsInt()      : 0;
+            int categoriaId      = datosJson.has("categoriaId")   && !datosJson.get("categoriaId").isJsonNull()   ? datosJson.get("categoriaId").getAsInt()      : 0;
 
             // Delegar al servicio la validación y creación del producto
             JsonObject respuesta = ProductoService.create(nombre, descripcion, precioVenta, costoPromedio, stock, categoriaId);
@@ -182,19 +182,19 @@ public class ProductoController {
             }
 
             // Extraer el nombre del JSON, usar "" si no viene en el body
-            String nombre        = datosJson.has("nombre")        ? datosJson.get("nombre").getAsString()        : "";
+            String nombre        = datosJson.has("nombre")        && !datosJson.get("nombre").isJsonNull()        ? datosJson.get("nombre").getAsString()        : "";
             // Extraer la descripción del JSON, usar null si no viene en el body
-            String descripcion   = datosJson.has("descripcion")   ? datosJson.get("descripcion").getAsString()   : null;
+            String descripcion   = datosJson.has("descripcion")   && !datosJson.get("descripcion").isJsonNull()   ? datosJson.get("descripcion").getAsString()   : null;
             // Extraer el precio de venta del JSON, usar 0 si no viene en el body
-            double precioVenta   = datosJson.has("precioVenta")   ? datosJson.get("precioVenta").getAsDouble()   : 0;
+            double precioVenta   = datosJson.has("precioVenta")   && !datosJson.get("precioVenta").isJsonNull()   ? datosJson.get("precioVenta").getAsDouble()   : 0;
             // Extraer el costo promedio del JSON, usar 0 si no viene en el body
-            double costoPromedio = datosJson.has("costoPromedio") ? datosJson.get("costoPromedio").getAsDouble() : 0;
+            double costoPromedio = datosJson.has("costoPromedio") && !datosJson.get("costoPromedio").isJsonNull() ? datosJson.get("costoPromedio").getAsDouble() : 0;
             // Extraer el stock del JSON, usar 0 si no viene en el body
-            int stock            = datosJson.has("stock")         ? datosJson.get("stock").getAsInt()            : 0;
+            int stock            = datosJson.has("stock")         && !datosJson.get("stock").isJsonNull()         ? datosJson.get("stock").getAsInt()            : 0;
             // Extraer el estado del JSON, usar true por defecto si no viene en el body
-            boolean estado       = datosJson.has("estado")        ? datosJson.get("estado").getAsBoolean()       : true;
+            boolean estado       = datosJson.has("estado")        && !datosJson.get("estado").isJsonNull()        ? datosJson.get("estado").getAsBoolean()       : true;
             // Extraer el ID de categoría del JSON, usar 0 si no viene en el body
-            int categoriaId      = datosJson.has("categoriaId")   ? datosJson.get("categoriaId").getAsInt()      : 0;
+            int categoriaId      = datosJson.has("categoriaId")   && !datosJson.get("categoriaId").isJsonNull()   ? datosJson.get("categoriaId").getAsInt()      : 0;
 
             // Delegar al servicio la validación y actualización del producto
             JsonObject respuesta = ProductoService.update(id, nombre, descripcion, precioVenta, costoPromedio, stock, estado, categoriaId);
@@ -255,7 +255,7 @@ public class ProductoController {
             }
 
             // PATCH solo permite cambiar el estado, verificar que venga en el body
-            if (!datosJson.has("estado")) {
+            if (!datosJson.has("estado") || datosJson.get("estado").isJsonNull()) {
                 // Error 400 si no se envió el campo estado
                 ApiResponse.error(exchange, 400, "El campo 'estado' es requerido");
                 // Salir del handler sin continuar

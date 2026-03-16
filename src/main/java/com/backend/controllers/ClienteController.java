@@ -111,17 +111,17 @@ public class ClienteController {
             }
 
             // Extraer el nombre del JSON, usar "" si no viene en el body
-            String nombre    = datosJson.has("nombre")    ? datosJson.get("nombre").getAsString()    : "";
+            String nombre    = datosJson.has("nombre")    && !datosJson.get("nombre").isJsonNull()    ? datosJson.get("nombre").getAsString()    : "";
             // Extraer el documento numérico del JSON, usar null si no viene en el body
-            Long documento   = datosJson.has("documento") ? datosJson.get("documento").getAsLong()   : null;
+            Long documento   = datosJson.has("documento") && !datosJson.get("documento").isJsonNull() ? datosJson.get("documento").getAsLong()   : null;
             // Extraer el correo del JSON, usar null si no viene en el body
-            String correo    = datosJson.has("correo")    ? datosJson.get("correo").getAsString()    : null;
+            String correo    = datosJson.has("correo")    && !datosJson.get("correo").isJsonNull()    ? datosJson.get("correo").getAsString()    : null;
             // Extraer el teléfono del JSON, usar null si no viene en el body
-            String telefono  = datosJson.has("telefono")  ? datosJson.get("telefono").getAsString()  : null;
+            String telefono  = datosJson.has("telefono")  && !datosJson.get("telefono").isJsonNull()  ? datosJson.get("telefono").getAsString()  : null;
             // Extraer la dirección del JSON, usar null si no viene en el body
-            String direccion = datosJson.has("direccion") ? datosJson.get("direccion").getAsString() : null;
+            String direccion = datosJson.has("direccion") && !datosJson.get("direccion").isJsonNull() ? datosJson.get("direccion").getAsString() : null;
             // Extraer la ciudad del JSON, usar null si no viene en el body
-            String ciudad    = datosJson.has("ciudad")    ? datosJson.get("ciudad").getAsString()    : null;
+            String ciudad    = datosJson.has("ciudad")    && !datosJson.get("ciudad").isJsonNull()    ? datosJson.get("ciudad").getAsString()    : null;
 
             // Delegar al servicio la validación y creación del cliente
             JsonObject respuesta = ClienteService.create(nombre, documento, correo, telefono, direccion, ciudad);
@@ -182,19 +182,19 @@ public class ClienteController {
             }
 
             // Extraer el nombre del JSON, usar "" si no viene en el body
-            String nombre    = datosJson.has("nombre")    ? datosJson.get("nombre").getAsString()    : "";
+            String nombre    = datosJson.has("nombre")    && !datosJson.get("nombre").isJsonNull()    ? datosJson.get("nombre").getAsString()    : "";
             // Extraer el documento numérico del JSON, usar null si no viene en el body
-            Long documento   = datosJson.has("documento") ? datosJson.get("documento").getAsLong()   : null;
+            Long documento   = datosJson.has("documento") && !datosJson.get("documento").isJsonNull() ? datosJson.get("documento").getAsLong()   : null;
             // Extraer el correo del JSON, usar null si no viene en el body
-            String correo    = datosJson.has("correo")    ? datosJson.get("correo").getAsString()    : null;
+            String correo    = datosJson.has("correo")    && !datosJson.get("correo").isJsonNull()    ? datosJson.get("correo").getAsString()    : null;
             // Extraer el teléfono del JSON, usar null si no viene en el body
-            String telefono  = datosJson.has("telefono")  ? datosJson.get("telefono").getAsString()  : null;
+            String telefono  = datosJson.has("telefono")  && !datosJson.get("telefono").isJsonNull()  ? datosJson.get("telefono").getAsString()  : null;
             // Extraer la dirección del JSON, usar null si no viene en el body
-            String direccion = datosJson.has("direccion") ? datosJson.get("direccion").getAsString() : null;
+            String direccion = datosJson.has("direccion") && !datosJson.get("direccion").isJsonNull() ? datosJson.get("direccion").getAsString() : null;
             // Extraer la ciudad del JSON, usar null si no viene en el body
-            String ciudad    = datosJson.has("ciudad")    ? datosJson.get("ciudad").getAsString()    : null;
+            String ciudad    = datosJson.has("ciudad")    && !datosJson.get("ciudad").isJsonNull()    ? datosJson.get("ciudad").getAsString()    : null;
             // Extraer el estado del JSON, usar true por defecto si no viene en el body
-            boolean estado   = datosJson.has("estado")    ? datosJson.get("estado").getAsBoolean()   : true;
+            boolean estado   = datosJson.has("estado")    && !datosJson.get("estado").isJsonNull()    ? datosJson.get("estado").getAsBoolean()   : true;
 
             // Delegar al servicio la validación y actualización del cliente
             JsonObject respuesta = ClienteService.update(id, nombre, documento, correo, telefono, direccion, ciudad, estado);
@@ -255,7 +255,7 @@ public class ClienteController {
             }
 
             // PATCH solo permite cambiar el estado, verificar que venga en el body
-            if (!datosJson.has("estado")) {
+            if (!datosJson.has("estado") || datosJson.get("estado").isJsonNull()) {
                 // Error 400 si no se envió el campo estado
                 ApiResponse.error(exchange, 400, "El campo 'estado' es requerido");
                 // Salir del handler sin continuar
