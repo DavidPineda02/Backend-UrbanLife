@@ -4,7 +4,6 @@ package com.backend.models;
 /**
  * Entidad que representa un gasto adicional del negocio.
  * Mapea directamente la tabla Gastos_Adicionales de la base de datos.
- * Puede estar asociado opcionalmente a una compra (ej: flete, seguro).
  */
 public class GastoAdicional {
 
@@ -18,12 +17,6 @@ public class GastoAdicional {
     private String fechaRegistro;
     // Método de pago utilizado: "Transferencia" o "Efectivo"
     private String metodoPago;
-    // ID de la compra asociada al gasto (FK a Compra, null si no aplica)
-    private Integer compraId;
-    // ID del tipo de gasto (FK a Tipo_Gasto)
-    private int tipoGastoId;
-    // ID del usuario que registró el gasto (FK a Usuarios)
-    private int usuarioId;
 
     /**
      * Constructor completo con ID (usado al leer desde la base de datos).
@@ -32,12 +25,9 @@ public class GastoAdicional {
      * @param descripcion Descripción del concepto del gasto
      * @param fechaRegistro Fecha de registro en formato "YYYY-MM-DD"
      * @param metodoPago Método de pago ("Transferencia" o "Efectivo")
-     * @param compraId ID de la compra asociada (null si no aplica)
-     * @param tipoGastoId ID del tipo de gasto
-     * @param usuarioId ID del usuario que registró el gasto
      */
     public GastoAdicional(int idGastosAdic, double monto, String descripcion, String fechaRegistro,
-                          String metodoPago, Integer compraId, int tipoGastoId, int usuarioId) {
+                          String metodoPago) {
         // Asignar el ID del gasto
         this.idGastosAdic = idGastosAdic;
         // Asignar el monto del gasto
@@ -48,12 +38,6 @@ public class GastoAdicional {
         this.fechaRegistro = fechaRegistro;
         // Asignar el método de pago
         this.metodoPago = metodoPago;
-        // Asignar el ID de la compra asociada (null si no aplica)
-        this.compraId = compraId;
-        // Asignar el ID del tipo de gasto
-        this.tipoGastoId = tipoGastoId;
-        // Asignar el ID del usuario
-        this.usuarioId = usuarioId;
     }
 
     /**
@@ -62,12 +46,9 @@ public class GastoAdicional {
      * @param descripcion Descripción del concepto
      * @param fechaRegistro Fecha de registro en formato "YYYY-MM-DD"
      * @param metodoPago Método de pago ("Transferencia" o "Efectivo")
-     * @param compraId ID de la compra asociada (null si no aplica)
-     * @param tipoGastoId ID del tipo de gasto
-     * @param usuarioId ID del usuario que lo registra
      */
     public GastoAdicional(double monto, String descripcion, String fechaRegistro,
-                          String metodoPago, Integer compraId, int tipoGastoId, int usuarioId) {
+                          String metodoPago) {
         // Asignar el monto del gasto
         this.monto = monto;
         // Asignar la descripción del gasto
@@ -76,12 +57,6 @@ public class GastoAdicional {
         this.fechaRegistro = fechaRegistro;
         // Asignar el método de pago
         this.metodoPago = metodoPago;
-        // Asignar el ID de la compra asociada (null si no aplica)
-        this.compraId = compraId;
-        // Asignar el ID del tipo de gasto
-        this.tipoGastoId = tipoGastoId;
-        // Asignar el ID del usuario
-        this.usuarioId = usuarioId;
     }
 
     // ========== Getters y Setters ==========
@@ -174,59 +149,5 @@ public class GastoAdicional {
     public void setMetodoPago(String metodoPago) {
         // Asignar el método de pago
         this.metodoPago = metodoPago;
-    }
-
-    /**
-     * Retorna el ID de la compra asociada (puede ser null).
-     * @return ID de la compra o null
-     */
-    public Integer getCompraId() {
-        // Retornar el ID de la compra (nullable)
-        return compraId;
-    }
-
-    /**
-     * Establece el ID de la compra asociada.
-     * @param compraId ID de la compra (null si no aplica)
-     */
-    public void setCompraId(Integer compraId) {
-        // Asignar el ID de la compra
-        this.compraId = compraId;
-    }
-
-    /**
-     * Retorna el ID del tipo de gasto.
-     * @return ID del tipo de gasto
-     */
-    public int getTipoGastoId() {
-        // Retornar el ID del tipo de gasto
-        return tipoGastoId;
-    }
-
-    /**
-     * Establece el ID del tipo de gasto.
-     * @param tipoGastoId ID del tipo a asignar
-     */
-    public void setTipoGastoId(int tipoGastoId) {
-        // Asignar el ID del tipo de gasto
-        this.tipoGastoId = tipoGastoId;
-    }
-
-    /**
-     * Retorna el ID del usuario que registró el gasto.
-     * @return ID del usuario
-     */
-    public int getUsuarioId() {
-        // Retornar el ID del usuario
-        return usuarioId;
-    }
-
-    /**
-     * Establece el ID del usuario.
-     * @param usuarioId ID del usuario a asignar
-     */
-    public void setUsuarioId(int usuarioId) {
-        // Asignar el ID del usuario
-        this.usuarioId = usuarioId;
     }
 }

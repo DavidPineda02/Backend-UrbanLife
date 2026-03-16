@@ -6,7 +6,7 @@ import com.backend.config.dbConnection;
 // Modelo que representa un gasto adicional del negocio
 import com.backend.models.GastoAdicional;
 
-// Clases JDBC para conexión, consultas preparadas, resultados, sentencias y tipos SQL
+// Clases JDBC para conexión, consultas preparadas, resultados y sentencias
 import java.sql.*;
 // Lista dinámica para retornar múltiples registros
 import java.util.ArrayList;
@@ -76,9 +76,10 @@ public class GastoAdicionalDAO {
      *     con tipo_movimiento_id=3 (Gasto Adicional/Egreso).
      * Si cualquier paso falla se hace rollback de toda la operación.
      * @param gasto Objeto GastoAdicional con los datos a insertar
+     * @param usuarioId ID del usuario autenticado que registra el gasto (para el movimiento financiero)
      * @return El GastoAdicional con su ID asignado, o null si la transacción falló
      */
-    public static GastoAdicional create(GastoAdicional gasto) {
+    public static GastoAdicional create(GastoAdicional gasto, int usuarioId) {
         // Declarar la conexión fuera del try para poder acceder en catch y finally
         Connection conexion = null;
         try {
@@ -88,8 +89,8 @@ public class GastoAdicionalDAO {
             conexion.setAutoCommit(false);
 
             // ===== PASO 1: INSERT en la tabla Gastos_Adicionales =====
-            // SQL para insertar el gasto adicional con todos sus campos
-            String sqlGasto = "INSERT INTO gastos_adicionales (monto, descripcion, fecha_registro, metodo_pago, compra_id, tipo_gasto_id, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            // SQL para insertar el gasto adicional con sus campos
+            String sqlGasto = "INSERT INTO gastos_adicionales (monto, descripcion, fecha_registro, metodo_pago) VALUES (?, ?, ?, ?)";
             // Preparar la consulta solicitando la clave generada por la BD
             PreparedStatement stmtGasto = conexion.prepareStatement(sqlGasto, Statement.RETURN_GENERATED_KEYS);
             // Asignar el monto del gasto
@@ -100,18 +101,6 @@ public class GastoAdicionalDAO {
             stmtGasto.setString(3, gasto.getFechaRegistro());
             // Asignar el método de pago ("Transferencia" o "Efectivo")
             stmtGasto.setString(4, gasto.getMetodoPago());
-            // Asignar el compra_id si existe, o NULL si no aplica
-            if (gasto.getCompraId() != null) {
-                // Asignar el ID de la compra asociada
-                stmtGasto.setInt(5, gasto.getCompraId());
-            } else {
-                // Asignar NULL al campo compra_id
-                stmtGasto.setNull(5, Types.INTEGER);
-            }
-            // Asignar el ID del tipo de gasto
-            stmtGasto.setInt(6, gasto.getTipoGastoId());
-            // Asignar el ID del usuario que registra el gasto
-            stmtGasto.setInt(7, gasto.getUsuarioId());
             // Ejecutar INSERT del gasto
             stmtGasto.executeUpdate();
             // Obtener la clave primaria generada por la BD para el gasto
@@ -131,7 +120,7 @@ public class GastoAdicionalDAO {
                     gasto.getMonto(),
                     gasto.getMetodoPago(),
                     3,
-                    gasto.getUsuarioId(),
+                    usuarioId,
                     null,
                     null,
                     gasto.getIdGastosAdic());
@@ -174,17 +163,11 @@ public class GastoAdicionalDAO {
 
     /**
      * Convierte una fila del ResultSet en un objeto GastoAdicional.
-     * Maneja la columna nullable compra_id usando el patrón getInt + wasNull.
      * @param resultado ResultSet posicionado en la fila a mapear
      * @return Objeto GastoAdicional con todos los campos del registro
      * @throws SQLException si ocurre un error al leer las columnas
      */
     private static GastoAdicional mapRow(ResultSet resultado) throws SQLException {
-        // Leer el compra_id como int primitivo (retorna 0 si es NULL)
-        int compraIdValor = resultado.getInt("compra_id");
-        // Convertir a Integer nullable: null si era NULL en la BD
-        Integer compraId = resultado.wasNull() ? null : compraIdValor;
-
         // Construir y retornar un GastoAdicional con los datos del registro actual
         return new GastoAdicional(
                 // Leer el ID del gasto desde la columna id_gastos_adic
@@ -196,12 +179,6 @@ public class GastoAdicionalDAO {
                 // Leer la fecha de registro como String desde la columna fecha_registro
                 resultado.getString("fecha_registro"),
                 // Leer el método de pago desde la columna metodo_pago
-                resultado.getString("metodo_pago"),
-                // Asignar el ID de la compra (nullable)
-                compraId,
-                // Leer el ID del tipo de gasto desde la columna tipo_gasto_id
-                resultado.getInt("tipo_gasto_id"),
-                // Leer el ID del usuario desde la columna usuario_id
-                resultado.getInt("usuario_id"));
+                resultado.getString("metodo_pago"));
     }
 }
