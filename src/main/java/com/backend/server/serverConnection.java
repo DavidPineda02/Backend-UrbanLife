@@ -3,8 +3,6 @@ package com.backend.server;
 
 // Importar la clase que registra todas las rutas de la API
 import com.backend.routes.Routes;
-// Manejador de archivos estáticos para servir las imágenes subidas
-import com.backend.server.StaticFileHandler;
 // Interfaz que representa un manejador de peticiones HTTP
 import com.sun.net.httpserver.HttpHandler;
 // Clase del servidor HTTP nativo de Java (com.sun.net.httpserver)
