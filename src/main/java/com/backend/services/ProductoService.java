@@ -79,13 +79,12 @@ public class ProductoService {
      * @param nombre Nombre del producto (obligatorio)
      * @param descripcion Descripción del producto (opcional)
      * @param precioVenta Precio de venta al público (obligatorio, mayor a 0)
-     * @param costoPromedio Costo promedio de adquisición (opcional, mayor o igual a 0)
      * @param stock Cantidad inicial en inventario (obligatorio, mayor o igual a 0)
      * @param categoriaId ID de la categoría asociada (obligatorio, debe existir)
      * @return JsonObject con el resultado de la creación
      */
     public static JsonObject create(String nombre, String descripcion, double precioVenta,
-                                    double costoPromedio, int stock, int categoriaId) {
+                                    int stock, int categoriaId) {
         // Crear el objeto de respuesta
         JsonObject respuesta = new JsonObject();
 
@@ -153,20 +152,6 @@ public class ProductoService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Costo Promedio -----
-
-        // Verificar que el costo promedio no sea negativo
-        if (costoPromedio < 0) {
-            // Indicar que la operación falló
-            respuesta.addProperty("success", false);
-            // Mensaje indicando que el costo no puede ser negativo
-            respuesta.addProperty("message", "El costo promedio no puede ser negativo");
-            // Código HTTP 400 Bad Request
-            respuesta.addProperty("status", 400);
-            // Retornar respuesta de error
-            return respuesta;
-        }
-
         // ----- Validaciones del campo Stock -----
 
         // Verificar que el stock no sea negativo
@@ -208,8 +193,8 @@ public class ProductoService {
 
         // ----- Crear y persistir el producto -----
 
-        // Construir el objeto Producto con estado activo por defecto
-        Producto nuevo = new Producto(nombre.trim(), descripcion, precioVenta, costoPromedio, stock, true, categoriaId);
+        // Construir el objeto Producto con estado activo y costo promedio en 0 (se calcula automáticamente en CompraDAO)
+        Producto nuevo = new Producto(nombre.trim(), descripcion, precioVenta, 0, stock, true, categoriaId);
         // Persistir el nuevo producto en la base de datos
         Producto creado = ProductoDAO.create(nuevo);
 
@@ -244,14 +229,13 @@ public class ProductoService {
      * @param nombre Nuevo nombre (obligatorio)
      * @param descripcion Nueva descripción (opcional)
      * @param precioVenta Nuevo precio de venta (obligatorio, mayor a 0)
-     * @param costoPromedio Nuevo costo promedio (obligatorio, mayor o igual a 0)
      * @param stock Nuevo stock (obligatorio, mayor o igual a 0)
      * @param estado Nuevo estado activo/inactivo
      * @param categoriaId Nuevo ID de categoría (obligatorio, debe existir)
      * @return JsonObject con el resultado de la actualización
      */
     public static JsonObject update(int id, String nombre, String descripcion, double precioVenta,
-                                    double costoPromedio, int stock, boolean estado, int categoriaId) {
+                                    int stock, boolean estado, int categoriaId) {
         // Crear el objeto de respuesta
         JsonObject respuesta = new JsonObject();
 
@@ -335,20 +319,6 @@ public class ProductoService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Costo Promedio -----
-
-        // Verificar que el costo promedio no sea negativo
-        if (costoPromedio < 0) {
-            // Indicar que la operación falló
-            respuesta.addProperty("success", false);
-            // Mensaje indicando que el costo no puede ser negativo
-            respuesta.addProperty("message", "El costo promedio no puede ser negativo");
-            // Código HTTP 400 Bad Request
-            respuesta.addProperty("status", 400);
-            // Retornar respuesta de error
-            return respuesta;
-        }
-
         // ----- Validaciones del campo Stock -----
 
         // Verificar que el stock no sea negativo
@@ -396,8 +366,7 @@ public class ProductoService {
         producto.setDescripcion(descripcion);
         // Actualizar el precio de venta en el objeto producto
         producto.setPrecioVenta(precioVenta);
-        // Actualizar el costo promedio en el objeto producto
-        producto.setCostoPromedio(costoPromedio);
+        // El costo promedio NO se modifica aquí, se preserva el valor calculado automáticamente por CompraDAO
         // Actualizar el stock en el objeto producto
         producto.setStock(stock);
         // Actualizar el estado en el objeto producto

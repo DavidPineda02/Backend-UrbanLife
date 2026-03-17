@@ -77,7 +77,7 @@ public class ProductoController {
 
     /**
      * Handler para POST /api/productos.
-     * Crea un nuevo producto con nombre, descripción, precio, costo, stock y categoría.
+     * Crea un nuevo producto con nombre, descripción, precio, stock y categoría.
      * @return HttpHandler que procesa la solicitud de crear producto
      */
     public static HttpHandler create() {
@@ -116,15 +116,13 @@ public class ProductoController {
             String descripcion   = datosJson.has("descripcion")   && !datosJson.get("descripcion").isJsonNull()   ? datosJson.get("descripcion").getAsString()   : null;
             // Extraer el precio de venta del JSON, usar 0 si no viene en el body
             double precioVenta   = datosJson.has("precioVenta")   && !datosJson.get("precioVenta").isJsonNull()   ? datosJson.get("precioVenta").getAsDouble()   : 0;
-            // Extraer el costo promedio del JSON, usar 0 si no viene en el body
-            double costoPromedio = datosJson.has("costoPromedio") && !datosJson.get("costoPromedio").isJsonNull() ? datosJson.get("costoPromedio").getAsDouble() : 0;
             // Extraer el stock del JSON, usar 0 si no viene en el body
             int stock            = datosJson.has("stock")         && !datosJson.get("stock").isJsonNull()         ? datosJson.get("stock").getAsInt()            : 0;
             // Extraer el ID de categoría del JSON, usar 0 si no viene en el body
             int categoriaId      = datosJson.has("categoriaId")   && !datosJson.get("categoriaId").isJsonNull()   ? datosJson.get("categoriaId").getAsInt()      : 0;
 
             // Delegar al servicio la validación y creación del producto
-            JsonObject respuesta = ProductoService.create(nombre, descripcion, precioVenta, costoPromedio, stock, categoriaId);
+            JsonObject respuesta = ProductoService.create(nombre, descripcion, precioVenta, stock, categoriaId);
             // Extraer el código HTTP interno del servicio para usarlo en la respuesta
             int codigoHttp = respuesta.get("status").getAsInt();
             // Eliminar el campo "status" interno antes de enviar al cliente
@@ -187,8 +185,6 @@ public class ProductoController {
             String descripcion   = datosJson.has("descripcion")   && !datosJson.get("descripcion").isJsonNull()   ? datosJson.get("descripcion").getAsString()   : null;
             // Extraer el precio de venta del JSON, usar 0 si no viene en el body
             double precioVenta   = datosJson.has("precioVenta")   && !datosJson.get("precioVenta").isJsonNull()   ? datosJson.get("precioVenta").getAsDouble()   : 0;
-            // Extraer el costo promedio del JSON, usar 0 si no viene en el body
-            double costoPromedio = datosJson.has("costoPromedio") && !datosJson.get("costoPromedio").isJsonNull() ? datosJson.get("costoPromedio").getAsDouble() : 0;
             // Extraer el stock del JSON, usar 0 si no viene en el body
             int stock            = datosJson.has("stock")         && !datosJson.get("stock").isJsonNull()         ? datosJson.get("stock").getAsInt()            : 0;
             // Extraer el estado del JSON, usar true por defecto si no viene en el body
@@ -197,7 +193,7 @@ public class ProductoController {
             int categoriaId      = datosJson.has("categoriaId")   && !datosJson.get("categoriaId").isJsonNull()   ? datosJson.get("categoriaId").getAsInt()      : 0;
 
             // Delegar al servicio la validación y actualización del producto
-            JsonObject respuesta = ProductoService.update(id, nombre, descripcion, precioVenta, costoPromedio, stock, estado, categoriaId);
+            JsonObject respuesta = ProductoService.update(id, nombre, descripcion, precioVenta, stock, estado, categoriaId);
             // Extraer el código HTTP interno del servicio para usarlo en la respuesta
             int codigoHttp = respuesta.get("status").getAsInt();
             // Eliminar el campo "status" interno antes de enviar al cliente
