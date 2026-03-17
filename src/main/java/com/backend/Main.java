@@ -13,6 +13,8 @@ import com.backend.seeders.SeedSuperAdmin;
 import com.backend.seeders.SeedRolPermisos;
 // Seeder para insertar datos de demostración (usuarios, productos, ventas, etc.)
 import com.backend.seeders.SeedDemoData;
+// Seeder para insertar el cliente predeterminado de UrbanLife
+import com.backend.seeders.SeedClienteDefault;
 // Importar la clase que inicia el servidor HTTP
 import com.backend.server.serverConnection;
 
@@ -45,6 +47,8 @@ public class Main {
         SeedSuperAdmin.insertSuperAdmin();
         // Asignar permisos a cada rol si no existen
         SeedRolPermisos.insertRolPermisos();
+        // Insertar cliente predeterminado de UrbanLife si no existe
+        SeedClienteDefault.insertClienteDefault();
         // Insertar datos de demostración si no existen
         SeedDemoData.insertDemoData();
         System.out.println("Seeders finalizados.\n");
