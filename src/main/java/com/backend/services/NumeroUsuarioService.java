@@ -84,6 +84,20 @@ public class NumeroUsuarioService {
             return respuesta;
         }
 
+        // ----- Validar que el número no esté duplicado para este usuario -----
+
+        // Verificar si el número ya está registrado para este usuario
+        if (NumeroUsuarioDAO.existsByNumeroAndUsuarioId(numero.trim(), usuarioId)) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el número ya existe
+            respuesta.addProperty("message", "Este número de teléfono ya está registrado");
+            // Código HTTP 409 Conflict
+            respuesta.addProperty("status", 409);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+
         // ----- Crear y persistir el número -----
 
         // Construir el objeto NumeroUsuario con el número limpio y el ID del usuario

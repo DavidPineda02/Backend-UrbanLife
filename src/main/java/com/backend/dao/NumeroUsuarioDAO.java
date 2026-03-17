@@ -96,6 +96,34 @@ public class NumeroUsuarioDAO {
     }
 
     /**
+     * Verifica si un número de teléfono ya está registrado para un usuario específico.
+     * @param numero Número de teléfono a verificar
+     * @param usuarioId ID del usuario al que pertenece el número
+     * @return true si el número ya existe para ese usuario, false si no
+     */
+    public static boolean existsByNumeroAndUsuarioId(String numero, int usuarioId) {
+        // Consulta SQL para verificar si el número ya existe para el usuario
+        String sql = "SELECT COUNT(*) FROM Numeros_Usuario WHERE NUMERO = ? AND USUARIO_ID = ?";
+        // Abrir conexión y preparar la consulta con try-with-resources
+        try (Connection conexion = dbConnection.getConnection();
+             PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            // Establecer el número de teléfono como primer parámetro
+            consulta.setString(1, numero);
+            // Establecer el ID del usuario como segundo parámetro
+            consulta.setInt(2, usuarioId);
+            // Ejecutar la consulta y obtener el resultado
+            ResultSet resultado = consulta.executeQuery();
+            // Si hay resultado, verificar si el conteo es mayor a 0
+            if (resultado.next()) return resultado.getInt(1) > 0;
+        } catch (Exception excepcion) {
+            // Imprimir el error en consola para depuración
+            System.out.println("Error NumeroUsuarioDAO.existsByNumeroAndUsuarioId: " + excepcion.getMessage());
+        }
+        // Retornar false si hubo error (asumir que no existe)
+        return false;
+    }
+
+    /**
      * Crea un nuevo número de usuario en la base de datos.
      * @param numeroUsuario Objeto NumeroUsuario con los datos a insertar
      * @return NumeroUsuario creado con su ID generado o null si falló
