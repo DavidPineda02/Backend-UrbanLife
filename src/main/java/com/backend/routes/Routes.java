@@ -76,10 +76,10 @@ public class Routes {
         router.patch("/api/users/id", auth.protect(UserController.patch(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
         
         // ========== RUTAS DE CATEGORIAS ==========
-        // Listar todas las categorías (solo administradores)
-        router.get("/api/categorias",    auth.protect(CategoriaController.listAll(), "SUPER_ADMIN", "ADMIN"));
-        // Obtener categoría por ID (solo administradores)
-        router.get("/api/categorias/id", auth.protect(CategoriaController.getById(), "SUPER_ADMIN", "ADMIN"));
+        // Listar todas las categorías (empleados pueden leer para ver la categoría de cada producto)
+        router.get("/api/categorias",    auth.protect(CategoriaController.listAll(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Obtener categoría por ID (empleados pueden leer para ver la categoría de cada producto)
+        router.get("/api/categorias/id", auth.protect(CategoriaController.getById(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
         // Crear nueva categoría
         router.post("/api/categorias",   auth.protect(CategoriaController.create(),  "SUPER_ADMIN", "ADMIN"));
         // Actualizar categoría completa
@@ -196,8 +196,8 @@ public class Routes {
         System.out.println("  GET    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
         System.out.println("  PUT    /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
         System.out.println("  PATCH  /api/users/id?id=X                   (SUPER_ADMIN, ADMIN, EMPLEADO propio)");
-        System.out.println("  GET    /api/categorias                       (SUPER_ADMIN, ADMIN)");
-        System.out.println("  GET    /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/categorias                       (SUPER_ADMIN, ADMIN, EMPLEADO)");
+        System.out.println("  GET    /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN, EMPLEADO)");
         System.out.println("  POST   /api/categorias                       (SUPER_ADMIN, ADMIN)");
         System.out.println("  PUT    /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
         System.out.println("  PATCH  /api/categorias/id?id=X               (SUPER_ADMIN, ADMIN)");
