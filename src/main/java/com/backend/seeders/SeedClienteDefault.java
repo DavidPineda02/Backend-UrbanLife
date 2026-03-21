@@ -27,7 +27,7 @@ public class SeedClienteDefault {
         try (Connection conexion = dbConnection.getConnection()) {
 
             // SQL para verificar si ya existe el cliente predeterminado
-            String sqlVerificacion = "SELECT COUNT(*) FROM Clientes WHERE NOMBRE = ?";
+            String sqlVerificacion = "SELECT COUNT(*) FROM Clientes WHERE NOMBRE_CLIENTE = ?";
             // Preparar consulta de verificación con auto-cierre
             try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion)) {
                 // Asignar el nombre del cliente predeterminado como parámetro
@@ -44,7 +44,7 @@ public class SeedClienteDefault {
             }
 
             // SQL para insertar el cliente predeterminado con todos sus campos
-            String sqlCliente = "INSERT INTO Clientes (NOMBRE, DOCUMENTO, CORREO, TELEFONO, DIRECCION, CIUDAD, ESTADO) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sqlCliente = "INSERT INTO Clientes (NOMBRE_CLIENTE, DOCUMENTO_CLIENTE, CORREO_CLIENTE, TELEFONO_CLIENTE, DIRECCION_CLIENTE, CIUDAD_CLIENTE, ESTADO_CLIENTE) VALUES (?, ?, ?, ?, ?, ?, ?)";
             // Preparar consulta de inserción con auto-cierre
             try (PreparedStatement consulta = conexion.prepareStatement(sqlCliente)) {
                 // Asignar el nombre del cliente predeterminado

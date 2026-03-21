@@ -1028,10 +1028,6 @@ Compra          → Egreso
 Gasto Adicional → Egreso
 ```
 
-### SeedTipoGasto.java
-
-Transporte, Impuestos, Almacenamiento, Embalaje, Otros.
-
 ---
 
 ## Paso 14: Services — Logica de negocio y validaciones
@@ -1523,8 +1519,6 @@ public class Main {
         SeedRoles.insertRoles();
         SeedPermisos.insertPermisos();
         SeedTipoMovimientos.insertTipoMovimientos();
-        SeedTipoGasto.insertTipoGasto();
-
         // 2. Iniciar el servidor HTTP en puerto 8080
         serverConnection.startServer(8080);
     }
@@ -1538,8 +1532,7 @@ public class Main {
 2. Seeders verifican e insertan datos iniciales en la BD
    ├── Roles: SUPER_ADMIN, ADMIN, EMPLEADO
    ├── Permisos: 10 permisos del sistema
-   ├── Tipos de movimiento: Venta (Ingreso), Compra (Egreso), Gasto (Egreso)
-   └── Tipos de gasto: Transporte, Impuestos, Almacenamiento, Embalaje, Otros
+   └── Tipos de movimiento: Venta (Ingreso), Compra (Egreso), Gasto (Egreso)
 3. serverConnection.startServer(8080) crea el HttpServer
 4. Routes.configureRoutes() registra todas las rutas en el Router
 5. El servidor inicia en http://localhost:8080
@@ -1647,7 +1640,358 @@ Frontend → POST /api/auth/reset-password  {"token":"abc-123","contrasena":"Nue
 
 ---
 
-## Endpoints del sistema
+## Paso 18: Módulo de Inventario — Categorías y Productos
+
+**Archivos clave:**
+- `CategoriaController.java`, `CategoriaService.java`, `CategoriaDAO.java`
+- `ProductoController.java`, `ProductoService.java`, `ProductoDAO.java`
+- `ImagenProductoController.java`, `ImagenProductoDAO.java`
+
+### Categorías — Organización del inventario
+
+Las categorías agrupan productos por tipo (ej: "Camisetas", "Pantalones", "Accesorios").
+
+**Endpoints principales:**
+```java
+GET /api/categorias           → Listar todas (EMPLEADO puede leer)
+GET /api/categorias?id=X     → Obtener una por ID
+POST /api/categorias         → Crear (ADMIN+)
+PUT /api/categorias?id=X     → Actualizar completa (ADMIN+)
+PATCH /api/categorias?id=X   → Cambiar estado (ADMIN+)
+```
+
+**Lógica de negocio:**
+- Validar que nombre no esté duplicado
+- `ESTADO_CATEGORIA = FALSE` → soft delete (no se pueden asignar nuevos productos)
+- Las categorías activas se muestran en selects del frontend
+
+### Productos — Catálogo de inventario
+
+**Endpoints principales:**
+```java
+GET /api/productos           → Listar todos con stock y categoría
+GET /api/productos?id=X     → Obtener uno por ID
+POST /api/productos         → Crear nuevo producto (ADMIN+)
+PUT /api/productos?id=X     → Actualizar completo (ADMIN+)
+PATCH /api/productos?id=X   → Cambiar estado (ADMIN+)
+```
+
+**Atributos clave:**
+- `PRECIO_VENTA`: Precio sugerido de venta (editable en cada venta)
+- `COSTO_PROMEDIO: Media ponderada que se actualiza con cada compra
+- `STOCK`: Se incrementa con compras, se decrementa con ventas
+- `ESTADO_PRODUCTO`: Soft delete, conserva historial
+
+**Validaciones importantes:**
+- Nombre de producto único por categoría
+- Precio de venta debe ser >= COSTO_PROMEDIO × 1.10 (10% ganancia mínima)
+- Stock no puede ser negativo
+
+### Imágenes de Productos
+
+**Endpoints:**
+```java
+POST /api/productos/imagen   → Subir imagen (Base64 en JSON)
+GET /api/productos/imagen?id=X → Listar imágenes de un producto
+DELETE /api/productos/imagen?id=X → Eliminar imagen específica
+```
+
+**Flujo:**
+1. Frontend convierte imagen a Base64
+2. Backend decodifica Base64 y guarda en `/uploads/`
+3. Guarda la ruta en BD (`IMAGENES_PRODUCTO`)
+4. Frontend usa la URL como `src` en `<img>`
+
+---
+
+## Paso 19: Módulo de Directorio — Clientes y Proveedores
+
+**Archivos:**
+- `ClienteController.java`, `ClienteService.java`, `ClienteDAO.java`
+- `ProveedorController.java`, `ProveedorService.java`, `ProveedorDAO.java`
+
+### Clientes
+
+**Endpoints:**
+```java
+GET /api/clientes           → Listar todos
+GET /api/clientes?id=X     → Obtener por ID
+POST /api/clientes         → Crear nuevo (EMPLEADO+)
+PUT /api/clientes?id=X     → Actualizar (ADMIN+)
+PATCH /api/clientes?id=X   → Cambiar estado (ADMIN+)
+```
+
+**Validaciones:**
+- `DOCUMENTO_CLIENTE`: Único si no es NULL (6-10 dígitos cédula colombiana)
+- `CORREO_CLIENTE`: Único si no es NULL
+- `ESTADO_CLIENTE = FALSE`: No aparece en selects, historial conservado
+
+### Proveedores
+
+**Endpoints:**
+```java
+GET /api/proveedores         → Listar todos (solo ADMIN+)
+GET /api/proveedores?id=X   → Obtener por ID
+POST /api/proveedores       → Crear (ADMIN+)
+PUT /api/proveedores?id=X   → Actualizar (ADMIN+)
+PATCH /api/proveedores?id=X → Cambiar estado (ADMIN+)
+```
+
+**Validaciones:**
+- `NIT`: Único si no es NULL (para personas jurídicas)
+- Diferencia entre `NOMBRE_PROVEEDOR` (contacto) y `RAZON_SOCIAL` (legal)
+
+---
+
+## Paso 20: Módulo de Operaciones — Ventas, Compras y Gastos
+
+**Archivos:**
+- `VentaController.java`, `VentaService.java`, `VentaDAO.java`
+- `CompraController.java`, `CompraService.java`, `CompraDAO.java`
+- `GastoAdicionalController.java`, `GastoAdicionalService.java`, `GastoAdicionalDAO.java`
+- `DetalleVentaDAO.java`, `DetalleCompraDAO.java`
+
+### Ventas
+
+**Endpoint principal:**
+```java
+POST /api/ventas   → Registrar nueva venta (transacción atómica)
+```
+
+**Body esperado:**
+```json
+{
+  "clienteId": 5,
+  "metodoPago": "Transferencia",
+  "productos": [
+    {"productoId": 10, "cantidad": 2, "precioUnitario": 50000},
+    {"productoId": 15, "cantidad": 1, "precioUnitario": 75000}
+  ]
+}
+```
+
+**Transacción atómica (4 pasos):**
+1. **Crear VENTA** → Cabecera con total, método pago, cliente, usuario
+2. **Crear DETALLE_VENTA** por cada producto (con precio histórico)
+3. **Actualizar STOCK** → `stock = stock - cantidadVendida`
+4. **Crear MOVIMIENTO_FINANCIERO** → Tipo=1 (Venta), Naturaleza=Ingreso
+
+Si cualquier paso falla, se hace ROLLBACK completo.
+
+**Validaciones:**
+- Stock disponible suficiente
+- Precio unitario >= costo_promedio × 1.10
+- Cliente existente y activo
+
+### Compras
+
+**Endpoint principal:**
+```java
+POST /api/compras   → Registrar nueva compra (transacción atómica)
+```
+
+**Body esperado:**
+```json
+{
+  "proveedorId": 3,
+  "metodoPago": "Transferencia",
+  "productos": [
+    {"productoId": 10, "cantidad": 10, "costoUnitario": 30000},
+    {"productoId": 12, "cantidad": 5, "costoUnitario": 25000}
+  ]
+}
+```
+
+**Transacción atómica (5 pasos):**
+1. **Crear COMPRA** → Cabecera con total, método pago, proveedor, usuario
+2. **Crear DETALLE_COMPRA** por cada producto
+3. **Actualizar STOCK** → `stock = stock + cantidadComprada`
+4. **Recalcular COSTO_PROMEDIO** → Media ponderada con nuevo costo
+5. **Crear MOVIMIENTO_FINANCIERO** → Tipo=2 (Compra), Naturaleza=Egreso
+
+**Fórmula costo promedio:**
+```
+nuevoCostoPromedio = (stockActual × costoActual + cantidadNueva × costoNuevo) / (stockActual + cantidadNueva)
+```
+
+### Gastos Adicionales
+
+**Endpoint:**
+```java
+POST /api/gastos   → Registrar gasto operativo
+```
+
+**Body esperado:**
+```json
+{
+  "monto": 1500000,
+  "descripcion": "Pago arriendo local enero",
+  "metodoPago": "Transferencia"
+}
+```
+
+**Transacción simple (2 pasos):**
+1. **Crear GASTOS_ADICIONALES**
+2. **Crear MOVIMIENTO_FINANCIERO** → Tipo=3 (Gasto), Naturaleza=Egreso
+
+---
+
+## Paso 21: Módulo Contable — Movimientos Financieros
+
+**Archivos:**
+- `MovimientoFinancieroController.java`, `MovimientoFinancieroService.java`, `MovimientoFinancieroDAO.java`
+
+**Endpoint (solo lectura):**
+```java
+GET /api/movimientos-financieros   → Listar todos enriquecidos
+```
+
+**Características:**
+- **Solo lectura**: Nunca se crean manualmente
+- **Auto-generados**: Se crean automáticamente en cada venta, compra o gasto
+- **Enriquecidos**: JOIN con TIPO_MOVIMIENTOS para mostrar tipo y naturaleza
+
+**Estructura del resultado:**
+```json
+{
+  "id": 45,
+  "concepto": "Venta #123 — 5 productos",
+  "monto": 250000,
+  "fecha": "2024-01-15",
+  "tipoMovimiento": "Venta",
+  "naturaleza": "Ingreso",
+  "referenciaId": 123
+}
+```
+
+**REFERENCIA_ID**: ID de la tabla origen (ID_VENTA, ID_COMPRA o ID_GASTOS_ADIC según el tipo)
+
+---
+
+## Paso 22: Módulo de Dashboard — Reportes y Métricas
+
+**Archivos:**
+- `DashboardController.java`, `DashboardService.java`, `DashboardDAO.java`
+
+### Tarjetas Resumen
+
+**Endpoint:** `GET /api/dashboard/resumen`
+
+**Métricas calculadas:**
+- **Ingresos del día**: Suma de ventas del día actual
+- **Egresos del día**: Suma de compras + gastos del día actual
+- **Ingresos del mes**: Suma de ventas del mes actual
+- **Egresos del mes**: Suma de compras + gastos del mes actual
+- **Ganancia neta del mes**: Ingresos - Egresos
+- **Contadores**: Total productos, clientes, proveedores activos
+
+### Gráficos de Tendencia
+
+**Ventas semanales:** `GET /api/dashboard/ventas-semanales`
+- Barras simples: ventas por día (últimos 7 días)
+
+**Resumen semanal:** `GET /api/dashboard/resumen-semanal`
+- Barras agrupadas: ingresos, egresos, ganancia neta por día
+
+### Análisis de Inventario
+
+**Stock por categoría:** `GET /api/dashboard/stock-categorias`
+- Gráfico de dona: unidades totales agrupadas por categoría
+- Solo productos activos (`ESTADO_PRODUCTO = TRUE`)
+
+**Productos rentables:** `GET /api/dashboard/productos-rentables`
+- Top 10 productos por margen absoluto (precio_venta - costo_promedio)
+- Útil para identificar productos más rentables
+
+---
+
+## Paso 23: Módulo de Perfil — Correos y Teléfonos Adicionales
+
+**Archivos:**
+- `CorreoUsuarioController.java`, `CorreoUsuarioDAO.java`
+- `TelefonoUsuarioController.java`, `TelefonoUsuarioDAO.java`
+
+### Correos Adicionales
+
+**Endpoints:**
+```java
+GET /api/correos-usuario        → Listar correos del usuario autenticado
+POST /api/correos-usuario       → Agregar correo adicional
+DELETE /api/correos-usuario?id=X → Eliminar correo específico
+```
+
+**Lógica:**
+- Solo opera sobre el usuario autenticado (userId del token)
+- `ES_PRINCIPAL = TRUE`: Solo puede haber uno por usuario (correo de login)
+- `ES_PRINCIPAL = NULL`: Correos secundarios (puede haber varios)
+
+### Teléfonos Adicionales
+
+**Endpoints similares a correos:**
+```java
+GET /api/telefonos-usuario        → Listar teléfonos del usuario
+POST /api/telefonos-usuario       → Agregar teléfono
+DELETE /api/telefonos-usuario?id=X → Eliminar teléfono
+```
+
+**Misma lógica** que correos para `ES_PRINCIPAL`.
+
+---
+
+## Paso 24: Seeders Completos del Sistema
+
+Además de los seeders básicos, el sistema incluye:
+
+### SeedSuperAdmin
+Crea el usuario técnico inicial:
+- **Usuario**: `admin@urbanlife.com`
+- **Contraseña**: `Admin1234*`
+- **Rol**: `SUPER_ADMIN`
+- **Propósito**: Configuración técnica del sistema
+
+### SeedRolPermisos
+Asigna permisos a cada rol:
+- **SUPER_ADMIN**: Todos los permisos
+- **ADMIN**: Todos los permisos excepto configuración técnica
+- **EMPLEADO**: Permiso de operaciones (ventas, clientes) y perfil
+
+### SeedClienteDefault
+Crea el cliente por defecto:
+- **Nombre**: "Cliente General"
+- **Propósito**: Para ventas ocasionales sin cliente específico
+
+### SeedDemoData
+Inserta datos de demostración:
+- Categorías de ejemplo
+- Productos con stock inicial
+- Clientes y proveedores de ejemplo
+- Ventas y compras de muestra
+
+---
+
+## Resumen de Endpoints por Módulo
+
+| Módulo | Endpoints | Acceso típico |
+|--------|-----------|---------------|
+| **Autenticación** | 7 endpoints | Público + JWT |
+| **Usuarios** | 4 endpoints | ADMIN+ (propias para EMPLEADO) |
+| **Categorías** | 5 endpoints | ADMIN+ escritura, todos lectura |
+| **Productos** | 5 endpoints | ADMIN+ escritura, todos lectura |
+| **Imágenes** | 3 endpoints | ADMIN+ escritura, todos lectura |
+| **Clientes** | 5 endpoints | ADMIN+ escritura, todos lectura |
+| **Proveedores** | 5 endpoints | ADMIN+ solo |
+| **Ventas** | 3 endpoints | Todos los roles |
+| **Compras** | 3 endpoints | ADMIN+ solo |
+| **Gastos** | 3 endpoints | ADMIN+ solo |
+| **Movimientos** | 1 endpoint | ADMIN+ solo (lectura) |
+| **Dashboard** | 5 endpoints | ADMIN+ solo |
+| **Perfil** | 6 endpoints | Todos los roles (propios) |
+
+**Total: 55 endpoints** implementados en el sistema.
+
+---
+
+## Endpoints del Sistema
 
 | Metodo | Ruta | Acceso | Descripcion |
 |--------|------|--------|-------------|
@@ -1657,11 +2001,54 @@ Frontend → POST /api/auth/reset-password  {"token":"abc-123","contrasena":"Nue
 | POST | `/api/auth/forgot-password` | Publico | Solicitar recuperacion de contrasena |
 | GET | `/api/auth/reset-password/validate` | Publico | Validar token de recuperacion |
 | POST | `/api/auth/reset-password` | Publico | Cambiar contrasena con token |
-| GET | `/api/users` | SUPER_ADMIN, ADMIN | Listar todos los usuarios |
-| POST | `/api/users` | SUPER_ADMIN, ADMIN | Crear un usuario nuevo |
+| POST | `/api/auth/register` | Publico | Registro de nuevo usuario (rol EMPLEADO) |
 | GET | `/api/users/id?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO* | Obtener usuario por ID |
 | PUT | `/api/users/id?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO* | Actualizar usuario completo |
 | PATCH | `/api/users/id?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO* | Actualizar usuario parcialmente |
+| GET | `/api/categorias` | SUPER_ADMIN, ADMIN, EMPLEADO | Listar todas las categorías |
+| GET | `/api/categorias?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO | Obtener categoría por ID |
+| POST | `/api/categorias` | SUPER_ADMIN, ADMIN | Crear nueva categoría |
+| PUT | `/api/categorias?id=X` | SUPER_ADMIN, ADMIN | Actualizar categoría completa |
+| PATCH | `/api/categorias?id=X` | SUPER_ADMIN, ADMIN | Cambiar estado de categoría |
+| GET | `/api/productos` | SUPER_ADMIN, ADMIN, EMPLEADO | Listar todos los productos |
+| GET | `/api/productos?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO | Obtener producto por ID |
+| POST | `/api/productos` | SUPER_ADMIN, ADMIN | Crear nuevo producto |
+| PUT | `/api/productos?id=X` | SUPER_ADMIN, ADMIN | Actualizar producto completo |
+| PATCH | `/api/productos?id=X` | SUPER_ADMIN, ADMIN | Cambiar estado de producto |
+| GET | `/api/clientes` | SUPER_ADMIN, ADMIN, EMPLEADO | Listar todos los clientes |
+| GET | `/api/clientes?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO | Obtener cliente por ID |
+| POST | `/api/clientes` | SUPER_ADMIN, ADMIN, EMPLEADO | Crear nuevo cliente |
+| PUT | `/api/clientes?id=X` | SUPER_ADMIN, ADMIN | Actualizar cliente completo |
+| PATCH | `/api/clientes?id=X` | SUPER_ADMIN, ADMIN | Cambiar estado de cliente |
+| GET | `/api/proveedores` | SUPER_ADMIN, ADMIN | Listar todos los proveedores |
+| GET | `/api/proveedores?id=X` | SUPER_ADMIN, ADMIN | Obtener proveedor por ID |
+| POST | `/api/proveedores` | SUPER_ADMIN, ADMIN | Crear nuevo proveedor |
+| PUT | `/api/proveedores?id=X` | SUPER_ADMIN, ADMIN | Actualizar proveedor completo |
+| PATCH | `/api/proveedores?id=X` | SUPER_ADMIN, ADMIN | Cambiar estado de proveedor |
+| GET | `/api/ventas` | SUPER_ADMIN, ADMIN, EMPLEADO | Listar todas las ventas |
+| GET | `/api/ventas?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO | Obtener venta por ID (con detalles) |
+| POST | `/api/ventas` | SUPER_ADMIN, ADMIN, EMPLEADO | Registrar nueva venta |
+| GET | `/api/compras` | SUPER_ADMIN, ADMIN | Listar todas las compras |
+| GET | `/api/compras?id=X` | SUPER_ADMIN, ADMIN | Obtener compra por ID (con detalles) |
+| POST | `/api/compras` | SUPER_ADMIN, ADMIN | Registrar nueva compra |
+| GET | `/api/gastos` | SUPER_ADMIN, ADMIN | Listar todos los gastos adicionales |
+| GET | `/api/gastos?id=X` | SUPER_ADMIN, ADMIN | Obtener gasto adicional por ID |
+| POST | `/api/gastos` | SUPER_ADMIN, ADMIN | Registrar nuevo gasto adicional |
+| GET | `/api/movimientos-financieros` | SUPER_ADMIN, ADMIN | Listar todos los movimientos (solo lectura) |
+| POST | `/api/productos/imagen?id=X` | SUPER_ADMIN, ADMIN | Subir imagen a producto |
+| GET | `/api/productos/imagen?id=X` | SUPER_ADMIN, ADMIN, EMPLEADO | Listar imágenes de producto |
+| DELETE | `/api/productos/imagen?id=X` | SUPER_ADMIN, ADMIN | Eliminar imagen de producto |
+| GET | `/api/correos-usuario` | Autenticado | Listar correos del usuario autenticado |
+| POST | `/api/correos-usuario` | Autenticado | Agregar correo adicional |
+| DELETE | `/api/correos-usuario?id=X` | Autenticado | Eliminar correo específico |
+| GET | `/api/telefonos-usuario` | Autenticado | Listar teléfonos del usuario autenticado |
+| POST | `/api/telefonos-usuario` | Autenticado | Agregar teléfono adicional |
+| DELETE | `/api/telefonos-usuario?id=X` | Autenticado | Eliminar teléfono específico |
+| GET | `/api/dashboard/resumen` | SUPER_ADMIN, ADMIN | Obtener tarjetas resumen del dashboard |
+| GET | `/api/dashboard/ventas-semanales` | SUPER_ADMIN, ADMIN | Gráfico de ventas semanales |
+| GET | `/api/dashboard/resumen-semanal` | SUPER_ADMIN, ADMIN | Gráfico de resumen semanal |
+| GET | `/api/dashboard/stock-categorias` | SUPER_ADMIN, ADMIN | Gráfico de stock por categoría |
+| GET | `/api/dashboard/productos-rentables` | SUPER_ADMIN, ADMIN | Top 10 productos más rentables |
 
 > *EMPLEADO solo puede acceder o modificar su propio perfil (cuando `?id=X` coincide con su `userId` del token).
 

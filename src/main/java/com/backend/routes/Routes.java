@@ -16,8 +16,10 @@ import com.backend.controllers.CompraController;
 import com.backend.controllers.GastoAdicionalController;
 // Controller para gestionar correos adicionales del perfil de usuario
 import com.backend.controllers.CorreoUsuarioController;
-// Controller para gestionar números telefónicos del perfil de usuario
-import com.backend.controllers.NumeroUsuarioController;
+// Controller para gestionar teléfonos del perfil de usuario
+import com.backend.controllers.TelefonoUsuarioController;
+// Controller para el módulo de movimientos financieros (solo lectura)
+import com.backend.controllers.MovimientoFinancieroController;
 // Controller para el módulo de reportes y métricas del dashboard
 import com.backend.controllers.DashboardController;
 // Controller para el módulo de imágenes de productos
@@ -147,6 +149,10 @@ public class Routes {
         // Registrar nuevo gasto adicional (transacción atómica)
         router.post("/api/gastos",   auth.protect(GastoAdicionalController.create(),  "SUPER_ADMIN", "ADMIN"));
 
+        // ========== RUTAS DE MOVIMIENTOS FINANCIEROS ==========
+        // Listar todos los movimientos financieros (solo lectura, enriquecidos con tipo y naturaleza)
+        router.get("/api/movimientos-financieros", auth.protect(MovimientoFinancieroController.listAll(), "SUPER_ADMIN", "ADMIN"));
+
         // ========== RUTAS DE IMÁGENES DE PRODUCTOS ==========
         // Subir imagen a un producto (Base64 JSON)
         router.post("/api/productos/imagen",   auth.protect(ImagenProductoController.upload(),         "SUPER_ADMIN", "ADMIN"));
@@ -163,13 +169,13 @@ public class Routes {
         // Eliminar un correo adicional del perfil
         router.delete("/api/correos-usuario",    auth.protect(CorreoUsuarioController.delete(),        "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
 
-        // ========== RUTAS DE NÚMEROS DE USUARIO (PERFIL) ==========
-        // Listar números telefónicos del usuario autenticado
-        router.get("/api/numeros-usuario",       auth.protect(NumeroUsuarioController.listByUsuario(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
-        // Agregar un número telefónico al perfil
-        router.post("/api/numeros-usuario",      auth.protect(NumeroUsuarioController.create(),        "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
-        // Eliminar un número telefónico del perfil
-        router.delete("/api/numeros-usuario",    auth.protect(NumeroUsuarioController.delete(),        "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // ========== RUTAS DE TELÉFONOS DE USUARIO (PERFIL) ==========
+        // Listar teléfonos del usuario autenticado
+        router.get("/api/telefonos-usuario",       auth.protect(TelefonoUsuarioController.listByUsuario(), "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Agregar un teléfono al perfil
+        router.post("/api/telefonos-usuario",      auth.protect(TelefonoUsuarioController.create(),        "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
+        // Eliminar un teléfono del perfil
+        router.delete("/api/telefonos-usuario",    auth.protect(TelefonoUsuarioController.delete(),        "SUPER_ADMIN", "ADMIN", "EMPLEADO"));
 
         // ========== RUTAS DE DASHBOARD ==========
         // Tarjetas: ingresos/egresos del día, ingresos/egresos/ganancia del mes, contadores
@@ -225,15 +231,16 @@ public class Routes {
         System.out.println("  GET    /api/gastos                                (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/gastos/id?id=X                        (SUPER_ADMIN, ADMIN)");
         System.out.println("  POST   /api/gastos                                (SUPER_ADMIN, ADMIN)");
+        System.out.println("  GET    /api/movimientos-financieros                (SUPER_ADMIN, ADMIN)");
         System.out.println("  POST   /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN, EMPLEADO)");
         System.out.println("  DELETE /api/productos/imagen?id=X                  (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/correos-usuario                        (autenticado)");
         System.out.println("  POST   /api/correos-usuario                        (autenticado)");
         System.out.println("  DELETE /api/correos-usuario?id=X                   (autenticado)");
-        System.out.println("  GET    /api/numeros-usuario                        (autenticado)");
-        System.out.println("  POST   /api/numeros-usuario                        (autenticado)");
-        System.out.println("  DELETE /api/numeros-usuario?id=X                   (autenticado)");
+        System.out.println("  GET    /api/telefonos-usuario                      (autenticado)");
+        System.out.println("  POST   /api/telefonos-usuario                      (autenticado)");
+        System.out.println("  DELETE /api/telefonos-usuario?id=X                 (autenticado)");
         System.out.println("  GET    /api/dashboard/resumen                     (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/dashboard/ventas-semanales            (SUPER_ADMIN, ADMIN)");
         System.out.println("  GET    /api/dashboard/resumen-semanal             (SUPER_ADMIN, ADMIN)");

@@ -1,6 +1,8 @@
-# Paso a Paso — Construcción del Backend UrbanLife
+# Paso a Paso — Construcción Completa del Backend UrbanLife
 
 Este documento explica **todo lo que se construyó**, en el orden en que se fue desarrollando, con el razonamiento detrás de cada decisión.
+
+**Alcance completo:** Sistema de gestión contable para tienda de ropa con 6 módulos principales: Autenticación, Inventario, Directorio, Operaciones, Contabilidad y Reportes.
 
 ---
 
@@ -16,13 +18,16 @@ Este documento explica **todo lo que se construyó**, en el orden en que se fue 
 8. [Paso 7 — DAOs (acceso a la base de datos)](#8-paso-7--daos-acceso-a-la-base-de-datos)
 9. [Paso 8 — Seeders (datos iniciales)](#9-paso-8--seeders-datos-iniciales)
 10. [Paso 9 — Helpers (JWT y BCrypt)](#10-paso-9--helpers-jwt-y-bcrypt)
-11. [Paso 10 — Servicio y controller de login](#11-paso-10--servicio-y-controller-de-login)
+11. [Paso 10 — Autenticación y Usuarios](#11-paso-10--autenticación-y-usuarios)
 12. [Paso 11 — Middleware de autenticación y roles](#12-paso-11--middleware-de-autenticación-y-roles)
-13. [Paso 12 — Registro y gestión de usuarios](#13-paso-12--registro-y-gestión-de-usuarios)
-14. [Paso 13 — Login con Google](#14-paso-13--login-con-google)
-15. [Paso 14 — Recuperación de contraseña](#15-paso-14--recuperación-de-contraseña)
-16. [Paso 15 — Punto de entrada (Main.java)](#16-paso-15--punto-de-entrada-mainjava)
-17. [Resumen de la arquitectura final](#17-resumen-de-la-arquitectura-final)
+13. [Paso 12 — Módulo de Inventario (Categorías y Productos)](#13-paso-12--módulo-de-inventario-categorías-y-productos)
+14. [Paso 13 — Módulo de Directorio (Clientes y Proveedores)](#14-paso-13--módulo-de-directorio-clientes-y-proveedores)
+15. [Paso 14 — Módulo de Operaciones (Ventas, Compras y Gastos)](#15-paso-14--módulo-de-operaciones-ventas-compras-y-gastos)
+16. [Paso 15 — Módulo Contable (Movimientos Financieros)](#16-paso-15--módulo-contable-movimientos-financieros)
+17. [Paso 16 — Módulo de Dashboard (Reportes y Métricas)](#17-paso-16--módulo-de-dashboard-reportes-y-métricas)
+18. [Paso 17 — Módulo de Perfil (Correos y Teléfonos)](#18-paso-17--módulo-de-perfil-correos-y-teléfonos)
+19. [Paso 18 — Punto de entrada (Main.java)](#19-paso-18--punto-de-entrada-mainjava)
+20. [Resumen de la arquitectura final](#20-resumen-de-la-arquitectura-final)
 
 ---
 
@@ -309,7 +314,7 @@ El sistema necesita que existan los roles (`SUPER_ADMIN`, `ADMIN`, `EMPLEADO`) e
 - `SeedRoles` — Inserta los 3 roles del sistema
 - `SeedPermisos` — Inserta permisos base
 - `SeedTipoMovimientos` — Datos para movimientos financieros
-- `SeedTipoGasto` — Tipos de gasto
+
 
 **¿Cómo evitan duplicar datos?**
 Antes de insertar, hacen un `SELECT COUNT(*)`. Si la tabla ya tiene datos, simplemente imprimen `"Ya existen datos -> omitido"` y no hacen nada.
@@ -700,7 +705,229 @@ http://localhost:5500/reset-password.html?token=abc-123-...
 
 ---
 
-## 16. Paso 15 — Punto de entrada (Main.java)
+## 13. Paso 12 — Módulo de Inventario (Categorías y Productos)
+
+**Archivos clave:**
+- `CategoriaController.java`, `CategoriaService.java`, `CategoriaDAO.java`
+- `ProductoController.java`, `ProductoService.java`, `ProductoDAO.java`
+- `ImagenProductoController.java`, `ImagenProductoDAO.java`
+
+### Categorías — Organización del inventario
+
+Las categorías agrupan productos por tipo (ej: "Camisetas", "Pantalones", "Accesorios").
+
+**Endpoints implementados:**
+- `GET /api/categorias` → Listar todas (EMPLEADO puede leer)
+- `GET /api/categorias?id=X` → Obtener una por ID
+- `POST /api/categorias` → Crear (ADMIN+)
+- `PUT /api/categorias?id=X` → Actualizar completa (ADMIN+)
+- `PATCH /api/categorias?id=X` → Cambiar estado (ADMIN+)
+
+**Validaciones principales:**
+- Nombre de categoría único
+- `ESTADO_CATEGORIA = FALSE` → soft delete (no se pueden asignar nuevos productos)
+
+### Productos — Catálogo de inventario
+
+**Endpoints implementados:**
+- `GET /api/productos` → Listar todos con stock y categoría
+- `GET /api/productos?id=X` → Obtener uno por ID
+- `POST /api/productos` → Crear nuevo producto (ADMIN+)
+- `PUT /api/productos?id=X` → Actualizar completo (ADMIN+)
+- `PATCH /api/productos?id=X` → Cambiar estado (ADMIN+)
+
+**Lógica de negocio importante:**
+- `STOCK` se incrementa con compras, se decrementa con ventas
+- `COSTO_PROMEDIO` se recalcula automáticamente con cada compra
+- Precio de venta debe ser >= costo_promedio × 1.10 (10% ganancia mínima)
+- `ESTADO_PRODUCTO = FALSE` → soft delete, conserva historial
+
+### Imágenes de Productos
+
+**Endpoints:**
+- `POST /api/productos/imagen` → Subir imagen (Base64 en JSON)
+- `GET /api/productos/imagen?id=X` → Listar imágenes de un producto
+- `DELETE /api/productos/imagen?id=X` → Eliminar imagen específica
+
+**Flujo de imágenes:**
+1. Frontend convierte imagen a Base64
+2. Backend decodifica y guarda en `/uploads/`
+3. Guarda ruta en BD (`IMAGENES_PRODUCTO`)
+4. Frontend usa URL como `src` en `<img>`
+
+---
+
+## 14. Paso 13 — Módulo de Directorio (Clientes y Proveedores)
+
+**Archivos:**
+- `ClienteController.java`, `ClienteService.java`, `ClienteDAO.java`
+- `ProveedorController.java`, `ProveedorService.java`, `ProveedorDAO.java`
+
+### Clientes
+
+**Endpoints:**
+- `GET /api/clientes` → Listar todos
+- `GET /api/clientes?id=X` → Obtener por ID
+- `POST /api/clientes` → Crear nuevo (EMPLEADO+)
+- `PUT /api/clientes?id=X` → Actualizar (ADMIN+)
+- `PATCH /api/clientes?id=X` → Cambiar estado (ADMIN+)
+
+**Validaciones:**
+- `DOCUMENTO_CLIENTE`: Único si no es NULL (6-10 dígitos cédula colombiana)
+- `CORREO_CLIENTE`: Único si no es NULL
+- `ESTADO_CLIENTE = FALSE`: No aparece en selects, historial conservado
+
+### Proveedores
+
+**Endpoints:**
+- `GET /api/proveedores` → Listar todos (solo ADMIN+)
+- `GET /api/proveedores?id=X` → Obtener por ID
+- `POST /api/proveedores` → Crear (ADMIN+)
+- `PUT /api/proveedores?id=X` → Actualizar (ADMIN+)
+- `PATCH /api/proveedores?id=X` → Cambiar estado (ADMIN+)
+
+**Validaciones:**
+- `NIT`: Único si no es NULL (para personas jurídicas)
+- Diferencia entre `NOMBRE_PROVEEDOR` (contacto) y `RAZON_SOCIAL` (legal)
+
+---
+
+## 15. Paso 14 — Módulo de Operaciones (Ventas, Compras y Gastos)
+
+**Archivos:**
+- `VentaController.java`, `VentaService.java`, `VentaDAO.java`
+- `CompraController.java`, `CompraService.java`, `CompraDAO.java`
+- `GastoAdicionalController.java`, `GastoAdicionalService.java`, `GastoAdicionalDAO.java`
+- `DetalleVentaDAO.java`, `DetalleCompraDAO.java`
+
+### Ventas
+
+**Endpoint principal:** `POST /api/ventas`
+
+**Transacción atómica (4 pasos):**
+1. **Crear VENTA** → Cabecera con total, método pago, cliente, usuario
+2. **Crear DETALLE_VENTA** por cada producto (con precio histórico)
+3. **Actualizar STOCK** → `stock = stock - cantidadVendida`
+4. **Crear MOVIMIENTO_FINANCIERO** → Tipo=1 (Venta), Naturaleza=Ingreso
+
+Si cualquier paso falla, se hace ROLLBACK completo.
+
+**Validaciones clave:**
+- Stock disponible suficiente
+- Precio unitario >= costo_promedio × 1.10
+- Cliente existente y activo
+
+### Compras
+
+**Endpoint principal:** `POST /api/compras`
+
+**Transacción atómica (5 pasos):**
+1. **Crear COMPRA** → Cabecera con total, método pago, proveedor, usuario
+2. **Crear DETALLE_COMPRA** por cada producto
+3. **Actualizar STOCK** → `stock = stock + cantidadComprada`
+4. **Recalcular COSTO_PROMEDIO** → Media ponderada con nuevo costo
+5. **Crear MOVIMIENTO_FINANCIERO** → Tipo=2 (Compra), Naturaleza=Egreso
+
+**Fórmula costo promedio:**
+```
+nuevoCostoPromedio = (stockActual × costoActual + cantidadNueva × costoNuevo) / (stockActual + cantidadNueva)
+```
+
+### Gastos Adicionales
+
+**Endpoint:** `POST /api/gastos`
+
+**Transacción simple (2 pasos):**
+1. **Crear GASTOS_ADICIONALES**
+2. **Crear MOVIMIENTO_FINANCIERO** → Tipo=3 (Gasto), Naturaleza=Egreso
+
+---
+
+## 16. Paso 15 — Módulo Contable (Movimientos Financieros)
+
+**Archivos:**
+- `MovimientoFinancieroController.java`, `MovimientoFinancieroService.java`, `MovimientoFinancieroDAO.java`
+
+**Endpoint (solo lectura):** `GET /api/movimientos-financieros`
+
+**Características:**
+- **Solo lectura**: Nunca se crean manualmente
+- **Auto-generados**: Se crean automáticamente en cada venta, compra o gasto
+- **Enriquecidos**: JOIN con TIPO_MOVIMIENTOS para mostrar tipo y naturaleza
+
+**Estructura del resultado:**
+```json
+{
+  "id": 45,
+  "concepto": "Venta #123 — 5 productos",
+  "monto": 250000,
+  "fecha": "2024-01-15",
+  "tipoMovimiento": "Venta",
+  "naturaleza": "Ingreso",
+  "referenciaId": 123
+}
+```
+
+**REFERENCIA_ID**: ID de la tabla origen (ID_VENTA, ID_COMPRA o ID_GASTOS_ADIC según el tipo)
+
+---
+
+## 17. Paso 16 — Módulo de Dashboard (Reportes y Métricas)
+
+**Archivos:**
+- `DashboardController.java`, `DashboardService.java`, `DashboardDAO.java`
+
+### Tarjetas Resumen
+
+**Endpoint:** `GET /api/dashboard/resumen`
+
+**Métricas calculadas:**
+- Ingresos/egresos del día y del mes
+- Ganancia neta del mes
+- Contadores: total productos, clientes, proveedores activos
+
+### Gráficos de Tendencia
+
+- **Ventas semanales**: `GET /api/dashboard/ventas-semanales`
+- **Resumen semanal**: `GET /api/dashboard/resumen-semanal` (ingresos, egresos, ganancia)
+
+### Análisis de Inventario
+
+- **Stock por categoría**: `GET /api/dashboard/stock-categorias` (gráfico de dona)
+- **Productos rentables**: `GET /api/dashboard/productos-rentables` (top 10 por margen)
+
+---
+
+## 18. Paso 17 — Módulo de Perfil (Correos y Teléfonos)
+
+**Archivos:**
+- `CorreoUsuarioController.java`, `CorreoUsuarioDAO.java`
+- `TelefonoUsuarioController.java`, `TelefonoUsuarioDAO.java`
+
+### Correos Adicionales
+
+**Endpoints:**
+- `GET /api/correos-usuario` → Listar correos del usuario autenticado
+- `POST /api/correos-usuario` → Agregar correo adicional
+- `DELETE /api/correos-usuario?id=X` → Eliminar correo específico
+
+**Lógica:**
+- Solo opera sobre el usuario autenticado (userId del token)
+- `ES_PRINCIPAL = TRUE`: Solo puede haber uno por usuario (correo de login)
+- `ES_PRINCIPAL = NULL`: Correos secundarios (puede haber varios)
+
+### Teléfonos Adicionales
+
+**Endpoints similares a correos:**
+- `GET /api/telefonos-usuario` → Listar teléfonos del usuario
+- `POST /api/telefonos-usuario` → Agregar teléfono
+- `DELETE /api/telefonos-usuario?id=X` → Eliminar teléfono
+
+**Misma lógica** que correos para `ES_PRINCIPAL`.
+
+---
+
+## 19. Paso 18 — Punto de entrada (Main.java)
 
 **Archivo:** [Main.java](src/main/java/com/backend/Main.java)
 
@@ -712,8 +939,182 @@ public static void main(String[] args) {
     SeedRoles.insertRoles();
     SeedPermisos.insertPermisos();
     SeedTipoMovimientos.insertTipoMovimientos();
-    SeedTipoGasto.insertTipoGasto();
+    SeedSuperAdmin.insertSuperAdmin();
+    SeedRolPermisos.insertRolPermisos();
+    SeedClienteDefault.insertClienteDefault();
+    SeedDemoData.insertDemoData();
+    
+    // 2. Iniciar el servidor en el puerto 8080
+    serverConnection.startServer(8080);
+}
+```
 
+**Secuencia de arranque completa:**
+```
+Main.main()
+  └─ SeedRoles, SeedPermisos, SeedTipoMovimientos (insertan datos si BD está vacía)
+  └─ SeedSuperAdmin (crea admin@urbanlife.com)
+  └─ SeedRolPermisos (asigna permisos a roles)
+  └─ SeedClienteDefault (crea "Cliente General")
+  └─ SeedDemoData (datos de demostración)
+  └─ serverConnection.startServer(8080)
+       └─ Routes.configureRoutes()
+            └─ Registra todos los endpoints con sus handlers y middlewares
+       └─ HttpServer.start()
+            └─ Servidor escuchando en http://localhost:8080
+```
+
+---
+
+## 20. Resumen de la arquitectura final
+
+```
+src/main/java/com/backend/
+│
+├── Main.java                    ← Punto de entrada
+│
+├── config/
+│   └── dbConnection.java        ← Conexión a MySQL con variables de entorno
+│
+├── server/
+│   ├── serverConnection.java    ← Levanta el HttpServer en el puerto 8080
+│   └── http/
+│       ├── ApiRequest.java      ← Lee el body de la petición
+│       └── ApiResponse.java     ← Escribe la respuesta JSON con headers CORS
+│
+├── routes/
+│   ├── Router.java              ← Despacha peticiones según método+ruta
+│   └── Routes.java              ← Registra todos los endpoints del sistema
+│
+├── models/                      ← Representan las tablas de la BD (POJOs)
+│   ├── Usuario.java
+│   ├── Rol.java
+│   ├── Categoria.java
+│   ├── Producto.java
+│   ├── Cliente.java
+│   ├── Proveedor.java
+│   ├── Venta.java
+│   ├── Compra.java
+│   ├── GastoAdicional.java
+│   ├── MovimientoFinanciero.java
+│   └── [otros modelos...]
+│
+├── dto/                         ← Representan el body de las peticiones
+│   ├── CreateUserRequest.java
+│   ├── LoginRequest.java
+│   └── [otros DTOs...]
+│
+├── dao/                         ← Hablan directamente con MySQL (PreparedStatement)
+│   ├── UsuarioDAO.java
+│   ├── CategoriaDAO.java
+│   ├── ProductoDAO.java
+│   ├── ClienteDAO.java
+│   ├── ProveedorDAO.java
+│   ├── VentaDAO.java
+│   ├── CompraDAO.java
+│   ├── GastoAdicionalDAO.java
+│   ├── MovimientoFinancieroDAO.java
+│   └── [otros DAOs...]
+│
+├── helpers/                     ← Utilidades técnicas reutilizables
+│   ├── JwtHelper.java           ← Generar y validar JWT
+│   └── PasswordHelper.java      ← Hashear y verificar con BCrypt
+│
+├── middlewares/
+│   └── AuthMiddleware.java      ← Protege rutas verificando JWT y roles
+│
+├── services/                    ← Lógica de negocio y validaciones
+│   ├── AuthService.java         ← Validaciones del login
+│   ├── UserService.java         ← Crear y actualizar usuarios
+│   ├── GoogleAuthService.java   ← Verificar tokens de Google
+│   ├── PasswordResetService.java← Flujo de recuperación de contraseña
+│   ├── CategoriaService.java    ← Lógica de categorías
+│   ├── ProductoService.java     ← Lógica de productos y stock
+│   ├── ClienteService.java      ← Lógica de clientes
+│   ├── ProveedorService.java    ← Lógica de proveedores
+│   ├── VentaService.java        ← Transacción de ventas (atómica)
+│   ├── CompraService.java       ← Transacción de compras (atómica)
+│   ├── GastoAdicionalService.java← Registro de gastos
+│   ├── MovimientoFinancieroService.java← Consulta de movimientos
+│   ├── DashboardService.java    ← Métricas y reportes
+│   └── [otros servicios...]
+│
+├── controllers/                 ← Reciben HTTP, llaman al service, responden
+│   ├── AuthController.java      ← login(), me(), register()
+│   ├── GoogleAuthController.java← loginWithGoogle()
+│   ├── PasswordResetController.java← 3 endpoints de recuperación
+│   ├── UserController.java      ← CRUD de usuarios
+│   ├── CategoriaController.java  ← CRUD de categorías
+│   ├── ProductoController.java  ← CRUD de productos
+│   ├── ClienteController.java   ← CRUD de clientes
+│   ├── ProveedorController.java ← CRUD de proveedores
+│   ├── VentaController.java      ← Registro de ventas
+│   ├── CompraController.java     ← Registro de compras
+│   ├── GastoAdicionalController.java← Registro de gastos
+│   ├── MovimientoFinancieroController.java← Lista de movimientos
+│   ├── DashboardController.java  ← Endpoints de reportes
+│   └── [otros controllers...]
+│
+└── seeders/                     ← Insertan datos iniciales al arrancar
+    ├── SeedRoles.java
+    ├── SeedPermisos.java
+    ├── SeedTipoMovimientos.java
+    ├── SeedSuperAdmin.java
+    ├── SeedRolPermisos.java
+    ├── SeedClienteDefault.java
+    └── SeedDemoData.java
+```
+
+### Estadísticas finales del sistema
+
+- **55 endpoints** implementados
+- **20 tablas** en la base de datos
+- **6 módulos** principales: Autenticación, Inventario, Directorio, Operaciones, Contabilidad, Reportes
+- **Arquitectura limpia** por capas: Controller → Service → DAO
+- **Transacciones atómicas** en ventas y compras
+- **Autenticación JWT** con roles y permisos
+- **Soft deletes** para conservar historial
+- **Dashboard completo** con métricas en tiempo real
+
+---
+
+### Flujo de una petición cualquiera (de principio a fin)
+
+```
+Cliente HTTP (navegador / Postman)
+    │
+    │  POST /api/ventas
+    ▼
+HttpServer (serverConnection.java)
+    │
+    ▼
+Router.handle() (Router.java)
+    │  Busca en el mapa: POST → /api/ventas → VentaController.create()
+    ▼
+AuthMiddleware (si la ruta es protegida)
+    │  Verifica JWT, verifica rol (ADMIN, EMPLEADO permitidos)
+    ▼
+VentaController.create() (controller)
+    │  Lee body JSON, extrae productos, cliente, método pago
+    ▼
+VentaService.create() (service)
+    │  Validaciones, transacción atómica (4 pasos)
+    ▼
+VentaDAO.create() + DetalleVentaDAO.create() + ProductoDAO.updateStock() + MovimientoFinancieroDAO.create()
+    │  Ejecutan SQL contra MySQL
+    ▼
+MySQL confirma transacción
+    │
+    ▼  (de vuelta subiendo por las capas)
+VentaService construye respuesta JSON
+    ▼
+VentaController envía respuesta 201 con datos de la venta
+    ▼
+ApiResponse.send() agrega headers y envía
+    ▼
+Cliente recibe { success: true, data: { id: 123, total: 50000, ... } }
+```
+    SeedTipoMovimientos.insertTipoMovimientos();
     // 2. Iniciar el servidor en el puerto 8080
     serverConnection.startServer(8080);
 
@@ -794,8 +1195,7 @@ src/main/java/com/backend/
 └── seeders/                     ← Insertan datos iniciales al arrancar
     ├── SeedRoles.java
     ├── SeedPermisos.java
-    ├── SeedTipoMovimientos.java
-    └── SeedTipoGasto.java
+    └── SeedTipoMovimientos.java
 ```
 
 ### Flujo de una petición cualquiera (de principio a fin)

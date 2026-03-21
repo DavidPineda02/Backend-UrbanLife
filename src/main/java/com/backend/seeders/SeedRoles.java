@@ -19,7 +19,7 @@ import java.sql.ResultSet;
 public class SeedRoles {
 
     /** SQL para insertar un rol con su nombre y descripcion */
-    private static final String SQL_INSERT = "INSERT INTO Roles (NOMBRE, DESCRIPCION) VALUES (?, ?)";
+    private static final String SQL_INSERT = "INSERT INTO Roles (NOMBRE_ROL, DESCRIPCION_ROL) VALUES (?, ?)";
 
     /** Datos de los 3 roles del sistema: [nombre, descripcion] */
     private static final String[][] roles = {

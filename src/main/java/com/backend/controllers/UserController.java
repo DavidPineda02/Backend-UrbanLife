@@ -96,8 +96,15 @@ public class UserController {
                 datosUsuarios.add(datos);
             }
 
+            // Construir mapa de respuesta con orden garantizado de claves
+            Map<String, Object> respuesta = new LinkedHashMap<>();
+            // Agregar campo de éxito
+            respuesta.put("success", true);
+            // Agregar la lista de usuarios
+            respuesta.put("data", datosUsuarios);
+
             // Enviar la lista de usuarios con rol serializada como JSON con codigo 200
-            ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", datosUsuarios));
+            ApiResponse.sendJson(exchange, 200, respuesta);
         };
     }
 
@@ -146,6 +153,8 @@ public class UserController {
             }
             // Ocultar la contrasena hasheada antes de enviar el usuario al cliente
             usuario.setContrasena(null);
+            // Ocultar el googleId antes de enviar al cliente (solo exponer tieneGoogle)
+            usuario.setGoogleId(null);
             // Enviar respuesta
             ApiResponse.sendJson(exchange, 200, Map.of("success", true, "data", usuario));
         };
@@ -217,8 +226,8 @@ public class UserController {
             String apellido = datosJson.has("apellido") ? datosJson.get("apellido").getAsString() : "";
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : "";
             String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : "";
-            // En PUT el estado tiene valor por defecto true si no se envia
-            boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : true;
+            // En PUT el estado tiene valor por defecto true si no se envia (verificar que no sea JsonNull)
+            boolean estado = datosJson.has("estado") && !datosJson.get("estado").isJsonNull() ? datosJson.get("estado").getAsBoolean() : true;
             // EMPLEADO no puede cambiar su propio estado: conservar el valor actual de la BD
             if ("EMPLEADO".equalsIgnoreCase(rolUsuario)) {
                 Usuario usuarioActual = UsuarioDAO.findById(id);
@@ -305,8 +314,8 @@ public class UserController {
             String correo = datosJson.has("correo") ? datosJson.get("correo").getAsString() : null;
             // Contraseña opcional
             String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : null;
-            // Boolean (objeto) en lugar de boolean primitivo para poder diferenciar null de false
-            Boolean estado = datosJson.has("estado") ? datosJson.get("estado").getAsBoolean() : null;
+            // Boolean (objeto) en lugar de boolean primitivo para poder diferenciar null de false (verificar que no sea JsonNull)
+            Boolean estado = datosJson.has("estado") && !datosJson.get("estado").isJsonNull() ? datosJson.get("estado").getAsBoolean() : null;
             // EMPLEADO no puede cambiar su propio estado: ignorar el campo si viene en el body
             if ("EMPLEADO".equalsIgnoreCase(rolUsuario)) {
                 estado = null;

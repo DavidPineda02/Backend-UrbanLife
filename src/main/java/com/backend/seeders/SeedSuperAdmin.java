@@ -15,29 +15,29 @@ import java.sql.ResultSet;
 
 /**
  * Seeder que crea el usuario SUPER_ADMIN del sistema si no existe previamente.
- * Es idempotente: verifica por correo antes de insertar para evitar duplicados.
+ * Es idempotente: verifica por correo en Correos_Usuarios antes de insertar para evitar duplicados.
  * Depende de SeedRoles: el rol SUPER_ADMIN debe existir antes de ejecutar este seeder.
  */
 public class SeedSuperAdmin {
 
     /**
      * Inserta el usuario SUPER_ADMIN solo si no existe un usuario con el correo configurado.
-     * Crea el usuario en Usuarios, obtiene el ID del rol SUPER_ADMIN y asigna la relación
-     * en la tabla Usuario_Rol.
+     * Crea el usuario en Usuarios, inserta el correo principal en Correos_Usuarios,
+     * obtiene el ID del rol SUPER_ADMIN y asigna la relación en la tabla Usuarios_Roles.
      */
     public static void insertSuperAdmin() {
         // Obtener conexión con auto-cierre
         try (Connection conexion = dbConnection.getConnection()) {
 
-            // SQL para verificar si ya existe un usuario con el correo del super admin
-            String sqlVerificacion = "SELECT COUNT(*) FROM Usuarios WHERE CORREO = ?";
+            // SQL para verificar si ya existe el correo del super admin en Correos_Usuarios
+            String sqlVerificacion = "SELECT COUNT(*) FROM Correos_Usuarios WHERE CORREO_USUARIO = ?";
             // Preparar consulta de verificación con auto-cierre
             try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion)) {
                 // Asignar el correo del super admin como parámetro de búsqueda
                 consultaVerificacion.setString(1, "davxpa.02@gmail.com");
                 // Ejecutar consulta y obtener resultado
                 ResultSet resultado = consultaVerificacion.executeQuery();
-                // Si ya existe un usuario con ese correo, omitir la inserción
+                // Si ya existe un correo con esa dirección, omitir la inserción
                 if (resultado.next() && resultado.getInt(1) > 0) {
                     // Log de omisión
                     System.out.println("  [SuperAdmin] Ya existe -> omitido");
@@ -46,8 +46,8 @@ public class SeedSuperAdmin {
                 }
             }
 
-            // SQL para insertar el nuevo usuario SUPER_ADMIN en la tabla Usuarios
-            String sqlUsuario = "INSERT INTO Usuarios (NOMBRE, APELLIDO, CORREO, CONTRASENA, ESTADO) VALUES (?, ?, ?, ?, ?)";
+            // SQL para insertar el nuevo usuario SUPER_ADMIN en la tabla Usuarios (sin correo)
+            String sqlUsuario = "INSERT INTO Usuarios (NOMBRE_USUARIO, APELLIDO_USUARIO, CONTRASENA, ESTADO_USUARIO) VALUES (?, ?, ?, ?)";
             // Variable para almacenar el ID del usuario creado
             int idUsuario;
             // Preparar consulta solicitando las claves generadas automáticamente
@@ -56,12 +56,10 @@ public class SeedSuperAdmin {
                 consulta.setString(1, "David");
                 // Asignar el apellido del super admin
                 consulta.setString(2, "Pineda");
-                // Asignar el correo del super admin
-                consulta.setString(3, "davxpa.02@gmail.com");
                 // Asignar la contraseña hasheada con BCrypt
-                consulta.setString(4, PasswordHelper.hashPassword("David@123."));
+                consulta.setString(3, PasswordHelper.hashPassword("David@123."));
                 // Asignar el estado activo del usuario
-                consulta.setBoolean(5, true);
+                consulta.setBoolean(4, true);
                 // Ejecutar INSERT del usuario
                 consulta.executeUpdate();
 
@@ -74,12 +72,24 @@ public class SeedSuperAdmin {
                     // Salir del método sin continuar
                     return;
                 }
-                // Leer el ID generado para usarlo en la asignación de rol
+                // Leer el ID generado para usarlo en la asignación de rol y correo
                 idUsuario = clavesGeneradas.getInt(1);
             }
 
+            // SQL para insertar el correo principal del super admin en Correos_Usuarios
+            String sqlCorreo = "INSERT INTO Correos_Usuarios (CORREO_USUARIO, ES_PRINCIPAL, USUARIO_ID) VALUES (?, TRUE, ?)";
+            // Preparar consulta de inserción del correo con auto-cierre
+            try (PreparedStatement consulta = conexion.prepareStatement(sqlCorreo)) {
+                // Asignar el correo del super admin
+                consulta.setString(1, "davxpa.02@gmail.com");
+                // Asignar el ID del usuario recién creado
+                consulta.setInt(2, idUsuario);
+                // Ejecutar INSERT del correo principal
+                consulta.executeUpdate();
+            }
+
             // SQL para obtener el ID del rol SUPER_ADMIN desde la tabla Roles
-            String sqlRol = "SELECT ID_ROLES FROM Roles WHERE NOMBRE = 'SUPER_ADMIN'";
+            String sqlRol = "SELECT ID_ROLES FROM Roles WHERE NOMBRE_ROL = 'SUPER_ADMIN'";
             // Variable para almacenar el ID del rol SUPER_ADMIN
             int idRol;
             // Preparar y ejecutar consulta de búsqueda del rol con auto-cierre
@@ -97,8 +107,8 @@ public class SeedSuperAdmin {
                 idRol = resultado.getInt("ID_ROLES");
             }
 
-            // SQL para insertar la relación usuario-rol en la tabla Usuario_Rol
-            String sqlUsuarioRol = "INSERT INTO Usuario_Rol (USUARIO_ID, ROL_ID) VALUES (?, ?)";
+            // SQL para insertar la relación usuario-rol en la tabla Usuarios_Roles
+            String sqlUsuarioRol = "INSERT INTO Usuarios_Roles (USUARIO_ID, ROL_ID) VALUES (?, ?)";
             // Preparar consulta de asignación de rol con auto-cierre
             try (PreparedStatement consulta = conexion.prepareStatement(sqlUsuarioRol)) {
                 // Asignar el ID del usuario creado
