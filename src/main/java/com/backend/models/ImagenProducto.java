@@ -1,9 +1,6 @@
 // Paquete de modelos de datos de la aplicación
 package com.backend.models;
 
-// Para manejar fechas de registro de la imagen
-import java.time.LocalDate;
-
 /**
  * Modelo que representa una imagen asociada a un producto.
  * Cada producto puede tener múltiples imágenes almacenadas por URL.
@@ -14,8 +11,8 @@ public class ImagenProducto {
     private int imagenProducto;
     /** URL donde se encuentra almacenada la imagen */
     private String url;
-    /** Fecha en que se registró la imagen en el sistema */
-    private LocalDate fechaRegistro;
+    /** Fecha en que se registró la imagen en el sistema (String para serialización Gson) */
+    private String fechaRegistro;
     /** ID del producto al que pertenece esta imagen */
     private int productoId;
 
@@ -23,10 +20,10 @@ public class ImagenProducto {
      * Constructor para crear una imagen de producto con ID existente (lectura desde BD).
      * @param imagenProducto ID de la imagen en la base de datos
      * @param url URL de la imagen almacenada
-     * @param fechaRegistro Fecha de registro de la imagen
+     * @param fechaRegistro Fecha de registro en formato "YYYY-MM-DD"
      * @param productoId ID del producto asociado
      */
-    public ImagenProducto(int imagenProducto, String url, LocalDate fechaRegistro, int productoId) {
+    public ImagenProducto(int imagenProducto, String url, String fechaRegistro, int productoId) {
         // Asignar el ID de la imagen
         this.imagenProducto = imagenProducto;
         // Asignar la URL de la imagen
@@ -40,10 +37,10 @@ public class ImagenProducto {
     /**
      * Constructor para crear una nueva imagen de producto sin ID (inserción en BD).
      * @param url URL de la imagen almacenada
-     * @param fechaRegistro Fecha de registro de la imagen
+     * @param fechaRegistro Fecha de registro en formato "YYYY-MM-DD"
      * @param productoId ID del producto asociado
      */
-    public ImagenProducto(String url, LocalDate fechaRegistro, int productoId) {
+    public ImagenProducto(String url, String fechaRegistro, int productoId) {
         // Asignar la URL de la imagen
         this.url = url;
         // Asignar la fecha de registro
@@ -90,18 +87,18 @@ public class ImagenProducto {
 
     /**
      * Obtiene la fecha de registro de la imagen.
-     * @return Fecha en que se registró la imagen
+     * @return Fecha en que se registró la imagen en formato "YYYY-MM-DD"
      */
-    public LocalDate getFechaRegistro() {
+    public String getFechaRegistro() {
         // Retornar la fecha de registro
         return fechaRegistro;
     }
 
     /**
      * Establece la fecha de registro de la imagen.
-     * @param fechaRegistro Nueva fecha de registro
+     * @param fechaRegistro Nueva fecha de registro en formato "YYYY-MM-DD"
      */
-    public void setFechaRegistro(LocalDate fechaRegistro) {
+    public void setFechaRegistro(String fechaRegistro) {
         // Asignar la nueva fecha de registro
         this.fechaRegistro = fechaRegistro;
     }

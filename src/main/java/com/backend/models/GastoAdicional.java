@@ -17,6 +17,8 @@ public class GastoAdicional {
     private String fechaRegistro;
     // Método de pago utilizado: "Transferencia" o "Efectivo"
     private String metodoPago;
+    // ID del usuario que registró el gasto (FK a Usuarios)
+    private int usuarioId;
 
     /**
      * Constructor completo con ID (usado al leer desde la base de datos).
@@ -25,9 +27,10 @@ public class GastoAdicional {
      * @param descripcion Descripción del concepto del gasto
      * @param fechaRegistro Fecha de registro en formato "YYYY-MM-DD"
      * @param metodoPago Método de pago ("Transferencia" o "Efectivo")
+     * @param usuarioId ID del usuario que registró el gasto
      */
     public GastoAdicional(int idGastosAdic, double monto, String descripcion, String fechaRegistro,
-                          String metodoPago) {
+                          String metodoPago, int usuarioId) {
         // Asignar el ID del gasto
         this.idGastosAdic = idGastosAdic;
         // Asignar el monto del gasto
@@ -38,6 +41,8 @@ public class GastoAdicional {
         this.fechaRegistro = fechaRegistro;
         // Asignar el método de pago
         this.metodoPago = metodoPago;
+        // Asignar el ID del usuario
+        this.usuarioId = usuarioId;
     }
 
     /**
@@ -46,9 +51,10 @@ public class GastoAdicional {
      * @param descripcion Descripción del concepto
      * @param fechaRegistro Fecha de registro en formato "YYYY-MM-DD"
      * @param metodoPago Método de pago ("Transferencia" o "Efectivo")
+     * @param usuarioId ID del usuario que registra el gasto
      */
     public GastoAdicional(double monto, String descripcion, String fechaRegistro,
-                          String metodoPago) {
+                          String metodoPago, int usuarioId) {
         // Asignar el monto del gasto
         this.monto = monto;
         // Asignar la descripción del gasto
@@ -57,6 +63,8 @@ public class GastoAdicional {
         this.fechaRegistro = fechaRegistro;
         // Asignar el método de pago
         this.metodoPago = metodoPago;
+        // Asignar el ID del usuario
+        this.usuarioId = usuarioId;
     }
 
     // ========== Getters y Setters ==========
@@ -149,5 +157,23 @@ public class GastoAdicional {
     public void setMetodoPago(String metodoPago) {
         // Asignar el método de pago
         this.metodoPago = metodoPago;
+    }
+
+    /**
+     * Retorna el ID del usuario que registró el gasto.
+     * @return ID del usuario
+     */
+    public int getUsuarioId() {
+        // Retornar el ID del usuario
+        return usuarioId;
+    }
+
+    /**
+     * Establece el ID del usuario que registró el gasto.
+     * @param usuarioId ID del usuario a asignar
+     */
+    public void setUsuarioId(int usuarioId) {
+        // Asignar el ID del usuario
+        this.usuarioId = usuarioId;
     }
 }

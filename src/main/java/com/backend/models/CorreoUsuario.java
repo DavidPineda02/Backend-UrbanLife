@@ -4,27 +4,34 @@ package com.backend.models;
 /**
  * Modelo que representa un correo electrónico asociado a un usuario.
  * Un usuario puede tener múltiples correos electrónicos registrados en el sistema.
+ * El campo esPrincipal (Boolean) usa el truco de NULL para el UNIQUE constraint:
+ * TRUE = correo principal (solo uno por usuario), NULL = correo secundario (ilimitados).
  */
 public class CorreoUsuario {
 
-    /** Identificador único del correo en la base de datos */
+    // Identificador único del correo en la base de datos (PK)
     private int idCorreo;
-    /** Dirección de correo electrónico del usuario */
+    // Dirección de correo electrónico del usuario
     private String correo;
-    /** ID del usuario al que pertenece este correo */
+    // Indica si es el correo principal del usuario (TRUE=principal, NULL=secundario)
+    private Boolean esPrincipal;
+    // ID del usuario al que pertenece este correo (FK a Usuarios)
     private int usuarioId;
 
     /**
      * Constructor para crear un correo de usuario con ID existente (lectura desde BD).
      * @param idCorreo ID del correo en la base de datos
      * @param correo Dirección de correo electrónico
+     * @param esPrincipal TRUE si es principal, NULL si es secundario
      * @param usuarioId ID del usuario asociado
      */
-    public CorreoUsuario(int idCorreo, String correo, int usuarioId) {
+    public CorreoUsuario(int idCorreo, String correo, Boolean esPrincipal, int usuarioId) {
         // Asignar el ID del correo
         this.idCorreo = idCorreo;
         // Asignar la dirección de correo electrónico
         this.correo = correo;
+        // Asignar si es correo principal o secundario
+        this.esPrincipal = esPrincipal;
         // Asignar el ID del usuario asociado
         this.usuarioId = usuarioId;
     }
@@ -32,11 +39,14 @@ public class CorreoUsuario {
     /**
      * Constructor para crear un nuevo correo de usuario sin ID (inserción en BD).
      * @param correo Dirección de correo electrónico
+     * @param esPrincipal TRUE si es principal, NULL si es secundario
      * @param usuarioId ID del usuario asociado
      */
-    public CorreoUsuario(String correo, int usuarioId) {
+    public CorreoUsuario(String correo, Boolean esPrincipal, int usuarioId) {
         // Asignar la dirección de correo electrónico
         this.correo = correo;
+        // Asignar si es correo principal o secundario
+        this.esPrincipal = esPrincipal;
         // Asignar el ID del usuario asociado
         this.usuarioId = usuarioId;
     }
@@ -75,6 +85,24 @@ public class CorreoUsuario {
     public void setCorreo(String correo) {
         // Asignar la nueva dirección de correo electrónico
         this.correo = correo;
+    }
+
+    /**
+     * Obtiene si este correo es el principal del usuario.
+     * @return TRUE si es principal, NULL si es secundario
+     */
+    public Boolean getEsPrincipal() {
+        // Retornar si es correo principal
+        return esPrincipal;
+    }
+
+    /**
+     * Establece si este correo es el principal del usuario.
+     * @param esPrincipal TRUE para principal, NULL para secundario
+     */
+    public void setEsPrincipal(Boolean esPrincipal) {
+        // Asignar si es correo principal o secundario
+        this.esPrincipal = esPrincipal;
     }
 
     /**

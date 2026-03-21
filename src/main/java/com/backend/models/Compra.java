@@ -20,6 +20,8 @@ public class Compra {
     private int usuarioId;
     // ID del proveedor al que se le realizó la compra (FK a Proveedores)
     private int proveedorId;
+    // Nombre del proveedor obtenido por JOIN con la tabla Proveedores (no persistido, solo lectura)
+    private String nombreProveedor;
 
     /**
      * Constructor completo con ID (usado al leer desde la base de datos).
@@ -176,5 +178,23 @@ public class Compra {
     public void setProveedorId(int proveedorId) {
         // Asignar el ID del proveedor
         this.proveedorId = proveedorId;
+    }
+
+    /**
+     * Retorna el nombre del proveedor asociado (poblado por JOIN).
+     * @return Nombre del proveedor o null si no se hizo JOIN
+     */
+    public String getNombreProveedor() {
+        // Retornar el nombre del proveedor obtenido del JOIN
+        return nombreProveedor;
+    }
+
+    /**
+     * Establece el nombre del proveedor (poblado por JOIN).
+     * @param nombreProveedor Nombre del proveedor a asignar
+     */
+    public void setNombreProveedor(String nombreProveedor) {
+        // Asignar el nombre del proveedor obtenido del JOIN
+        this.nombreProveedor = nombreProveedor;
     }
 }
