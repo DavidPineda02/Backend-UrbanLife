@@ -20,6 +20,8 @@ public class Venta {
     private int usuarioId;
     // ID del cliente al que se le realizó la venta (FK a Clientes)
     private int clienteId;
+    // Nombre del cliente obtenido por JOIN con la tabla Clientes (no persistido, solo lectura)
+    private String nombreCliente;
 
     /**
      * Constructor completo con ID (usado al leer desde la base de datos).
@@ -176,5 +178,23 @@ public class Venta {
     public void setClienteId(int clienteId) {
         // Asignar el ID del cliente
         this.clienteId = clienteId;
+    }
+
+    /**
+     * Retorna el nombre del cliente asociado (poblado por JOIN).
+     * @return Nombre del cliente o null si no se hizo JOIN
+     */
+    public String getNombreCliente() {
+        // Retornar el nombre del cliente obtenido del JOIN
+        return nombreCliente;
+    }
+
+    /**
+     * Establece el nombre del cliente (poblado por JOIN).
+     * @param nombreCliente Nombre del cliente a asignar
+     */
+    public void setNombreCliente(String nombreCliente) {
+        // Asignar el nombre del cliente obtenido del JOIN
+        this.nombreCliente = nombreCliente;
     }
 }

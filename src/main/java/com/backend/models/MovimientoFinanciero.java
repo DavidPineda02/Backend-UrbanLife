@@ -5,100 +5,89 @@ package com.backend.models;
  * Entidad que representa un movimiento financiero del negocio.
  * Mapea directamente la tabla Movimientos_Financieros de la base de datos.
  * Se crea automáticamente al registrar una Venta, Compra o Gasto Adicional.
+ * Usa VENTA_ID, COMPRA_ID o GASTO_ADICIONAL_ID (FKs separadas) para identificar la operación origen.
  */
 public class MovimientoFinanciero {
 
     // Identificador único del movimiento financiero en la base de datos (PK)
     private int idMovsFinancieros;
-    // Fecha en que se realizó el movimiento en formato "YYYY-MM-DD"
-    private String fechaMovimiento;
     // Descripción del concepto del movimiento (ej: "Venta #5")
     private String concepto;
     // Monto del movimiento financiero
     private double monto;
-    // Método de pago: "Transferencia" o "Efectivo"
-    private String metodoPago;
+    // Fecha en que se realizó el movimiento en formato "YYYY-MM-DD"
+    private String fecha;
     // ID del tipo de movimiento (FK a Tipo_Movimientos: 1=Venta, 2=Compra, 3=Gasto)
     private int tipoMovimientoId;
-    // ID del usuario que generó el movimiento (FK a Usuarios)
-    private int usuarioId;
-    // ID de la venta asociada (FK a Venta, null si no es una venta)
+    // ID de la venta asociada (solo si tipo=1, null en otro caso)
     private Integer ventaId;
-    // ID de la compra asociada (FK a Compra, null si no es una compra)
+    // ID de la compra asociada (solo si tipo=2, null en otro caso)
     private Integer compraId;
-    // ID del gasto adicional asociado (FK a Gastos_Adicionales, null si no aplica)
+    // ID del gasto adicional asociado (solo si tipo=3, null en otro caso)
     private Integer gastoAdicionalId;
+    // Nombre del tipo de movimiento obtenido por JOIN (ej: "Venta", "Compra", "Gasto Adicional")
+    private String tipoMovimiento;
+    // Naturaleza del movimiento obtenida por JOIN ("Ingreso" o "Egreso")
+    private String naturaleza;
 
     /**
      * Constructor completo con ID (usado al leer desde la base de datos).
      * @param idMovsFinancieros ID del movimiento en la BD
-     * @param fechaMovimiento Fecha del movimiento en formato "YYYY-MM-DD"
      * @param concepto Descripción del concepto del movimiento
      * @param monto Monto del movimiento
-     * @param metodoPago Método de pago ("Transferencia" o "Efectivo")
+     * @param fecha Fecha del movimiento en formato "YYYY-MM-DD"
      * @param tipoMovimientoId ID del tipo de movimiento (1=Venta, 2=Compra, 3=Gasto)
-     * @param usuarioId ID del usuario que generó el movimiento
      * @param ventaId ID de la venta asociada (null si no aplica)
      * @param compraId ID de la compra asociada (null si no aplica)
-     * @param gastoAdicionalId ID del gasto adicional (null si no aplica)
+     * @param gastoAdicionalId ID del gasto adicional asociado (null si no aplica)
      */
-    public MovimientoFinanciero(int idMovsFinancieros, String fechaMovimiento, String concepto,
-                                double monto, String metodoPago, int tipoMovimientoId, int usuarioId,
+    public MovimientoFinanciero(int idMovsFinancieros, String concepto, double monto,
+                                String fecha, int tipoMovimientoId,
                                 Integer ventaId, Integer compraId, Integer gastoAdicionalId) {
         // Asignar el ID del movimiento
         this.idMovsFinancieros = idMovsFinancieros;
-        // Asignar la fecha del movimiento
-        this.fechaMovimiento = fechaMovimiento;
         // Asignar el concepto del movimiento
         this.concepto = concepto;
         // Asignar el monto del movimiento
         this.monto = monto;
-        // Asignar el método de pago
-        this.metodoPago = metodoPago;
+        // Asignar la fecha del movimiento
+        this.fecha = fecha;
         // Asignar el ID del tipo de movimiento
         this.tipoMovimientoId = tipoMovimientoId;
-        // Asignar el ID del usuario
-        this.usuarioId = usuarioId;
-        // Asignar el ID de la venta (null si no aplica)
+        // Asignar el ID de la venta asociada (null si no es tipo Venta)
         this.ventaId = ventaId;
-        // Asignar el ID de la compra (null si no aplica)
+        // Asignar el ID de la compra asociada (null si no es tipo Compra)
         this.compraId = compraId;
-        // Asignar el ID del gasto adicional (null si no aplica)
+        // Asignar el ID del gasto adicional asociado (null si no es tipo Gasto)
         this.gastoAdicionalId = gastoAdicionalId;
     }
 
     /**
      * Constructor sin ID (usado al construir un movimiento nuevo antes de persistir).
-     * @param fechaMovimiento Fecha del movimiento en formato "YYYY-MM-DD"
      * @param concepto Descripción del concepto
      * @param monto Monto del movimiento
-     * @param metodoPago Método de pago ("Transferencia" o "Efectivo")
+     * @param fecha Fecha del movimiento en formato "YYYY-MM-DD"
      * @param tipoMovimientoId ID del tipo de movimiento
-     * @param usuarioId ID del usuario que lo genera
-     * @param ventaId ID de la venta (null si no aplica)
-     * @param compraId ID de la compra (null si no aplica)
-     * @param gastoAdicionalId ID del gasto adicional (null si no aplica)
+     * @param ventaId ID de la venta asociada (null si no aplica)
+     * @param compraId ID de la compra asociada (null si no aplica)
+     * @param gastoAdicionalId ID del gasto adicional asociado (null si no aplica)
      */
-    public MovimientoFinanciero(String fechaMovimiento, String concepto, double monto,
-                                String metodoPago, int tipoMovimientoId, int usuarioId,
+    public MovimientoFinanciero(String concepto, double monto, String fecha,
+                                int tipoMovimientoId,
                                 Integer ventaId, Integer compraId, Integer gastoAdicionalId) {
-        // Asignar la fecha del movimiento
-        this.fechaMovimiento = fechaMovimiento;
         // Asignar el concepto del movimiento
         this.concepto = concepto;
         // Asignar el monto del movimiento
         this.monto = monto;
-        // Asignar el método de pago
-        this.metodoPago = metodoPago;
+        // Asignar la fecha del movimiento
+        this.fecha = fecha;
         // Asignar el ID del tipo de movimiento
         this.tipoMovimientoId = tipoMovimientoId;
-        // Asignar el ID del usuario
-        this.usuarioId = usuarioId;
-        // Asignar el ID de la venta (null si no aplica)
+        // Asignar el ID de la venta asociada (null si no es tipo Venta)
         this.ventaId = ventaId;
-        // Asignar el ID de la compra (null si no aplica)
+        // Asignar el ID de la compra asociada (null si no es tipo Compra)
         this.compraId = compraId;
-        // Asignar el ID del gasto adicional (null si no aplica)
+        // Asignar el ID del gasto adicional asociado (null si no es tipo Gasto)
         this.gastoAdicionalId = gastoAdicionalId;
     }
 
@@ -120,24 +109,6 @@ public class MovimientoFinanciero {
     public void setIdMovsFinancieros(int idMovsFinancieros) {
         // Asignar el ID del movimiento
         this.idMovsFinancieros = idMovsFinancieros;
-    }
-
-    /**
-     * Retorna la fecha del movimiento.
-     * @return Fecha en formato "YYYY-MM-DD"
-     */
-    public String getFechaMovimiento() {
-        // Retornar la fecha del movimiento
-        return fechaMovimiento;
-    }
-
-    /**
-     * Establece la fecha del movimiento.
-     * @param fechaMovimiento Fecha en formato "YYYY-MM-DD"
-     */
-    public void setFechaMovimiento(String fechaMovimiento) {
-        // Asignar la fecha del movimiento
-        this.fechaMovimiento = fechaMovimiento;
     }
 
     /**
@@ -177,21 +148,21 @@ public class MovimientoFinanciero {
     }
 
     /**
-     * Retorna el método de pago del movimiento.
-     * @return Método de pago
+     * Retorna la fecha del movimiento.
+     * @return Fecha en formato "YYYY-MM-DD"
      */
-    public String getMetodoPago() {
-        // Retornar el método de pago
-        return metodoPago;
+    public String getFecha() {
+        // Retornar la fecha del movimiento
+        return fecha;
     }
 
     /**
-     * Establece el método de pago del movimiento.
-     * @param metodoPago Método de pago a asignar
+     * Establece la fecha del movimiento.
+     * @param fecha Fecha en formato "YYYY-MM-DD"
      */
-    public void setMetodoPago(String metodoPago) {
-        // Asignar el método de pago
-        this.metodoPago = metodoPago;
+    public void setFecha(String fecha) {
+        // Asignar la fecha del movimiento
+        this.fecha = fecha;
     }
 
     /**
@@ -213,74 +184,92 @@ public class MovimientoFinanciero {
     }
 
     /**
-     * Retorna el ID del usuario que generó el movimiento.
-     * @return ID del usuario
-     */
-    public int getUsuarioId() {
-        // Retornar el ID del usuario
-        return usuarioId;
-    }
-
-    /**
-     * Establece el ID del usuario.
-     * @param usuarioId ID del usuario a asignar
-     */
-    public void setUsuarioId(int usuarioId) {
-        // Asignar el ID del usuario
-        this.usuarioId = usuarioId;
-    }
-
-    /**
-     * Retorna el ID de la venta asociada (puede ser null).
-     * @return ID de la venta o null
+     * Retorna el ID de la venta asociada.
+     * @return ID de la venta o null si no es tipo Venta
      */
     public Integer getVentaId() {
-        // Retornar el ID de la venta (nullable)
+        // Retornar el ID de la venta asociada
         return ventaId;
     }
 
     /**
      * Establece el ID de la venta asociada.
-     * @param ventaId ID de la venta (null si no aplica)
+     * @param ventaId ID de la venta a asignar
      */
     public void setVentaId(Integer ventaId) {
-        // Asignar el ID de la venta
+        // Asignar el ID de la venta asociada
         this.ventaId = ventaId;
     }
 
     /**
-     * Retorna el ID de la compra asociada (puede ser null).
-     * @return ID de la compra o null
+     * Retorna el ID de la compra asociada.
+     * @return ID de la compra o null si no es tipo Compra
      */
     public Integer getCompraId() {
-        // Retornar el ID de la compra (nullable)
+        // Retornar el ID de la compra asociada
         return compraId;
     }
 
     /**
      * Establece el ID de la compra asociada.
-     * @param compraId ID de la compra (null si no aplica)
+     * @param compraId ID de la compra a asignar
      */
     public void setCompraId(Integer compraId) {
-        // Asignar el ID de la compra
+        // Asignar el ID de la compra asociada
         this.compraId = compraId;
     }
 
     /**
-     * Retorna el ID del gasto adicional asociado (puede ser null).
-     * @return ID del gasto adicional o null
+     * Retorna el ID del gasto adicional asociado.
+     * @return ID del gasto adicional o null si no es tipo Gasto
      */
     public Integer getGastoAdicionalId() {
-        // Retornar el ID del gasto adicional (nullable)
+        // Retornar el ID del gasto adicional asociado
         return gastoAdicionalId;
     }
 
     /**
      * Establece el ID del gasto adicional asociado.
-     * @param gastoAdicionalId ID del gasto (null si no aplica)
+     * @param gastoAdicionalId ID del gasto adicional a asignar
      */
     public void setGastoAdicionalId(Integer gastoAdicionalId) {
-        // Asignar el ID del gasto adicional
+        // Asignar el ID del gasto adicional asociado
         this.gastoAdicionalId = gastoAdicionalId;
+    }
+
+    /**
+     * Retorna el nombre del tipo de movimiento (poblado por JOIN).
+     * @return Nombre del tipo ("Venta", "Compra", "Gasto Adicional") o null si no se hizo JOIN
+     */
+    public String getTipoMovimiento() {
+        // Retornar el nombre del tipo de movimiento
+        return tipoMovimiento;
+    }
+
+    /**
+     * Establece el nombre del tipo de movimiento (poblado por JOIN).
+     * @param tipoMovimiento Nombre del tipo a asignar
+     */
+    public void setTipoMovimiento(String tipoMovimiento) {
+        // Asignar el nombre del tipo de movimiento
+        this.tipoMovimiento = tipoMovimiento;
+    }
+
+    /**
+     * Retorna la naturaleza del movimiento (poblada por JOIN).
+     * @return Naturaleza ("Ingreso" o "Egreso") o null si no se hizo JOIN
+     */
+    public String getNaturaleza() {
+        // Retornar la naturaleza del movimiento
+        return naturaleza;
+    }
+
+    /**
+     * Establece la naturaleza del movimiento (poblada por JOIN).
+     * @param naturaleza Naturaleza a asignar ("Ingreso" o "Egreso")
+     */
+    public void setNaturaleza(String naturaleza) {
+        // Asignar la naturaleza del movimiento
+        this.naturaleza = naturaleza;
     }
 }
