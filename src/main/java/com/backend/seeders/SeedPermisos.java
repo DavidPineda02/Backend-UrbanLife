@@ -19,7 +19,7 @@ import java.sql.ResultSet;
 public class SeedPermisos {
 
     /** SQL para insertar un permiso con su nombre y descripcion */
-    private static final String SQL_INSERT = "INSERT INTO Permisos (NOMBRE, DESCRIPCION) VALUES (?, ?)";
+    private static final String SQL_INSERT = "INSERT INTO Permisos (NOMBRE_PERMISO, DESCRIPCION_PERMISO) VALUES (?, ?)";
 
     /** Catálogo de permisos del sistema: [nombre, descripcion] */
     private static final String[][] permisos = {

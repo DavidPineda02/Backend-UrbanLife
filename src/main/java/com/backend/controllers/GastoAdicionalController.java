@@ -51,10 +51,17 @@ public class GastoAdicionalController {
             // Log de la petición recibida en consola
             System.out.println("Peticion: " + exchange.getRequestMethod() + " /api/gastos/id");
 
-            // Obtener el parámetro query "id" de la URL
-            String query = exchange.getRequestURI().getQuery();
-            // Parsear el ID del query param "id=X"
-            int id = Integer.parseInt(query.split("=")[1]);
+            // Leer los parámetros de la URL (query string)
+            String parametrosUrl = exchange.getRequestURI().getQuery();
+            // Validar que el parámetro id exista y sea un número entero
+            if (parametrosUrl == null || !parametrosUrl.matches("id=\\d+")) {
+                // Error 400 si el parámetro id no viene o tiene formato incorrecto
+                ApiResponse.error(exchange, 400, "Parametro id requerido (ej: ?id=5)");
+                // Salir del handler sin continuar
+                return;
+            }
+            // Extraer el valor numérico del ID del parámetro (ej: "id=5" → 5)
+            int id = Integer.parseInt(parametrosUrl.split("=")[1]);
 
             // Delegar al servicio la búsqueda del gasto por ID
             JsonObject respuesta = GastoAdicionalService.findById(id);

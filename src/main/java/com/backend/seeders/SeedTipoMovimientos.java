@@ -19,7 +19,7 @@ import java.sql.ResultSet;
 public class SeedTipoMovimientos {
 
     /** SQL para insertar un tipo de movimiento con su nombre y naturaleza */
-    private static final String SQL_INSERT = "INSERT INTO Tipo_Movimientos (MOVIMIENTO, NATURALEZA) VALUES (?, ?)";
+    private static final String SQL_INSERT = "INSERT INTO Tipos_Movimientos (MOVIMIENTO, NATURALEZA) VALUES (?, ?)";
 
     /** Catálogo de tipos de movimientos del sistema: [movimiento, naturaleza] */
     private static final String[][] tipos = {
@@ -32,7 +32,7 @@ public class SeedTipoMovimientos {
     };
 
     /**
-     * Inserta los tipos de movimientos iniciales solo si la tabla Tipo_Movimientos está vacía (idempotente).
+     * Inserta los tipos de movimientos iniciales solo si la tabla Tipos_Movimientos está vacía (idempotente).
      * Verifica primero si existen datos antes de insertar para evitar duplicados.
      */
     public static void insertTipoMovimientos() {
@@ -40,14 +40,14 @@ public class SeedTipoMovimientos {
         try (Connection conexion = dbConnection.getConnection()) {
 
             // Query de verificación
-            String sqlVerificacion = "SELECT COUNT(*) FROM Tipo_Movimientos";
+            String sqlVerificacion = "SELECT COUNT(*) FROM Tipos_Movimientos";
             // Preparar consulta y ejecutar verificación
             try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion);
                  ResultSet resultado = consultaVerificacion.executeQuery()) {
                 // Verificar si existen datos
                 if (resultado.next() && resultado.getInt(1) > 0) {
                     // Log de omisión
-                    System.out.println("  [Tipo_Movimientos] Ya existen datos -> omitido");
+                    System.out.println("  [Tipos_Movimientos] Ya existen datos -> omitido");
                     // Salir del método
                     return;
                 }
@@ -68,7 +68,7 @@ public class SeedTipoMovimientos {
                     filas += consulta.executeUpdate();
                 }
                 // Log de resultados
-                System.out.println("  [Tipo_Movimientos] Insertados: " + filas);
+                System.out.println("  [Tipos_Movimientos] Insertados: " + filas);
             // El PreparedStatement se cierra automáticamente
             }
 

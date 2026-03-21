@@ -22,7 +22,7 @@ import java.sql.ResultSet;
 public class SeedRolPermisos {
 
     /** SQL para insertar una relación rol-permiso */
-    private static final String SQL_INSERT = "INSERT INTO Rol_Permisos (ROL_ID, PERMISOS_ID) VALUES (?, ?)";
+    private static final String SQL_INSERT = "INSERT INTO Roles_Permisos (ROL_ID, PERMISOS_ID) VALUES (?, ?)";
 
     /** Asignaciones de permisos por rol: [rolId, permisoId] */
     private static final int[][] asignaciones = {
@@ -35,7 +35,7 @@ public class SeedRolPermisos {
     };
 
     /**
-     * Inserta las asignaciones rol-permiso solo si la tabla Rol_Permisos está vacía (idempotente).
+     * Inserta las asignaciones rol-permiso solo si la tabla Roles_Permisos está vacía (idempotente).
      * Verifica primero si existen datos antes de insertar para evitar duplicados.
      */
     public static void insertRolPermisos() {
@@ -43,14 +43,14 @@ public class SeedRolPermisos {
         try (Connection conexion = dbConnection.getConnection()) {
 
             // Verificar si ya existen asignaciones para evitar duplicados
-            String sqlVerificacion = "SELECT COUNT(*) FROM Rol_Permisos";
+            String sqlVerificacion = "SELECT COUNT(*) FROM Roles_Permisos";
             // Preparar consulta y ejecutar verificación
             try (PreparedStatement consultaVerificacion = conexion.prepareStatement(sqlVerificacion);
                  ResultSet resultado = consultaVerificacion.executeQuery()) {
                 // Si ya hay al menos una asignación, omitir la inserción
                 if (resultado.next() && resultado.getInt(1) > 0) {
                     // Log de omisión
-                    System.out.println("  [Rol_Permisos] Ya existen datos -> omitido");
+                    System.out.println("  [Roles_Permisos] Ya existen datos -> omitido");
                     // Salir del método
                     return;
                 }
@@ -70,7 +70,7 @@ public class SeedRolPermisos {
                     filas += consulta.executeUpdate();
                 }
                 // Log de resultados
-                System.out.println("  [Rol_Permisos] Insertados: " + filas);
+                System.out.println("  [Roles_Permisos] Insertados: " + filas);
             }
 
         // Capturar errores generales

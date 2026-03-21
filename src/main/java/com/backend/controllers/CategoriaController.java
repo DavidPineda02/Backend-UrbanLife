@@ -177,8 +177,8 @@ public class CategoriaController {
             String nombre      = datosJson.has("nombre") && !datosJson.get("nombre").isJsonNull()           ? datosJson.get("nombre").getAsString()      : "";
             // Extraer la descripción del JSON, usar null si no viene en el body (verificar que no sea JsonNull)
             String descripcion = datosJson.has("descripcion") && !datosJson.get("descripcion").isJsonNull() ? datosJson.get("descripcion").getAsString() : null;
-            // Extraer el estado del JSON, usar true por defecto si no viene en el body
-            boolean estado     = datosJson.has("estado")      ? datosJson.get("estado").getAsBoolean()     : true;
+            // Extraer el estado del JSON, usar true por defecto si no viene en el body (verificar que no sea JsonNull)
+            boolean estado     = datosJson.has("estado") && !datosJson.get("estado").isJsonNull() ? datosJson.get("estado").getAsBoolean() : true;
 
             // Delegar al servicio la validación y actualización de la categoría
             JsonObject respuesta = CategoriaService.update(id, nombre, descripcion, estado);
@@ -238,9 +238,9 @@ public class CategoriaController {
                 return;
             }
 
-            // PATCH solo permite cambiar el estado, verificar que venga en el body
-            if (!datosJson.has("estado")) {
-                // Error 400 si no se envió el campo estado
+            // PATCH solo permite cambiar el estado, verificar que venga en el body y no sea null
+            if (!datosJson.has("estado") || datosJson.get("estado").isJsonNull()) {
+                // Error 400 si no se envió el campo estado o es null
                 ApiResponse.error(exchange, 400, "El campo 'estado' es requerido");
                 // Salir del handler sin continuar
                 return;
