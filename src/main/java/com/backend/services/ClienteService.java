@@ -175,10 +175,22 @@ public class ClienteService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Teléfono (opcional) -----
+        // ----- Validaciones del campo Teléfono (obligatorio) -----
 
-        // Verificar que el teléfono (si viene) sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
-        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
+        // Verificar que el teléfono no sea nulo ni vacío
+        if (telefono == null || telefono.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el teléfono es obligatorio
+            respuesta.addProperty("message", "El teléfono es obligatorio");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+
+        // Verificar que el teléfono sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
+        if (!telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano requerido
@@ -436,10 +448,22 @@ public class ClienteService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Teléfono (opcional) -----
+        // ----- Validaciones del campo Teléfono (obligatorio) -----
 
-        // Verificar que el teléfono (si viene) sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
-        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
+        // Verificar que el teléfono no sea nulo ni vacío
+        if (telefono == null || telefono.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el teléfono es obligatorio
+            respuesta.addProperty("message", "El teléfono es obligatorio");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+
+        // Verificar que el teléfono sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
+        if (!telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano requerido
