@@ -77,12 +77,12 @@ public class ProveedorService {
      * El nombre y el NIT son obligatorios. El NIT debe ser único.
      * Razón social, correo, teléfono, dirección y ciudad son opcionales.
      * @param nombre Nombre comercial del proveedor (obligatorio, 2-100 caracteres)
-     * @param razonSocial Razón social legal (opcional, máximo 150 caracteres)
+     * @param razonSocial Razón social legal (obligatorio, máximo 150 caracteres)
      * @param nit Número de identificación tributaria (obligatorio, único, 5-20 caracteres)
-     * @param correo Correo electrónico (opcional, formato válido si viene)
-     * @param telefono Número de teléfono (opcional, 7-15 caracteres si viene)
-     * @param direccion Dirección física (opcional, máximo 200 caracteres)
-     * @param ciudad Ciudad donde opera (opcional, máximo 100 caracteres)
+     * @param correo Correo electrónico (obligatorio, formato válido)
+     * @param telefono Número de teléfono (obligatorio, 7-10 dígitos)
+     * @param direccion Dirección física (obligatorio, máximo 200 caracteres)
+     * @param ciudad Ciudad donde opera (obligatorio, máximo 100 caracteres)
      * @return JsonObject con el resultado de la creación
      */
     public static JsonObject create(String nombre, String razonSocial, String nit,
@@ -126,10 +126,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Razón Social (opcional) -----
+        // ----- Validaciones del campo Razón Social (obligatorio) -----
 
-        // Verificar que la razón social (si viene) no supere los 150 caracteres
-        if (razonSocial != null && razonSocial.trim().length() > 150) {
+        // Verificar que la razón social no sea nula ni esté vacía
+        if (razonSocial == null || razonSocial.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la razón social es obligatoria
+            respuesta.addProperty("message", "La razón social es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la razón social no supere los 150 caracteres
+        if (razonSocial.trim().length() > 150) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -165,10 +176,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Correo (opcional) -----
+        // ----- Validaciones del campo Correo (obligatorio) -----
 
-        // Verificar que el correo (si viene) tenga formato válido usando el regex centralizado
-        if (correo != null && !correo.isBlank() && !correo.matches(ValidationHelper.EMAIL_REGEX)) {
+        // Verificar que el correo no sea nulo ni esté vacío
+        if (correo == null || correo.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el correo es obligatorio
+            respuesta.addProperty("message", "El correo electrónico es requerido");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que el correo tenga formato válido usando el regex centralizado
+        if (!correo.trim().matches(ValidationHelper.EMAIL_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato inválido
@@ -179,10 +201,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Teléfono (opcional) -----
+        // ----- Validaciones del campo Teléfono (obligatorio) -----
 
-        // Verificar que el teléfono (si viene) sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
-        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
+        // Verificar que el teléfono no sea nulo ni esté vacío
+        if (telefono == null || telefono.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el teléfono es obligatorio
+            respuesta.addProperty("message", "El teléfono es requerido");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que el teléfono sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
+        if (!telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano requerido
@@ -193,10 +226,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Dirección (opcional) -----
+        // ----- Validaciones del campo Dirección (obligatorio) -----
 
-        // Verificar que la dirección (si viene) no supere los 200 caracteres
-        if (direccion != null && direccion.length() > 200) {
+        // Verificar que la dirección no sea nula ni esté vacía
+        if (direccion == null || direccion.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la dirección es obligatoria
+            respuesta.addProperty("message", "La dirección es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la dirección no supere los 200 caracteres
+        if (direccion.trim().length() > 200) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -207,10 +251,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Ciudad (opcional) -----
+        // ----- Validaciones del campo Ciudad (obligatorio) -----
 
-        // Verificar que la ciudad (si viene) no supere los 100 caracteres
-        if (ciudad != null && ciudad.length() > 100) {
+        // Verificar que la ciudad no sea nula ni esté vacía
+        if (ciudad == null || ciudad.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la ciudad es obligatoria
+            respuesta.addProperty("message", "La ciudad es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la ciudad no supere los 100 caracteres
+        if (ciudad.trim().length() > 100) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -235,21 +290,38 @@ public class ProveedorService {
             return respuesta;
         }
 
+        // ----- Verificar unicidad del correo -----
+
+        // Verificar que no exista otro proveedor con el mismo correo electrónico
+        if (ProveedorDAO.findByCorreo(correo.trim()) != null) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el correo ya está registrado por otro proveedor
+            respuesta.addProperty("message", "Ya existe un proveedor con ese correo electrónico");
+            // Código HTTP 409 Conflict
+            respuesta.addProperty("status", 409);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+
+        // ----- Verificar unicidad del teléfono -----
+
+        // Verificar que no exista otro proveedor con el mismo número de teléfono
+        if (ProveedorDAO.findByTelefono(telefono.trim()) != null) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el teléfono ya está registrado por otro proveedor
+            respuesta.addProperty("message", "Ya existe un proveedor con ese número de teléfono");
+            // Código HTTP 409 Conflict
+            respuesta.addProperty("status", 409);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+
         // ----- Crear y persistir el proveedor -----
 
-        // Normalizar razón social a null si viene vacía
-        String razonSocialFinal = (razonSocial != null && !razonSocial.isBlank()) ? razonSocial.trim() : null;
-        // Normalizar correo a null si viene vacío
-        String correoFinal = (correo != null && !correo.isBlank()) ? correo.trim() : null;
-        // Normalizar teléfono a null si viene vacío
-        String telefonoFinal = (telefono != null && !telefono.isBlank()) ? telefono.trim() : null;
-        // Normalizar dirección a null si viene vacía
-        String direccionFinal = (direccion != null && !direccion.isBlank()) ? direccion.trim() : null;
-        // Normalizar ciudad a null si viene vacía
-        String ciudadFinal = (ciudad != null && !ciudad.isBlank()) ? ciudad.trim() : null;
-
-        // Construir el objeto Proveedor con estado activo por defecto
-        Proveedor nuevo = new Proveedor(nombre.trim(), razonSocialFinal, nit.trim(), correoFinal, telefonoFinal, direccionFinal, ciudadFinal);
+        // Construir el objeto Proveedor con todos los campos obligatorios y estado activo por defecto
+        Proveedor nuevo = new Proveedor(nombre.trim(), razonSocial.trim(), nit.trim(), correo.trim(), telefono.trim(), direccion.trim(), ciudad.trim());
         // Persistir el nuevo proveedor en la base de datos
         Proveedor creado = ProveedorDAO.create(nuevo);
 
@@ -282,12 +354,12 @@ public class ProveedorService {
      * Verifica que el proveedor exista y que el NIT sea único (si cambió).
      * @param id ID del proveedor a actualizar
      * @param nombre Nuevo nombre comercial (obligatorio)
-     * @param razonSocial Nueva razón social (opcional)
+     * @param razonSocial Nueva razón social (obligatorio)
      * @param nit Nuevo NIT (obligatorio, único si cambió)
-     * @param correo Nuevo correo (opcional)
-     * @param telefono Nuevo teléfono (opcional)
-     * @param direccion Nueva dirección (opcional)
-     * @param ciudad Nueva ciudad (opcional)
+     * @param correo Nuevo correo (obligatorio, único si cambió)
+     * @param telefono Nuevo teléfono (obligatorio, único si cambió)
+     * @param direccion Nueva dirección (obligatorio)
+     * @param ciudad Nueva ciudad (obligatorio)
      * @param estado Nuevo estado activo/inactivo
      * @return JsonObject con el resultado de la actualización
      */
@@ -348,10 +420,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Razón Social (opcional) -----
+        // ----- Validaciones del campo Razón Social (obligatorio) -----
 
-        // Verificar que la razón social (si viene) no supere los 150 caracteres
-        if (razonSocial != null && razonSocial.trim().length() > 150) {
+        // Verificar que la razón social no sea nula ni esté vacía
+        if (razonSocial == null || razonSocial.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la razón social es obligatoria
+            respuesta.addProperty("message", "La razón social es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la razón social no supere los 150 caracteres
+        if (razonSocial.trim().length() > 150) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -387,10 +470,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Correo (opcional) -----
+        // ----- Validaciones del campo Correo (obligatorio) -----
 
-        // Verificar que el correo (si viene) tenga formato válido usando el regex centralizado
-        if (correo != null && !correo.isBlank() && !correo.matches(ValidationHelper.EMAIL_REGEX)) {
+        // Verificar que el correo no sea nulo ni esté vacío
+        if (correo == null || correo.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el correo es obligatorio
+            respuesta.addProperty("message", "El correo electrónico es requerido");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que el correo tenga formato válido usando el regex centralizado
+        if (!correo.trim().matches(ValidationHelper.EMAIL_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato inválido
@@ -401,10 +495,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Teléfono (opcional) -----
+        // ----- Validaciones del campo Teléfono (obligatorio) -----
 
-        // Verificar que el teléfono (si viene) sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
-        if (telefono != null && !telefono.isBlank() && !telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
+        // Verificar que el teléfono no sea nulo ni esté vacío
+        if (telefono == null || telefono.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el teléfono es obligatorio
+            respuesta.addProperty("message", "El teléfono es requerido");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que el teléfono sea solo dígitos y tenga entre 7 y 10 caracteres (estándar colombiano)
+        if (!telefono.trim().matches(ValidationHelper.TELEFONO_REGEX)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato colombiano requerido
@@ -415,10 +520,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Dirección (opcional) -----
+        // ----- Validaciones del campo Dirección (obligatorio) -----
 
-        // Verificar que la dirección (si viene) no supere los 200 caracteres
-        if (direccion != null && direccion.length() > 200) {
+        // Verificar que la dirección no sea nula ni esté vacía
+        if (direccion == null || direccion.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la dirección es obligatoria
+            respuesta.addProperty("message", "La dirección es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la dirección no supere los 200 caracteres
+        if (direccion.trim().length() > 200) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -429,10 +545,21 @@ public class ProveedorService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Ciudad (opcional) -----
+        // ----- Validaciones del campo Ciudad (obligatorio) -----
 
-        // Verificar que la ciudad (si viene) no supere los 100 caracteres
-        if (ciudad != null && ciudad.length() > 100) {
+        // Verificar que la ciudad no sea nula ni esté vacía
+        if (ciudad == null || ciudad.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la ciudad es obligatoria
+            respuesta.addProperty("message", "La ciudad es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la ciudad no supere los 100 caracteres
+        if (ciudad.trim().length() > 100) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -460,22 +587,56 @@ public class ProveedorService {
             }
         }
 
+        // ----- Verificar unicidad del correo (solo si cambió) -----
+
+        // Comparar el nuevo correo con el actual del proveedor
+        if (!correo.trim().equals(proveedor.getCorreo())) {
+            // Solo verificar unicidad si el correo cambió para no bloquear el mismo valor
+            if (ProveedorDAO.findByCorreo(correo.trim()) != null) {
+                // Indicar que la operación falló
+                respuesta.addProperty("success", false);
+                // Mensaje indicando que el correo ya está registrado por otro proveedor
+                respuesta.addProperty("message", "Ya existe un proveedor con ese correo electrónico");
+                // Código HTTP 409 Conflict
+                respuesta.addProperty("status", 409);
+                // Retornar respuesta de error
+                return respuesta;
+            }
+        }
+
+        // ----- Verificar unicidad del teléfono (solo si cambió) -----
+
+        // Comparar el nuevo teléfono con el actual del proveedor
+        if (!telefono.trim().equals(proveedor.getTelefono())) {
+            // Solo verificar unicidad si el teléfono cambió para no bloquear el mismo valor
+            if (ProveedorDAO.findByTelefono(telefono.trim()) != null) {
+                // Indicar que la operación falló
+                respuesta.addProperty("success", false);
+                // Mensaje indicando que el teléfono ya está registrado por otro proveedor
+                respuesta.addProperty("message", "Ya existe un proveedor con ese número de teléfono");
+                // Código HTTP 409 Conflict
+                respuesta.addProperty("status", 409);
+                // Retornar respuesta de error
+                return respuesta;
+            }
+        }
+
         // ----- Aplicar cambios y persistir -----
 
         // Actualizar el nombre en el objeto proveedor
         proveedor.setNombre(nombre.trim());
-        // Normalizar razón social a null si viene vacía y actualizar
-        proveedor.setRazonSocial((razonSocial != null && !razonSocial.isBlank()) ? razonSocial.trim() : null);
+        // Actualizar la razón social en el objeto proveedor
+        proveedor.setRazonSocial(razonSocial.trim());
         // Actualizar el NIT en el objeto proveedor
         proveedor.setNit(nit.trim());
-        // Normalizar correo a null si viene vacío y actualizar
-        proveedor.setCorreo((correo != null && !correo.isBlank()) ? correo.trim() : null);
-        // Normalizar teléfono a null si viene vacío y actualizar
-        proveedor.setTelefono((telefono != null && !telefono.isBlank()) ? telefono.trim() : null);
-        // Normalizar dirección a null si viene vacía y actualizar
-        proveedor.setDireccion((direccion != null && !direccion.isBlank()) ? direccion.trim() : null);
-        // Normalizar ciudad a null si viene vacía y actualizar
-        proveedor.setCiudad((ciudad != null && !ciudad.isBlank()) ? ciudad.trim() : null);
+        // Actualizar el correo en el objeto proveedor
+        proveedor.setCorreo(correo.trim());
+        // Actualizar el teléfono en el objeto proveedor
+        proveedor.setTelefono(telefono.trim());
+        // Actualizar la dirección en el objeto proveedor
+        proveedor.setDireccion(direccion.trim());
+        // Actualizar la ciudad en el objeto proveedor
+        proveedor.setCiudad(ciudad.trim());
         // Actualizar el estado en el objeto proveedor
         proveedor.setEstado(estado);
 

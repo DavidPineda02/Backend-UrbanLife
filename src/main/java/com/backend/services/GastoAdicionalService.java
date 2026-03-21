@@ -9,6 +9,8 @@ import com.backend.models.GastoAdicional;
 import com.google.gson.Gson;
 // Para construir el objeto JSON de respuesta
 import com.google.gson.JsonObject;
+// Para acceder a las expresiones regulares de validación centralizadas
+import com.backend.helpers.ValidationHelper;
 
 /**
  * Servicio con la lógica de negocio para el módulo de Gastos Adicionales.
@@ -122,8 +124,20 @@ public class GastoAdicionalService {
             return respuesta;
         }
 
+        // Validar formato de fecha YYYY-MM-DD con la regex centralizada
+        if (!fechaRegistro.trim().matches(ValidationHelper.FECHA_REGEX)) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando formato de fecha inválido
+            respuesta.addProperty("message", "La fecha debe tener formato YYYY-MM-DD");
+            // Agregar el código HTTP 400 para que el controller lo extraiga
+            respuesta.addProperty("status", 400);
+            // Retornar la respuesta de error
+            return respuesta;
+        }
+
         // ----- Validación de método de pago -----
-        if (!metodoPago.equals("Transferencia") && !metodoPago.equals("Efectivo")) {
+        if (metodoPago == null || (!metodoPago.equals("Transferencia") && !metodoPago.equals("Efectivo"))) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando que el método de pago es inválido
@@ -135,12 +149,12 @@ public class GastoAdicionalService {
         }
 
         // ----- Creación del objeto GastoAdicional -----
-        GastoAdicional nuevoGasto = new GastoAdicional(monto, descripcion, fechaRegistro, metodoPago);
+        GastoAdicional nuevoGasto = new GastoAdicional(monto, descripcion, fechaRegistro, metodoPago, usuarioId);
 
         // ----- Crear el gasto con transacción atómica -----
 
         // Ejecutar la transacción atómica en el DAO (INSERT gasto + INSERT movimiento financiero)
-        GastoAdicional gastoCreado = GastoAdicionalDAO.create(nuevoGasto, usuarioId);
+        GastoAdicional gastoCreado = GastoAdicionalDAO.create(nuevoGasto);
 
         // Verificar si la transacción falló
         if (gastoCreado == null) {

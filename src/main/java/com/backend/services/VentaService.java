@@ -267,8 +267,8 @@ public class VentaService {
             int productoId = item.get("productoId").getAsInt();
             // Extraer la cantidad del ítem
             int cantidad = item.get("cantidad").getAsInt();
-            // Extraer el precio unitario ingresado por el usuario
-            double precioUnitario = item.get("precioUnitario").getAsDouble();
+            // El precio unitario se obtiene de la BD después de buscar el producto (seguridad)
+            double precioUnitario;
 
             // Verificar que el ID del producto sea un valor positivo
             if (productoId <= 0) {
@@ -317,6 +317,9 @@ public class VentaService {
                 // Retornar respuesta de error
                 return respuesta;
             }
+            // Obtener el precio de venta directamente de la BD (previene manipulación del frontend)
+            precioUnitario = producto.getPrecioVenta();
+
             // Verificar que el stock del producto sea suficiente para la cantidad solicitada
             if (producto.getStock() < cantidad) {
                 // Indicar que la operación falló

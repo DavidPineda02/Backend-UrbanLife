@@ -1,6 +1,8 @@
 // Paquete de servicios de lógica de negocio
 package com.backend.services;
 
+// Para insertar el correo principal en Correos_Usuario tras crear el usuario
+import com.backend.dao.CorreoUsuarioDAO;
 // Para buscar el rol EMPLEADO y asignarlo al nuevo usuario
 import com.backend.dao.RolDAO;
 // Para operaciones CRUD de usuarios en la base de datos
@@ -13,6 +15,8 @@ import com.backend.helpers.JwtHelper;
 import com.backend.helpers.PasswordHelper;
 // Para las expresiones regulares y políticas de validación compartidas
 import com.backend.helpers.ValidationHelper;
+// Modelo que representa un correo electrónico asociado a un usuario
+import com.backend.models.CorreoUsuario;
 // Entidad del rol del sistema
 import com.backend.models.Rol;
 // Entidad del usuario del sistema
@@ -238,6 +242,11 @@ public class UserService {
 
         // Verificar si la creación del usuario fue exitosa
         if (usuarioCreado != null) {
+            // Insertar el correo principal en la tabla Correos_Usuario con ES_PRINCIPAL=TRUE
+            CorreoUsuarioDAO.create(new CorreoUsuario(correo, true, usuarioCreado.getIdUsuario()));
+            // Asignar el correo al objeto usuario en memoria (campo de conveniencia)
+            usuarioCreado.setCorreo(correo);
+
             // Buscar el rol EMPLEADO para asignárselo por defecto al nuevo usuario
             Rol rolEmpleado = RolDAO.findByNombre("EMPLEADO");
             // Valor por defecto si por algún motivo el rol no existe en la BD
@@ -376,12 +385,10 @@ public class UserService {
         usuario.setNombre(nombre);
         // Actualizar el apellido en el objeto usuario en memoria
         usuario.setApellido(apellido);
-        // Actualizar el correo en el objeto usuario en memoria
-        usuario.setCorreo(correo);
         // Actualizar el estado en el objeto usuario en memoria
         usuario.setEstado(estado);
 
-        // Persistir los cambios de nombre, apellido, correo y estado en la base de datos
+        // Persistir los cambios de nombre, apellido y estado en la base de datos
         if (!UsuarioDAO.update(usuario)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
@@ -391,6 +398,19 @@ public class UserService {
             respuesta.addProperty("status", 500);
             // Retornar respuesta de error
             return respuesta;
+        }
+
+        // Actualizar el correo principal en Correos_Usuario si cambió
+        if (!correo.equals(usuario.getCorreo())) {
+            // Buscar el correo principal actual del usuario en Correos_Usuario
+            CorreoUsuario correoPrincipal = CorreoUsuarioDAO.findByCorreo(usuario.getCorreo());
+            // Si existe el correo principal, actualizar su dirección
+            if (correoPrincipal != null) {
+                // Asignar la nueva dirección de correo al objeto
+                correoPrincipal.setCorreo(correo);
+                // Persistir el cambio en la base de datos
+                CorreoUsuarioDAO.update(correoPrincipal);
+            }
         }
 
         // Hashear y guardar la nueva contraseña si fue proporcionada (ya validada arriba)
@@ -498,12 +518,10 @@ public class UserService {
         if (nombre != null && !nombre.isBlank()) usuario.setNombre(nombre);
         // Actualizar el apellido solo si fue enviado en el body
         if (apellido != null && !apellido.isBlank()) usuario.setApellido(apellido);
-        // Actualizar el correo solo si fue enviado en el body
-        if (correo != null && !correo.isBlank()) usuario.setCorreo(correo);
         // Actualizar el estado solo si fue enviado en el body (Boolean objeto permite null = no actualizar)
         if (estado != null) usuario.setEstado(estado);
 
-        // Persistir los cambios en la base de datos
+        // Persistir los cambios de nombre, apellido y estado en la base de datos
         if (!UsuarioDAO.update(usuario)) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
@@ -513,6 +531,19 @@ public class UserService {
             respuesta.addProperty("status", 500);
             // Retornar respuesta de error
             return respuesta;
+        }
+
+        // Actualizar el correo principal en Correos_Usuario si fue enviado y cambió
+        if (correo != null && !correo.isBlank() && !correo.equals(usuario.getCorreo())) {
+            // Buscar el correo principal actual del usuario en Correos_Usuario
+            CorreoUsuario correoPrincipal = CorreoUsuarioDAO.findByCorreo(usuario.getCorreo());
+            // Si existe el correo principal, actualizar su dirección
+            if (correoPrincipal != null) {
+                // Asignar la nueva dirección de correo al objeto
+                correoPrincipal.setCorreo(correo);
+                // Persistir el cambio en la base de datos
+                CorreoUsuarioDAO.update(correoPrincipal);
+            }
         }
 
         // Hashear y guardar la nueva contraseña si fue proporcionada (ya validada arriba)

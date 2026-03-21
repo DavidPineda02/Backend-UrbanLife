@@ -137,8 +137,10 @@ public class ImagenProductoService {
         // URL relativa con la que el frontend puede acceder a la imagen
         String urlImagen = "/uploads/" + nombreArchivo;
 
+        // Obtener la fecha actual en formato YYYY-MM-DD como String
+        String fechaHoy = LocalDate.now().toString();
         // Crear el objeto ImagenProducto para guardar en la BD
-        ImagenProducto nuevaImagen = new ImagenProducto(urlImagen, LocalDate.now(), productoId);
+        ImagenProducto nuevaImagen = new ImagenProducto(urlImagen, fechaHoy, productoId);
         // Insertar en la base de datos usando el DAO
         ImagenProducto imagenCreada = ImagenProductoDAO.create(nuevaImagen);
 
@@ -188,7 +190,7 @@ public class ImagenProductoService {
             JsonObject item = new JsonObject();
             item.addProperty("id", img.getImagenProducto());
             item.addProperty("url", img.getUrl());
-            item.addProperty("fechaRegistro", img.getFechaRegistro().toString());
+            item.addProperty("fechaRegistro", img.getFechaRegistro());
             listaImagenes.add(item);
         }
 

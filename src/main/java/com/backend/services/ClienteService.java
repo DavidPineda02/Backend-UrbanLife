@@ -80,8 +80,8 @@ public class ClienteService {
      * @param documento Número de documento de identidad (obligatorio, único, mínimo 5 dígitos)
      * @param correo Correo electrónico (opcional, formato válido si viene)
      * @param telefono Número de teléfono (opcional, 7-15 caracteres si viene)
-     * @param direccion Dirección física (opcional, máximo 200 caracteres)
-     * @param ciudad Ciudad de residencia (opcional, máximo 100 caracteres)
+     * @param direccion Dirección física (obligatorio, máximo 200 caracteres)
+     * @param ciudad Ciudad de residencia (obligatorio, máximo 100 caracteres)
      * @return JsonObject con el resultado de la creación
      */
     public static JsonObject create(String nombre, Long documento, String correo,
@@ -189,10 +189,21 @@ public class ClienteService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Dirección (opcional) -----
+        // ----- Validaciones del campo Dirección (obligatorio) -----
 
-        // Verificar que la dirección (si viene) no supere los 200 caracteres
-        if (direccion != null && direccion.length() > 200) {
+        // Verificar que la dirección no sea nula ni esté vacía
+        if (direccion == null || direccion.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la dirección es obligatoria
+            respuesta.addProperty("message", "La dirección es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la dirección no supere los 200 caracteres
+        if (direccion.trim().length() > 200) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -203,10 +214,21 @@ public class ClienteService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Ciudad (opcional) -----
+        // ----- Validaciones del campo Ciudad (obligatorio) -----
 
-        // Verificar que la ciudad (si viene) no supere los 100 caracteres
-        if (ciudad != null && ciudad.length() > 100) {
+        // Verificar que la ciudad no sea nula ni esté vacía
+        if (ciudad == null || ciudad.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la ciudad es obligatoria
+            respuesta.addProperty("message", "La ciudad es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la ciudad no supere los 100 caracteres
+        if (ciudad.trim().length() > 100) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -231,19 +253,42 @@ public class ClienteService {
             return respuesta;
         }
 
+        // ----- Verificar unicidad del correo (solo si viene) -----
+
+        // Verificar que no exista otro cliente con el mismo correo electrónico
+        if (correo != null && !correo.isBlank() && ClienteDAO.findByCorreo(correo.trim()) != null) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el correo ya está registrado por otro cliente
+            respuesta.addProperty("message", "Ya existe un cliente con ese correo electrónico");
+            // Código HTTP 409 Conflict
+            respuesta.addProperty("status", 409);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+
+        // ----- Verificar unicidad del teléfono (solo si viene) -----
+
+        // Verificar que no exista otro cliente con el mismo número de teléfono
+        if (telefono != null && !telefono.isBlank() && ClienteDAO.findByTelefono(telefono.trim()) != null) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que el teléfono ya está registrado por otro cliente
+            respuesta.addProperty("message", "Ya existe un cliente con ese número de teléfono");
+            // Código HTTP 409 Conflict
+            respuesta.addProperty("status", 409);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+
         // ----- Crear y persistir el cliente -----
 
         // Normalizar correo a null si viene vacío para evitar strings vacíos en BD
         String correoFinal = (correo != null && !correo.isBlank()) ? correo.trim() : null;
         // Normalizar teléfono a null si viene vacío
         String telefonoFinal = (telefono != null && !telefono.isBlank()) ? telefono.trim() : null;
-        // Normalizar dirección a null si viene vacía
-        String direccionFinal = (direccion != null && !direccion.isBlank()) ? direccion.trim() : null;
-        // Normalizar ciudad a null si viene vacía
-        String ciudadFinal = (ciudad != null && !ciudad.isBlank()) ? ciudad.trim() : null;
-
         // Construir el objeto Cliente con estado activo por defecto
-        Cliente nuevo = new Cliente(nombre.trim(), documento, correoFinal, telefonoFinal, direccionFinal, ciudadFinal);
+        Cliente nuevo = new Cliente(nombre.trim(), documento, correoFinal, telefonoFinal, direccion.trim(), ciudad.trim());
         // Persistir el nuevo cliente en la base de datos
         Cliente creado = ClienteDAO.create(nuevo);
 
@@ -279,8 +324,8 @@ public class ClienteService {
      * @param documento Nuevo número de documento (obligatorio, único si cambió)
      * @param correo Nuevo correo (opcional)
      * @param telefono Nuevo teléfono (opcional)
-     * @param direccion Nueva dirección (opcional)
-     * @param ciudad Nueva ciudad (opcional)
+     * @param direccion Nueva dirección (obligatorio)
+     * @param ciudad Nueva ciudad (obligatorio)
      * @param estado Nuevo estado activo/inactivo
      * @return JsonObject con el resultado de la actualización
      */
@@ -405,10 +450,21 @@ public class ClienteService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Dirección (opcional) -----
+        // ----- Validaciones del campo Dirección (obligatorio) -----
 
-        // Verificar que la dirección (si viene) no supere los 200 caracteres
-        if (direccion != null && direccion.length() > 200) {
+        // Verificar que la dirección no sea nula ni esté vacía
+        if (direccion == null || direccion.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la dirección es obligatoria
+            respuesta.addProperty("message", "La dirección es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la dirección no supere los 200 caracteres
+        if (direccion.trim().length() > 200) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -419,10 +475,21 @@ public class ClienteService {
             return respuesta;
         }
 
-        // ----- Validaciones del campo Ciudad (opcional) -----
+        // ----- Validaciones del campo Ciudad (obligatorio) -----
 
-        // Verificar que la ciudad (si viene) no supere los 100 caracteres
-        if (ciudad != null && ciudad.length() > 100) {
+        // Verificar que la ciudad no sea nula ni esté vacía
+        if (ciudad == null || ciudad.isBlank()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que la ciudad es obligatoria
+            respuesta.addProperty("message", "La ciudad es requerida");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la ciudad no supere los 100 caracteres
+        if (ciudad.trim().length() > 100) {
             // Indicar que la operación falló
             respuesta.addProperty("success", false);
             // Mensaje indicando el máximo de caracteres permitidos
@@ -450,6 +517,44 @@ public class ClienteService {
             }
         }
 
+        // ----- Verificar unicidad del correo (solo si cambió) -----
+
+        // Normalizar correo entrante para comparar con el actual
+        String correoNuevo = (correo != null && !correo.isBlank()) ? correo.trim() : null;
+        // Comparar el nuevo correo con el actual del cliente (ambos pueden ser null)
+        if (correoNuevo != null && !correoNuevo.equals(cliente.getCorreo())) {
+            // Solo verificar unicidad si el correo cambió para no bloquear el mismo valor
+            if (ClienteDAO.findByCorreo(correoNuevo) != null) {
+                // Indicar que la operación falló
+                respuesta.addProperty("success", false);
+                // Mensaje indicando que el correo ya está registrado por otro cliente
+                respuesta.addProperty("message", "Ya existe un cliente con ese correo electrónico");
+                // Código HTTP 409 Conflict
+                respuesta.addProperty("status", 409);
+                // Retornar respuesta de error
+                return respuesta;
+            }
+        }
+
+        // ----- Verificar unicidad del teléfono (solo si cambió) -----
+
+        // Normalizar teléfono entrante para comparar con el actual
+        String telefonoNuevo = (telefono != null && !telefono.isBlank()) ? telefono.trim() : null;
+        // Comparar el nuevo teléfono con el actual del cliente (ambos pueden ser null)
+        if (telefonoNuevo != null && !telefonoNuevo.equals(cliente.getTelefono())) {
+            // Solo verificar unicidad si el teléfono cambió para no bloquear el mismo valor
+            if (ClienteDAO.findByTelefono(telefonoNuevo) != null) {
+                // Indicar que la operación falló
+                respuesta.addProperty("success", false);
+                // Mensaje indicando que el teléfono ya está registrado por otro cliente
+                respuesta.addProperty("message", "Ya existe un cliente con ese número de teléfono");
+                // Código HTTP 409 Conflict
+                respuesta.addProperty("status", 409);
+                // Retornar respuesta de error
+                return respuesta;
+            }
+        }
+
         // ----- Aplicar cambios y persistir -----
 
         // Actualizar el nombre en el objeto cliente
@@ -457,13 +562,13 @@ public class ClienteService {
         // Actualizar el documento numérico en el objeto cliente
         cliente.setDocumento(documento);
         // Normalizar correo a null si viene vacío y actualizar
-        cliente.setCorreo((correo != null && !correo.isBlank()) ? correo.trim() : null);
+        cliente.setCorreo(correoNuevo);
         // Normalizar teléfono a null si viene vacío y actualizar
-        cliente.setTelefono((telefono != null && !telefono.isBlank()) ? telefono.trim() : null);
-        // Normalizar dirección a null si viene vacía y actualizar
-        cliente.setDireccion((direccion != null && !direccion.isBlank()) ? direccion.trim() : null);
-        // Normalizar ciudad a null si viene vacía y actualizar
-        cliente.setCiudad((ciudad != null && !ciudad.isBlank()) ? ciudad.trim() : null);
+        cliente.setTelefono(telefonoNuevo);
+        // Actualizar la dirección en el objeto cliente
+        cliente.setDireccion(direccion.trim());
+        // Actualizar la ciudad en el objeto cliente
+        cliente.setCiudad(ciudad.trim());
         // Actualizar el estado en el objeto cliente
         cliente.setEstado(estado);
 
