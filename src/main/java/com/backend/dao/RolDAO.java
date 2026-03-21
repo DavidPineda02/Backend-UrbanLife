@@ -27,7 +27,7 @@ public class RolDAO {
      */
     public static Rol findById(int id) {
         // SQL para seleccionar un rol por su clave primaria
-        String sql = "SELECT * FROM roles WHERE id_roles = ?";
+        String sql = "SELECT * FROM Roles WHERE ID_ROLES = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -52,7 +52,7 @@ public class RolDAO {
      */
     public static Rol findByNombre(String nombre) {
         // SQL para seleccionar un rol filtrando por nombre
-        String sql = "SELECT * FROM roles WHERE nombre = ?";
+        String sql = "SELECT * FROM Roles WHERE NOMBRE_ROL = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -78,7 +78,7 @@ public class RolDAO {
         // Lista donde se acumularán los roles encontrados
         List<Rol> lista = new ArrayList<>();
         // SQL para seleccionar todos los roles ordenados por ID
-        String sql = "SELECT * FROM roles ORDER BY id_roles ASC";
+        String sql = "SELECT * FROM Roles ORDER BY ID_ROLES ASC";
         // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -100,7 +100,7 @@ public class RolDAO {
      */
     public static Rol create(Rol rol) {
         // SQL para insertar un nuevo rol con nombre y descripción
-        String sql = "INSERT INTO roles (nombre, descripcion) VALUES (?, ?)";
+        String sql = "INSERT INTO Roles (NOMBRE_ROL, DESCRIPCION_ROL) VALUES (?, ?)";
         // Abrir conexión y preparar consulta solicitando las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -132,7 +132,7 @@ public class RolDAO {
      */
     public static boolean update(Rol rol) {
         // SQL para actualizar nombre y descripción de un rol por su ID
-        String sql = "UPDATE roles SET nombre = ?, descripcion = ? WHERE id_roles = ?";
+        String sql = "UPDATE Roles SET NOMBRE_ROL = ?, DESCRIPCION_ROL = ? WHERE ID_ROLES = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -159,7 +159,7 @@ public class RolDAO {
      */
     public static boolean delete(int id) {
         // SQL para eliminar un rol por su clave primaria
-        String sql = "DELETE FROM roles WHERE id_roles = ?";
+        String sql = "DELETE FROM Roles WHERE ID_ROLES = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -184,11 +184,11 @@ public class RolDAO {
     private static Rol mapRow(ResultSet resultado) throws SQLException {
         // Construir y retornar un Rol con los datos del registro actual
         return new Rol(
-                // Leer el ID del rol desde la columna id_roles
-                resultado.getInt("id_roles"),
-                // Leer el nombre del rol desde la columna nombre
-                resultado.getString("nombre"),
-                // Leer la descripción del rol desde la columna descripcion
-                resultado.getString("descripcion"));
+                // Leer el ID del rol desde la columna ID_ROLES
+                resultado.getInt("ID_ROLES"),
+                // Leer el nombre del rol desde la columna NOMBRE_ROL
+                resultado.getString("NOMBRE_ROL"),
+                // Leer la descripción del rol desde la columna DESCRIPCION_ROL
+                resultado.getString("DESCRIPCION_ROL"));
     }
 }

@@ -49,36 +49,36 @@ public class DashboardDAO {
         // Inicializar clientesActivos en 0 por si la consulta no retorna filas
         resumen.addProperty("clientesActivos", 0);
 
-        // SQL: suma de montos de tipo 1 (ventas/ingresos) con fecha igual a hoy
+        // SQL: suma de MONTO de TIPO_MOVIMIENTO_ID 1 (ventas/ingresos) con FECHA igual a hoy
         // COALESCE garantiza que si no hay ventas hoy el resultado sea 0 en vez de NULL
-        String sqlIngresosHoy = "SELECT COALESCE(SUM(monto), 0) AS total " +
-                "FROM movimientos_financieros " +
-                "WHERE tipo_movimiento_id = 1 AND DATE(fecha_movimiento) = CURDATE()";
+        String sqlIngresosHoy = "SELECT COALESCE(SUM(MONTO), 0) AS total " +
+                "FROM Movimientos_Financieros " +
+                "WHERE TIPO_MOVIMIENTO_ID = 1 AND DATE(FECHA) = CURDATE()";
 
-        // SQL: suma de montos de tipo 2 (compras) y tipo 3 (gastos) con fecha igual a hoy
-        String sqlEgresosHoy = "SELECT COALESCE(SUM(monto), 0) AS total " +
-                "FROM movimientos_financieros " +
-                "WHERE tipo_movimiento_id IN (2, 3) AND DATE(fecha_movimiento) = CURDATE()";
+        // SQL: suma de MONTO de TIPO_MOVIMIENTO_ID 2 (compras) y 3 (gastos) con FECHA igual a hoy
+        String sqlEgresosHoy = "SELECT COALESCE(SUM(MONTO), 0) AS total " +
+                "FROM Movimientos_Financieros " +
+                "WHERE TIPO_MOVIMIENTO_ID IN (2, 3) AND DATE(FECHA) = CURDATE()";
 
-        // SQL: suma de ingresos (tipo 1) del mes y año actuales
-        String sqlIngresosMes = "SELECT COALESCE(SUM(monto), 0) AS total " +
-                "FROM movimientos_financieros " +
-                "WHERE tipo_movimiento_id = 1 " +
-                "AND MONTH(fecha_movimiento) = MONTH(CURDATE()) " +
-                "AND YEAR(fecha_movimiento) = YEAR(CURDATE())";
+        // SQL: suma de ingresos (TIPO_MOVIMIENTO_ID 1) del mes y año actuales
+        String sqlIngresosMes = "SELECT COALESCE(SUM(MONTO), 0) AS total " +
+                "FROM Movimientos_Financieros " +
+                "WHERE TIPO_MOVIMIENTO_ID = 1 " +
+                "AND MONTH(FECHA) = MONTH(CURDATE()) " +
+                "AND YEAR(FECHA) = YEAR(CURDATE())";
 
-        // SQL: suma de egresos (tipos 2 y 3) del mes y año actuales
-        String sqlEgresosMes = "SELECT COALESCE(SUM(monto), 0) AS total " +
-                "FROM movimientos_financieros " +
-                "WHERE tipo_movimiento_id IN (2, 3) " +
-                "AND MONTH(fecha_movimiento) = MONTH(CURDATE()) " +
-                "AND YEAR(fecha_movimiento) = YEAR(CURDATE())";
+        // SQL: suma de egresos (TIPO_MOVIMIENTO_ID 2 y 3) del mes y año actuales
+        String sqlEgresosMes = "SELECT COALESCE(SUM(MONTO), 0) AS total " +
+                "FROM Movimientos_Financieros " +
+                "WHERE TIPO_MOVIMIENTO_ID IN (2, 3) " +
+                "AND MONTH(FECHA) = MONTH(CURDATE()) " +
+                "AND YEAR(FECHA) = YEAR(CURDATE())";
 
-        // SQL: conteo de productos con estado activo (estado = true)
-        String sqlProductos = "SELECT COUNT(*) AS total FROM Producto WHERE ESTADO = true";
+        // SQL: conteo de productos con ESTADO_PRODUCTO activo (ESTADO_PRODUCTO = true)
+        String sqlProductos = "SELECT COUNT(*) AS total FROM Productos WHERE ESTADO_PRODUCTO = true";
 
-        // SQL: conteo de clientes con estado activo (estado = true)
-        String sqlClientes = "SELECT COUNT(*) AS total FROM Clientes WHERE ESTADO = true";
+        // SQL: conteo de clientes con ESTADO_CLIENTE activo (ESTADO_CLIENTE = true)
+        String sqlClientes = "SELECT COUNT(*) AS total FROM Clientes WHERE ESTADO_CLIENTE = true";
 
         // Abrir una sola conexión y reutilizarla para todas las consultas del resumen
         try (Connection conexion = dbConnection.getConnection()) {
@@ -145,15 +145,15 @@ public class DashboardDAO {
         // Lista donde se acumularán los totales por día retornados por la BD
         JsonArray resultado = new JsonArray();
 
-        // SQL: suma de ingresos (tipo 1) agrupada por fecha para los últimos 7 días
+        // SQL: suma de ingresos (TIPO_MOVIMIENTO_ID 1) agrupada por FECHA para los últimos 7 días
         // DATE_SUB(CURDATE(), INTERVAL 6 DAY) calcula la fecha de hace 6 días (hoy = día 7)
         // GROUP BY agrupa los movimientos del mismo día en un solo registro
         // ORDER BY fecha ASC para mostrar los días en orden cronológico en el gráfico
-        String sql = "SELECT DATE(fecha_movimiento) AS fecha, COALESCE(SUM(monto), 0) AS total " +
-                "FROM movimientos_financieros " +
-                "WHERE tipo_movimiento_id = 1 " +
-                "AND DATE(fecha_movimiento) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) " +
-                "GROUP BY DATE(fecha_movimiento) " +
+        String sql = "SELECT DATE(FECHA) AS fecha, COALESCE(SUM(MONTO), 0) AS total " +
+                "FROM Movimientos_Financieros " +
+                "WHERE TIPO_MOVIMIENTO_ID = 1 " +
+                "AND DATE(FECHA) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) " +
+                "GROUP BY DATE(FECHA) " +
                 "ORDER BY fecha ASC";
 
         // Abrir conexión, preparar la consulta y ejecutarla con auto-cierre de recursos
@@ -195,16 +195,16 @@ public class DashboardDAO {
         JsonArray resultado = new JsonArray();
 
         // SQL: usa CASE WHEN para separar ingresos y egresos en columnas distintas dentro del mismo GROUP BY
-        // tipo_movimiento_id = 1 → ingresos (ventas)
-        // tipo_movimiento_id IN (2, 3) → egresos (compras + gastos adicionales)
+        // TIPO_MOVIMIENTO_ID = 1 → ingresos (ventas)
+        // TIPO_MOVIMIENTO_ID IN (2, 3) → egresos (compras + gastos adicionales)
         // COALESCE asegura 0 en vez de NULL si no hay movimientos de ese tipo en el día
         String sql = "SELECT " +
-                "    DATE(fecha_movimiento) AS fecha, " +
-                "    COALESCE(SUM(CASE WHEN tipo_movimiento_id = 1 THEN monto ELSE 0 END), 0) AS ingresos, " +
-                "    COALESCE(SUM(CASE WHEN tipo_movimiento_id IN (2, 3) THEN monto ELSE 0 END), 0) AS egresos " +
-                "FROM movimientos_financieros " +
-                "WHERE DATE(fecha_movimiento) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) " +
-                "GROUP BY DATE(fecha_movimiento) " +
+                "    DATE(FECHA) AS fecha, " +
+                "    COALESCE(SUM(CASE WHEN TIPO_MOVIMIENTO_ID = 1 THEN MONTO ELSE 0 END), 0) AS ingresos, " +
+                "    COALESCE(SUM(CASE WHEN TIPO_MOVIMIENTO_ID IN (2, 3) THEN MONTO ELSE 0 END), 0) AS egresos " +
+                "FROM Movimientos_Financieros " +
+                "WHERE DATE(FECHA) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) " +
+                "GROUP BY DATE(FECHA) " +
                 "ORDER BY fecha ASC";
 
         // Abrir conexión, preparar la consulta y ejecutarla con auto-cierre de recursos
@@ -246,16 +246,16 @@ public class DashboardDAO {
         // Lista donde se acumularán los totales de stock por categoría retornados por la BD
         JsonArray resultado = new JsonArray();
 
-        // SQL: JOIN de producto con categoria para unir el stock con el nombre de la categoría
-        // WHERE p.estado = true filtra solo los productos activos en el inventario
+        // SQL: JOIN de Producto con Categoria para unir el STOCK con el NOMBRE_CATEGORIA
+        // WHERE p.ESTADO_PRODUCTO = true filtra solo los productos activos en el inventario
         // GROUP BY agrupa todos los productos de la misma categoría en un solo registro
-        // SUM(p.stock) acumula el stock total de todos los productos de cada categoría
+        // SUM(p.STOCK) acumula el stock total de todos los productos de cada categoría
         // ORDER BY totalStock DESC muestra primero las categorías con más stock
-        String sql = "SELECT c.NOMBRE AS categoria, COALESCE(SUM(p.STOCK), 0) AS totalStock " +
-                "FROM Producto p " +
-                "JOIN Categoria c ON p.CATEGORIA_ID = c.ID_CATEGORIA " +
-                "WHERE p.ESTADO = true " +
-                "GROUP BY c.ID_CATEGORIA, c.NOMBRE " +
+        String sql = "SELECT c.NOMBRE_CATEGORIA AS categoria, COALESCE(SUM(p.STOCK), 0) AS totalStock " +
+                "FROM Productos p " +
+                "JOIN Categorias c ON p.CATEGORIA_ID = c.ID_CATEGORIA " +
+                "WHERE p.ESTADO_PRODUCTO = true " +
+                "GROUP BY c.ID_CATEGORIA, c.NOMBRE_CATEGORIA " +
                 "ORDER BY totalStock DESC";
 
         // Abrir conexión, preparar la consulta y ejecutarla con auto-cierre de recursos
@@ -267,7 +267,7 @@ public class DashboardDAO {
             while (rs.next()) {
                 // Crear un objeto JSON para representar el stock de una categoría
                 JsonObject fila = new JsonObject();
-                // Agregar el nombre de la categoría obtenido del JOIN con la tabla categoria
+                // Agregar el NOMBRE_CATEGORIA obtenido del JOIN con la tabla Categoria
                 fila.addProperty("categoria",  rs.getString("categoria"));
                 // Agregar el stock total acumulado de todos los productos de esa categoría
                 fila.addProperty("totalStock", rs.getInt("totalStock"));
@@ -299,21 +299,21 @@ public class DashboardDAO {
         JsonArray resultado = new JsonArray();
 
         // SQL: JOIN de Producto con Detalle_Venta para obtener unidades realmente vendidas
-        // SUM(dv.CANTIDAD) acumula todas las unidades vendidas de cada producto en todas las ventas
-        // WHERE p.ESTADO = true filtra solo productos activos
+        // SUM(dv.CANTIDAD_VENTA) acumula todas las unidades vendidas de cada producto en todas las ventas
+        // WHERE p.ESTADO_PRODUCTO = true filtra solo productos activos
         // WHERE p.PRECIO_VENTA > 0 evita productos sin precio que causarían división por cero
         // HAVING asegura que solo se incluyan productos con al menos una venta registrada
         // Sin ORDER BY ni LIMIT — el ordenamiento y la selección del top 10 se delegan al Service
         String sql = "SELECT " +
-                "    p.NOMBRE AS nombre, " +
+                "    p.NOMBRE_PRODUCTO AS nombre, " +
                 "    p.PRECIO_VENTA AS precioVenta, " +
                 "    p.COSTO_PROMEDIO AS costoPromedio, " +
-                "    SUM(dv.CANTIDAD) AS unidadesVendidas " +
-                "FROM Producto p " +
-                "JOIN Detalle_Venta dv ON p.ID_PRODUCTO = dv.PRODUCTO_ID " +
-                "WHERE p.ESTADO = true AND p.PRECIO_VENTA > 0 " +
-                "GROUP BY p.ID_PRODUCTO, p.NOMBRE, p.PRECIO_VENTA, p.COSTO_PROMEDIO " +
-                "HAVING SUM(dv.CANTIDAD) > 0";
+                "    SUM(dv.CANTIDAD_VENTA) AS unidadesVendidas " +
+                "FROM Productos p " +
+                "JOIN Detalles_Ventas dv ON p.ID_PRODUCTO = dv.PRODUCTO_ID " +
+                "WHERE p.ESTADO_PRODUCTO = true AND p.PRECIO_VENTA > 0 " +
+                "GROUP BY p.ID_PRODUCTO, p.NOMBRE_PRODUCTO, p.PRECIO_VENTA, p.COSTO_PROMEDIO " +
+                "HAVING SUM(dv.CANTIDAD_VENTA) > 0";
 
         // Abrir conexión, preparar la consulta y ejecutarla con auto-cierre de recursos
         try (Connection conexion = dbConnection.getConnection();
@@ -324,11 +324,11 @@ public class DashboardDAO {
             while (rs.next()) {
                 // Crear un objeto JSON para representar los datos crudos del producto
                 JsonObject producto = new JsonObject();
-                // Agregar el nombre del producto desde la columna nombre
+                // Agregar el NOMBRE_PRODUCTO del producto desde la columna nombre
                 producto.addProperty("nombre",           rs.getString("nombre"));
-                // Agregar el precio de venta actual del producto desde la columna precioVenta
+                // Agregar el PRECIO_VENTA actual del producto desde la columna precioVenta
                 producto.addProperty("precioVenta",      rs.getDouble("precioVenta"));
-                // Agregar el costo promedio ponderado del producto desde la columna costoPromedio
+                // Agregar el COSTO_PROMEDIO ponderado del producto desde la columna costoPromedio
                 producto.addProperty("costoPromedio",    rs.getDouble("costoPromedio"));
                 // Agregar las unidades totales vendidas del producto desde la columna unidadesVendidas
                 producto.addProperty("unidadesVendidas", rs.getInt("unidadesVendidas"));

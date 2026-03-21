@@ -27,7 +27,7 @@ public class DetalleCompraDAO {
      */
     public static DetalleCompra findById(int id) {
         // SQL para seleccionar un detalle por su clave primaria
-        String sql = "SELECT * FROM detalle_compra WHERE id_det_compra = ?";
+        String sql = "SELECT * FROM Detalles_Compras WHERE ID_DET_COMPRA = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -54,7 +54,7 @@ public class DetalleCompraDAO {
         // Lista donde se acumularán los detalles encontrados
         List<DetalleCompra> lista = new ArrayList<>();
         // SQL para seleccionar los detalles de una compra ordenados por ID
-        String sql = "SELECT * FROM detalle_compra WHERE compra_id = ? ORDER BY id_det_compra ASC";
+        String sql = "SELECT * FROM Detalles_Compras WHERE COMPRA_ID = ? ORDER BY ID_DET_COMPRA ASC";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -81,17 +81,17 @@ public class DetalleCompraDAO {
     private static DetalleCompra mapRow(ResultSet resultado) throws SQLException {
         // Construir y retornar un DetalleCompra con los datos del registro actual
         return new DetalleCompra(
-                // Leer el ID del detalle desde la columna id_det_compra
-                resultado.getInt("id_det_compra"),
-                // Leer la cantidad comprada desde la columna cantidad
-                resultado.getInt("cantidad"),
-                // Leer el costo unitario desde la columna costo_unitario
-                resultado.getDouble("costo_unitario"),
-                // Leer el subtotal del ítem desde la columna subtotal
-                resultado.getDouble("subtotal"),
-                // Leer el ID de la compra desde la columna compra_id
-                resultado.getInt("compra_id"),
-                // Leer el ID del producto desde la columna producto_id
-                resultado.getInt("producto_id"));
+                // Leer el ID del detalle desde la columna ID_DET_COMPRA
+                resultado.getInt("ID_DET_COMPRA"),
+                // Leer la cantidad comprada desde la columna CANTIDAD_COMPRA
+                resultado.getInt("CANTIDAD_COMPRA"),
+                // Leer el costo unitario desde la columna COSTO_UNITARIO
+                resultado.getDouble("COSTO_UNITARIO"),
+                // Leer el subtotal del ítem desde la columna SUBTOTAL_COMPRA
+                resultado.getDouble("SUBTOTAL_COMPRA"),
+                // Leer el ID de la compra desde la columna COMPRA_ID
+                resultado.getInt("COMPRA_ID"),
+                // Leer el ID del producto desde la columna PRODUCTO_ID
+                resultado.getInt("PRODUCTO_ID"));
     }
 }

@@ -27,7 +27,7 @@ public class DetalleVentaDAO {
      */
     public static DetalleVenta findById(int id) {
         // SQL para seleccionar un detalle por su clave primaria
-        String sql = "SELECT * FROM detalle_venta WHERE id_det_venta = ?";
+        String sql = "SELECT * FROM Detalles_Ventas WHERE ID_DET_VENTA = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -54,7 +54,7 @@ public class DetalleVentaDAO {
         // Lista donde se acumularán los detalles encontrados
         List<DetalleVenta> lista = new ArrayList<>();
         // SQL para seleccionar los detalles de una venta ordenados por ID
-        String sql = "SELECT * FROM detalle_venta WHERE venta_id = ? ORDER BY id_det_venta ASC";
+        String sql = "SELECT * FROM Detalles_Ventas WHERE VENTA_ID = ? ORDER BY ID_DET_VENTA ASC";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -81,17 +81,17 @@ public class DetalleVentaDAO {
     private static DetalleVenta mapRow(ResultSet resultado) throws SQLException {
         // Construir y retornar un DetalleVenta con los datos del registro actual
         return new DetalleVenta(
-                // Leer el ID del detalle desde la columna id_det_venta
-                resultado.getInt("id_det_venta"),
-                // Leer la cantidad vendida desde la columna cantidad
-                resultado.getInt("cantidad"),
-                // Leer el precio unitario desde la columna precio_unitario
-                resultado.getDouble("precio_unitario"),
-                // Leer el subtotal del ítem desde la columna subtotal
-                resultado.getDouble("subtotal"),
-                // Leer el ID de la venta desde la columna venta_id
-                resultado.getInt("venta_id"),
-                // Leer el ID del producto desde la columna producto_id
-                resultado.getInt("producto_id"));
+                // Leer el ID del detalle desde la columna ID_DET_VENTA
+                resultado.getInt("ID_DET_VENTA"),
+                // Leer la cantidad vendida desde la columna CANTIDAD_VENTA
+                resultado.getInt("CANTIDAD_VENTA"),
+                // Leer el precio unitario desde la columna PRECIO_UNITARIO
+                resultado.getDouble("PRECIO_UNITARIO"),
+                // Leer el subtotal del ítem desde la columna SUBTOTAL_VENTA
+                resultado.getDouble("SUBTOTAL_VENTA"),
+                // Leer el ID de la venta desde la columna VENTA_ID
+                resultado.getInt("VENTA_ID"),
+                // Leer el ID del producto desde la columna PRODUCTO_ID
+                resultado.getInt("PRODUCTO_ID"));
     }
 }

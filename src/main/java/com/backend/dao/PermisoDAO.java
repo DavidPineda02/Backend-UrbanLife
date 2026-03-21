@@ -27,7 +27,7 @@ public class PermisoDAO {
      */
     public static Permiso findById(int id) {
         // Consulta SQL para buscar un permiso por su ID
-        String sql = "SELECT * FROM permisos WHERE id_permisos = ?";
+        String sql = "SELECT * FROM Permisos WHERE ID_PERMISOS = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -53,7 +53,7 @@ public class PermisoDAO {
         // Crear lista vacía para almacenar los permisos encontrados
         List<Permiso> lista = new ArrayList<>();
         // Consulta SQL para obtener todos los permisos ordenados por ID
-        String sql = "SELECT * FROM permisos ORDER BY id_permisos ASC";
+        String sql = "SELECT * FROM Permisos ORDER BY ID_PERMISOS ASC";
         // Abrir conexión, preparar y ejecutar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -75,7 +75,7 @@ public class PermisoDAO {
      */
     public static Permiso create(Permiso permiso) {
         // Consulta SQL para insertar un nuevo permiso
-        String sql = "INSERT INTO permisos (nombre, descripcion) VALUES (?, ?)";
+        String sql = "INSERT INTO Permisos (NOMBRE_PERMISO, DESCRIPCION_PERMISO) VALUES (?, ?)";
         // Abrir conexión y preparar la consulta solicitando las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -107,7 +107,7 @@ public class PermisoDAO {
      */
     public static boolean update(Permiso permiso) {
         // Consulta SQL para actualizar nombre y descripción de un permiso
-        String sql = "UPDATE permisos SET nombre = ?, descripcion = ? WHERE id_permisos = ?";
+        String sql = "UPDATE Permisos SET NOMBRE_PERMISO = ?, DESCRIPCION_PERMISO = ? WHERE ID_PERMISOS = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -134,7 +134,7 @@ public class PermisoDAO {
      */
     public static boolean delete(int id) {
         // Consulta SQL para eliminar un permiso por su ID
-        String sql = "DELETE FROM permisos WHERE id_permisos = ?";
+        String sql = "DELETE FROM Permisos WHERE ID_PERMISOS = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -159,8 +159,8 @@ public class PermisoDAO {
     private static Permiso mapRow(ResultSet resultado) throws SQLException {
         // Crear y retornar un nuevo objeto Permiso con los valores de las columnas
         return new Permiso(
-                resultado.getInt("id_permisos"),       // Obtener el ID del permiso
-                resultado.getString("nombre"),          // Obtener el nombre del permiso
-                resultado.getString("descripcion"));    // Obtener la descripción del permiso
+                resultado.getInt("ID_PERMISOS"),           // Obtener el ID del permiso
+                resultado.getString("NOMBRE_PERMISO"),      // Obtener el nombre del permiso
+                resultado.getString("DESCRIPCION_PERMISO"));// Obtener la descripción del permiso
     }
 }

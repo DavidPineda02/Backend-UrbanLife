@@ -31,7 +31,7 @@ public class CompraDAO {
      */
     public static Compra findById(int id) {
         // SQL para seleccionar una compra por su clave primaria
-        String sql = "SELECT * FROM compra WHERE id_compra = ?";
+        String sql = "SELECT * FROM Compras WHERE ID_COMPRA = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -56,8 +56,11 @@ public class CompraDAO {
     public static List<Compra> findAll() {
         // Lista donde se acumularán las compras encontradas
         List<Compra> lista = new ArrayList<>();
-        // SQL para seleccionar todas las compras ordenadas por fecha y luego por ID descendente
-        String sql = "SELECT * FROM compra ORDER BY fecha_compra DESC, id_compra DESC";
+        // SQL con JOIN a Proveedores para obtener el nombre del proveedor en una sola consulta
+        String sql = "SELECT co.*, p.NOMBRE_PROVEEDOR " +
+                "FROM Compras co " +
+                "JOIN Proveedores p ON co.PROVEEDOR_ID = p.ID_PROVEEDOR " +
+                "ORDER BY co.FECHA_COMPRA DESC, co.ID_COMPRA DESC";
         // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -81,7 +84,7 @@ public class CompraDAO {
         // Lista donde se acumularán los detalles encontrados
         List<DetalleCompra> lista = new ArrayList<>();
         // SQL para seleccionar todos los ítems de una compra específica
-        String sql = "SELECT * FROM detalle_compra WHERE compra_id = ? ORDER BY id_det_compra ASC";
+        String sql = "SELECT * FROM Detalles_Compras WHERE COMPRA_ID = ? ORDER BY ID_DET_COMPRA ASC";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -102,7 +105,7 @@ public class CompraDAO {
     /**
      * Crea una compra completa de forma atómica en una sola transacción de base de datos.
      * Pasos: (1) INSERT en Compra, (2) INSERT en Detalle_Compra por cada ítem,
-     * (3) UPDATE stock sumando la cantidad comprada y recalculando costo_promedio,
+     * (3) UPDATE stock sumando la cantidad comprada y recalculando COSTO_PROMEDIO,
      * (4) INSERT en Movimientos_Financieros con tipo_movimiento_id=2 (Compra/Egreso).
      * Si cualquier paso falla se hace rollback de toda la operación.
      * @param compra Objeto Compra con los datos del encabezado
@@ -120,14 +123,14 @@ public class CompraDAO {
 
             // ===== PASO 1: INSERT en la tabla Compra =====
             // SQL para insertar el encabezado de la compra
-            String sqlCompra = "INSERT INTO compra (fecha_compra, total_compra, metodo_pago, usuario_id, proveedor_id) VALUES (?, ?, ?, ?, ?)";
+            String sqlCompra = "INSERT INTO Compras (FECHA_COMPRA, TOTAL_COMPRA, METODO_PAGO_COMPRA, USUARIO_ID, PROVEEDOR_ID) VALUES (?, ?, ?, ?, ?)";
             // Preparar la consulta solicitando la clave generada por la BD
             PreparedStatement stmtCompra = conexion.prepareStatement(sqlCompra, Statement.RETURN_GENERATED_KEYS);
             // Asignar la fecha de la compra en formato "YYYY-MM-DD"
             stmtCompra.setString(1, compra.getFechaCompra());
             // Asignar el total calculado de la compra
             stmtCompra.setDouble(2, compra.getTotalCompra());
-            // Asignar el método de pago ("Transferencia" o "Efectivo")
+            // Asignar el método de pago de la compra ("Transferencia" o "Efectivo")
             stmtCompra.setString(3, compra.getMetodoPago());
             // Asignar el ID del usuario que registra la compra
             stmtCompra.setInt(4, compra.getUsuarioId());
@@ -144,10 +147,10 @@ public class CompraDAO {
 
             // ===== PASOS 2 y 3: INSERT Detalle_Compra y UPDATE stock por cada ítem =====
             // SQL para insertar cada ítem del detalle de compra
-            String sqlDetalle = "INSERT INTO detalle_compra (cantidad, costo_unitario, subtotal, compra_id, producto_id) VALUES (?, ?, ?, ?, ?)";
+            String sqlDetalle = "INSERT INTO Detalles_Compras (CANTIDAD_COMPRA, COSTO_UNITARIO, SUBTOTAL_COMPRA, COMPRA_ID, PRODUCTO_ID) VALUES (?, ?, ?, ?, ?)";
             // SQL para sumar la cantidad comprada al stock y aplicar el costo promedio ya calculado
             // El costo promedio ponderado NO se calcula aquí — viene pre-calculado desde CompraService
-            String sqlStock = "UPDATE producto SET stock = stock + ?, costo_promedio = ? WHERE id_producto = ?";
+            String sqlStock = "UPDATE Productos SET STOCK = STOCK + ?, COSTO_PROMEDIO = ? WHERE ID_PRODUCTO = ?";
             // Recorrer cada ítem para insertarlo y actualizar el stock
             for (DetalleCompra detalle : detalles) {
                 // Asignar el ID de la compra recién creada al detalle
@@ -190,18 +193,14 @@ public class CompraDAO {
 
             // ===== PASO 4: Registrar movimiento financiero en la misma transacción =====
             // Delegar al MovimientoFinancieroDAO pasando la conexión activa para mantener la atomicidad
-            // tipo_movimiento_id = 2 → Compra (Egreso); venta_id y gasto_adicional_id son null
+            // tipo_movimiento_id = 2 → Compra (Egreso); compraId = ID de la compra creada, ventaId y gastoId = null
             MovimientoFinancieroDAO.insertEnTransaccion(
                     conexion,
-                    compra.getFechaCompra(),
                     "Compra #" + compra.getIdCompra(),
                     compra.getTotalCompra(),
-                    compra.getMetodoPago(),
+                    compra.getFechaCompra(),
                     2,
-                    compra.getUsuarioId(),
-                    null,
-                    compra.getIdCompra(),
-                    null);
+                    null, compra.getIdCompra(), null);
 
             // Confirmar todos los cambios de la transacción en la BD
             conexion.commit();
@@ -246,20 +245,29 @@ public class CompraDAO {
      * @throws SQLException si ocurre un error al leer las columnas
      */
     private static Compra mapRow(ResultSet resultado) throws SQLException {
-        // Construir y retornar una Compra con los datos del registro actual
-        return new Compra(
-                // Leer el ID de la compra desde la columna id_compra
-                resultado.getInt("id_compra"),
-                // Leer la fecha de la compra como String desde la columna fecha_compra
-                resultado.getString("fecha_compra"),
-                // Leer el total de la compra desde la columna total_compra
-                resultado.getDouble("total_compra"),
-                // Leer el método de pago desde la columna metodo_pago
-                resultado.getString("metodo_pago"),
-                // Leer el ID del usuario desde la columna usuario_id
-                resultado.getInt("usuario_id"),
-                // Leer el ID del proveedor desde la columna proveedor_id
-                resultado.getInt("proveedor_id"));
+        // Construir la Compra con los datos del registro actual
+        Compra compra = new Compra(
+                // Leer el ID de la compra desde la columna ID_COMPRA
+                resultado.getInt("ID_COMPRA"),
+                // Leer la fecha de la compra como String desde la columna FECHA_COMPRA
+                resultado.getString("FECHA_COMPRA"),
+                // Leer el total de la compra desde la columna TOTAL_COMPRA
+                resultado.getDouble("TOTAL_COMPRA"),
+                // Leer el método de pago desde la columna METODO_PAGO_COMPRA
+                resultado.getString("METODO_PAGO_COMPRA"),
+                // Leer el ID del usuario desde la columna USUARIO_ID
+                resultado.getInt("USUARIO_ID"),
+                // Leer el ID del proveedor desde la columna PROVEEDOR_ID
+                resultado.getInt("PROVEEDOR_ID"));
+        // Poblar el nombre del proveedor si la columna existe en el ResultSet (viene del JOIN)
+        try {
+            // Leer el nombre del proveedor desde la columna NOMBRE_PROVEEDOR del JOIN
+            compra.setNombreProveedor(resultado.getString("NOMBRE_PROVEEDOR"));
+        } catch (SQLException excepcion) {
+            // Si la columna no existe (ej: findById sin JOIN), ignorar silenciosamente
+        }
+        // Retornar la compra con todos los campos poblados
+        return compra;
     }
 
     /**
@@ -271,17 +279,17 @@ public class CompraDAO {
     private static DetalleCompra mapDetalleRow(ResultSet resultado) throws SQLException {
         // Construir y retornar un DetalleCompra con los datos del registro actual
         return new DetalleCompra(
-                // Leer el ID del ítem desde la columna id_det_compra
-                resultado.getInt("id_det_compra"),
-                // Leer la cantidad comprada desde la columna cantidad
-                resultado.getInt("cantidad"),
-                // Leer el costo unitario desde la columna costo_unitario
-                resultado.getDouble("costo_unitario"),
-                // Leer el subtotal del ítem desde la columna subtotal
-                resultado.getDouble("subtotal"),
-                // Leer el ID de la compra desde la columna compra_id
-                resultado.getInt("compra_id"),
-                // Leer el ID del producto desde la columna producto_id
-                resultado.getInt("producto_id"));
+                // Leer el ID del ítem desde la columna ID_DET_COMPRA
+                resultado.getInt("ID_DET_COMPRA"),
+                // Leer la cantidad comprada desde la columna CANTIDAD_COMPRA
+                resultado.getInt("CANTIDAD_COMPRA"),
+                // Leer el costo unitario desde la columna COSTO_UNITARIO
+                resultado.getDouble("COSTO_UNITARIO"),
+                // Leer el subtotal del ítem desde la columna SUBTOTAL_COMPRA
+                resultado.getDouble("SUBTOTAL_COMPRA"),
+                // Leer el ID de la compra desde la columna COMPRA_ID
+                resultado.getInt("COMPRA_ID"),
+                // Leer el ID del producto desde la columna PRODUCTO_ID
+                resultado.getInt("PRODUCTO_ID"));
     }
 }
