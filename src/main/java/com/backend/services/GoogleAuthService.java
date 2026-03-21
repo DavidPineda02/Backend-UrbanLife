@@ -1,6 +1,8 @@
 // Paquete de servicios de lógica de negocio
 package com.backend.services;
 
+// Para insertar el correo principal en Correos_Usuario tras crear el usuario
+import com.backend.dao.CorreoUsuarioDAO;
 // Para buscar el rol EMPLEADO por nombre y asignarlo a nuevos usuarios
 import com.backend.dao.RolDAO;
 // Para buscar, crear y vincular usuarios en la base de datos
@@ -9,6 +11,8 @@ import com.backend.dao.UsuarioDAO;
 import com.backend.dao.UsuarioRolDAO;
 // Para generar el JWT una vez autenticado el usuario
 import com.backend.helpers.JwtHelper;
+// Modelo que representa un correo electrónico asociado a un usuario
+import com.backend.models.CorreoUsuario;
 // Entidad del rol del sistema
 import com.backend.models.Rol;
 // Entidad del usuario del sistema
@@ -146,6 +150,9 @@ public class GoogleAuthService {
                     // Retornar respuesta de error
                     return respuesta;
                 }
+
+                // Insertar el correo principal en la tabla Correos_Usuario con ES_PRINCIPAL=TRUE
+                CorreoUsuarioDAO.create(new CorreoUsuario(correo, true, usuario.getIdUsuario()));
 
                 // Asignar rol EMPLEADO por defecto al nuevo usuario de Google
                 Rol rolEmpleado = RolDAO.findByNombre("EMPLEADO");

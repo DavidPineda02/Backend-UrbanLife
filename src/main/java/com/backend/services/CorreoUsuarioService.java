@@ -84,10 +84,29 @@ public class CorreoUsuarioService {
             return respuesta;
         }
 
+        // ----- Verificar duplicados -----
+
+        // Obtener todos los correos del usuario para verificar si ya existe
+        List<CorreoUsuario> correosExistentes = CorreoUsuarioDAO.findByUsuarioId(usuarioId);
+        // Recorrer cada correo existente y comparar con el nuevo
+        for (CorreoUsuario existente : correosExistentes) {
+            // Comparar en minúsculas para evitar duplicados por capitalización
+            if (existente.getCorreo().equalsIgnoreCase(correo.trim())) {
+                // Indicar que la operación falló
+                respuesta.addProperty("success", false);
+                // Mensaje indicando que el correo ya está registrado
+                respuesta.addProperty("message", "Este correo ya está registrado");
+                // Código HTTP 409 Conflict
+                respuesta.addProperty("status", 409);
+                // Retornar respuesta de error
+                return respuesta;
+            }
+        }
+
         // ----- Crear y persistir el correo -----
 
-        // Construir el objeto CorreoUsuario con el correo limpio y el ID del usuario
-        CorreoUsuario nuevo = new CorreoUsuario(correo.trim(), usuarioId);
+        // Construir el objeto CorreoUsuario con el correo limpio, sin principal (NULL) y el ID del usuario
+        CorreoUsuario nuevo = new CorreoUsuario(correo.trim(), null, usuarioId);
         // Persistir el nuevo correo en la base de datos
         CorreoUsuario creado = CorreoUsuarioDAO.create(nuevo);
 
@@ -138,6 +157,20 @@ public class CorreoUsuarioService {
             respuesta.addProperty("message", "Correo no encontrado");
             // Código HTTP 404 Not Found
             respuesta.addProperty("status", 404);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+
+        // ----- Verificar que no sea el correo principal -----
+
+        // Verificar si el correo es el principal del usuario (no se puede eliminar)
+        if (correo.getEsPrincipal() != null && correo.getEsPrincipal()) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que no se puede eliminar el correo principal
+            respuesta.addProperty("message", "No se puede eliminar el correo principal");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
             // Retornar respuesta de error
             return respuesta;
         }
