@@ -24,19 +24,27 @@ import java.util.List;
 /**
  * DAO que centraliza todas las operaciones SQL de la tabla Usuarios.
  * Provee métodos para buscar, crear, actualizar y desactivar usuarios.
+ * El correo NO está en la tabla Usuarios; se almacena en Correos_Usuarios.
+ * Para búsquedas por correo se hace JOIN con Correos_Usuarios.
  * No se elimina físicamente ningún usuario (soft delete por campo estado).
  */
 public class UsuarioDAO {
 
     /**
-     * Busca un usuario por su correo electrónico.
+     * Busca un usuario por su correo electrónico principal.
      * Se usa en login, registro (verificar duplicados) y recuperación de contraseña.
+     * El correo está en la tabla Correos_Usuarios, no en Usuarios.
      * @param correo Correo electrónico a buscar
      * @return Usuario encontrado o null si no existe
      */
     public static Usuario findByCorreo(String correo) {
-        // Consulta SQL para buscar usuario por correo exacto
-        String sql = "SELECT * FROM usuarios WHERE correo = ?";
+        // Consulta SQL con JOIN para buscar usuario por correo en Correos_Usuarios
+        String sql = """
+                SELECT u.*, cu.CORREO_USUARIO AS correo
+                FROM Usuarios u
+                JOIN Correos_Usuarios cu ON u.ID_USUARIO = cu.USUARIO_ID
+                WHERE cu.CORREO_USUARIO = ?
+                """;
         // Abrir conexión y preparar la consulta (se cierran automáticamente con try-with-resources)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -61,8 +69,13 @@ public class UsuarioDAO {
      * @return Usuario encontrado o null si no existe
      */
     public static Usuario findById(int id) {
-        // Consulta SQL para buscar usuario por su ID
-        String sql = "SELECT * FROM usuarios WHERE id_usuario = ?";
+        // Consulta SQL con JOIN para obtener el usuario con su correo principal
+        String sql = """
+                SELECT u.*, cu.CORREO_USUARIO AS correo
+                FROM Usuarios u
+                LEFT JOIN Correos_Usuarios cu ON u.ID_USUARIO = cu.USUARIO_ID AND cu.ES_PRINCIPAL = TRUE
+                WHERE u.ID_USUARIO = ?
+                """;
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -87,8 +100,13 @@ public class UsuarioDAO {
      * @return Usuario encontrado o null si no existe
      */
     public static Usuario findByGoogleId(String googleId) {
-        // Consulta SQL para buscar usuario por su Google ID
-        String sql = "SELECT * FROM usuarios WHERE google_id = ?";
+        // Consulta SQL con JOIN para obtener el usuario con su correo principal
+        String sql = """
+                SELECT u.*, cu.CORREO_USUARIO AS correo
+                FROM Usuarios u
+                LEFT JOIN Correos_Usuarios cu ON u.ID_USUARIO = cu.USUARIO_ID AND cu.ES_PRINCIPAL = TRUE
+                WHERE u.GOOGLE_ID = ?
+                """;
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -114,8 +132,13 @@ public class UsuarioDAO {
     public static List<Usuario> findAll() {
         // Lista donde se acumularán los usuarios encontrados
         List<Usuario> lista = new ArrayList<>();
-        // Consulta SQL para obtener todos los usuarios ordenados por ID
-        String sql = "SELECT * FROM usuarios ORDER BY id_usuario ASC";
+        // Consulta SQL con JOIN para obtener cada usuario con su correo principal
+        String sql = """
+                SELECT u.*, cu.CORREO_USUARIO AS correo
+                FROM Usuarios u
+                LEFT JOIN Correos_Usuarios cu ON u.ID_USUARIO = cu.USUARIO_ID AND cu.ES_PRINCIPAL = TRUE
+                ORDER BY u.ID_USUARIO ASC
+                """;
         // Abrir conexión, preparar y ejecutar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -133,12 +156,13 @@ public class UsuarioDAO {
     /**
      * Inserta un nuevo usuario en la base de datos con contraseña hasheada.
      * Se usa en el registro de nuevos usuarios con correo y contraseña.
+     * El correo se inserta por separado en Correos_Usuarios (no en esta tabla).
      * @param usuario Objeto Usuario con los datos a persistir
      * @return Usuario con el ID generado asignado, o null si falló
      */
     public static Usuario create(Usuario usuario) {
-        // Consulta SQL para insertar un nuevo usuario con sus cinco campos
-        String sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, estado) VALUES (?, ?, ?, ?, ?)";
+        // Consulta SQL para insertar un nuevo usuario (sin correo, que va en Correos_Usuarios)
+        String sql = "INSERT INTO Usuarios (NOMBRE_USUARIO, APELLIDO_USUARIO, CONTRASENA, ESTADO_USUARIO) VALUES (?, ?, ?, ?)";
         // Abrir conexión y preparar la consulta solicitando que retorne las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -146,12 +170,10 @@ public class UsuarioDAO {
             consulta.setString(1, usuario.getNombre());
             // Asignar el apellido al segundo parámetro
             consulta.setString(2, usuario.getApellido());
-            // Asignar el correo al tercer parámetro
-            consulta.setString(3, usuario.getCorreo());
-            // Asignar el hash BCrypt de la contraseña al cuarto parámetro
-            consulta.setString(4, usuario.getContrasena());
-            // Asignar el estado activo al quinto parámetro
-            consulta.setBoolean(5, usuario.isEstado());
+            // Asignar el hash BCrypt de la contraseña al tercer parámetro
+            consulta.setString(3, usuario.getContrasena());
+            // Asignar el estado activo al cuarto parámetro
+            consulta.setBoolean(4, usuario.isEstado());
             // Ejecutar el INSERT y verificar que afectó al menos una fila
             if (consulta.executeUpdate() > 0) {
                 // Obtener las claves generadas por el INSERT (el ID autoincremental)
@@ -172,15 +194,16 @@ public class UsuarioDAO {
     /**
      * Inserta un nuevo usuario creado con Google OAuth2 (sin contraseña).
      * Se usa cuando un usuario inicia sesión por primera vez con Google.
+     * El correo se inserta por separado en Correos_Usuarios (no en esta tabla).
      * @param googleId ID único de Google del usuario
      * @param nombre Nombre extraído del token de Google
      * @param apellido Apellido extraído del token de Google
-     * @param correo Correo electrónico de la cuenta Google
+     * @param correo Correo electrónico de la cuenta Google (se guarda en el objeto pero no en Usuarios)
      * @return Usuario creado con su ID asignado, o null si falló
      */
     public static Usuario createWithGoogle(String googleId, String nombre, String apellido, String correo) {
         // Consulta SQL para insertar usuario de Google: contrasena es NULL y google_id se guarda
-        String sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, estado, google_id) VALUES (?, ?, ?, NULL, true, ?)";
+        String sql = "INSERT INTO Usuarios (NOMBRE_USUARIO, APELLIDO_USUARIO, CONTRASENA, ESTADO_USUARIO, GOOGLE_ID) VALUES (?, ?, NULL, TRUE, ?)";
         // Abrir conexión y preparar la consulta solicitando que retorne las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -188,10 +211,8 @@ public class UsuarioDAO {
             consulta.setString(1, nombre);
             // Asignar el apellido al segundo parámetro
             consulta.setString(2, apellido);
-            // Asignar el correo al tercer parámetro
-            consulta.setString(3, correo);
-            // Asignar el Google ID al cuarto parámetro
-            consulta.setString(4, googleId);
+            // Asignar el Google ID al tercer parámetro
+            consulta.setString(3, googleId);
             // Ejecutar el INSERT y verificar que afectó al menos una fila
             if (consulta.executeUpdate() > 0) {
                 // Obtener las claves generadas por el INSERT
@@ -202,7 +223,7 @@ public class UsuarioDAO {
                 nuevo.setNombre(nombre);
                 // Asignar el apellido al nuevo usuario
                 nuevo.setApellido(apellido);
-                // Asignar el correo al nuevo usuario
+                // Asignar el correo al nuevo usuario (campo de conveniencia, no está en tabla Usuarios)
                 nuevo.setCorreo(correo);
                 // Asignar el Google ID al nuevo usuario
                 nuevo.setGoogleId(googleId);
@@ -230,7 +251,7 @@ public class UsuarioDAO {
      */
     public static boolean linkGoogleId(int usuarioId, String googleId) {
         // Consulta SQL para actualizar el google_id de un usuario existente
-        String sql = "UPDATE usuarios SET google_id = ? WHERE id_usuario = ?";
+        String sql = "UPDATE Usuarios SET GOOGLE_ID = ? WHERE ID_USUARIO = ?";
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -249,14 +270,14 @@ public class UsuarioDAO {
     }
 
     /**
-     * Actualiza los datos principales de un usuario (nombre, apellido, correo, estado).
-     * No actualiza la contraseña (eso se hace con updatePassword por separado).
+     * Actualiza los datos principales de un usuario (nombre, apellido, estado).
+     * No actualiza correo (que está en Correos_Usuarios) ni contraseña.
      * @param usuario Objeto Usuario con los datos actualizados
      * @return true si la actualización fue exitosa, false si falló
      */
     public static boolean update(Usuario usuario) {
-        // Consulta SQL para actualizar los cuatro campos del usuario por su ID
-        String sql = "UPDATE usuarios SET nombre = ?, apellido = ?, correo = ?, estado = ? WHERE id_usuario = ?";
+        // Consulta SQL para actualizar nombre, apellido y estado del usuario por su ID
+        String sql = "UPDATE Usuarios SET NOMBRE_USUARIO = ?, APELLIDO_USUARIO = ?, ESTADO_USUARIO = ? WHERE ID_USUARIO = ?";
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -264,12 +285,10 @@ public class UsuarioDAO {
             consulta.setString(1, usuario.getNombre());
             // Asignar el nuevo apellido al segundo parámetro
             consulta.setString(2, usuario.getApellido());
-            // Asignar el nuevo correo al tercer parámetro
-            consulta.setString(3, usuario.getCorreo());
-            // Asignar el nuevo estado al cuarto parámetro
-            consulta.setBoolean(4, usuario.isEstado());
-            // Asignar el ID del usuario a actualizar al quinto parámetro (cláusula WHERE)
-            consulta.setInt(5, usuario.getIdUsuario());
+            // Asignar el nuevo estado al tercer parámetro
+            consulta.setBoolean(3, usuario.isEstado());
+            // Asignar el ID del usuario a actualizar al cuarto parámetro (cláusula WHERE)
+            consulta.setInt(4, usuario.getIdUsuario());
             // Ejecutar el UPDATE y retornar true si afectó al menos una fila
             return consulta.executeUpdate() > 0;
         } catch (Exception excepcion) {
@@ -289,7 +308,7 @@ public class UsuarioDAO {
      */
     public static boolean updatePassword(int id, String contrasenaEncriptada) {
         // Consulta SQL para actualizar solo la contraseña del usuario por su ID
-        String sql = "UPDATE usuarios SET contrasena = ? WHERE id_usuario = ?";
+        String sql = "UPDATE Usuarios SET CONTRASENA = ? WHERE ID_USUARIO = ?";
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -308,30 +327,6 @@ public class UsuarioDAO {
     }
 
     /**
-     * Desactiva un usuario cambiando su estado a false (soft delete).
-     * El usuario no se elimina físicamente de la base de datos.
-     * @param id ID del usuario a desactivar
-     * @return true si la desactivación fue exitosa, false si falló
-     */
-    public static boolean updateStatus(int id) {
-        // Consulta SQL para desactivar el usuario estableciendo estado = false
-        String sql = "UPDATE usuarios SET estado = false WHERE id_usuario = ?";
-        // Abrir conexión y preparar la consulta (se cierran automáticamente)
-        try (Connection conexion = dbConnection.getConnection();
-             PreparedStatement consulta = conexion.prepareStatement(sql)) {
-            // Asignar el ID del usuario a desactivar al primer parámetro
-            consulta.setInt(1, id);
-            // Ejecutar el UPDATE y retornar true si afectó al menos una fila
-            return consulta.executeUpdate() > 0;
-        } catch (Exception excepcion) {
-            // Imprimir el error en consola para identificar fallos de BD
-            System.out.println("Error UsuarioDAO.updateStatus: " + excepcion.getMessage());
-        }
-        // Retornar false si el UPDATE no afectó ninguna fila o hubo un error
-        return false;
-    }
-
-    /**
      * Busca el nombre del rol principal asignado a un usuario.
      * Se usa para incluir el rol en el JWT y en las respuestas de autenticación.
      * @param usuarioId ID del usuario cuyo rol se buscará
@@ -340,10 +335,10 @@ public class UsuarioDAO {
     public static String findRolByUsuarioId(int usuarioId) {
         // Consulta SQL con JOIN para obtener el nombre del rol del usuario
         String sql = """
-                SELECT r.nombre
-                FROM roles r
-                JOIN usuario_rol ur ON r.id_roles = ur.rol_id
-                WHERE ur.usuario_id = ?
+                SELECT r.NOMBRE_ROL
+                FROM Roles r
+                JOIN Usuarios_Roles ur ON r.ID_ROLES = ur.ROL_ID
+                WHERE ur.USUARIO_ID = ?
                 LIMIT 1
                 """;
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
@@ -354,7 +349,7 @@ public class UsuarioDAO {
             // Ejecutar la consulta y obtener el resultado
             ResultSet resultado = consulta.executeQuery();
             // Si hay un registro, retornar el nombre del rol encontrado
-            if (resultado.next()) return resultado.getString("nombre");
+            if (resultado.next()) return resultado.getString("NOMBRE_ROL");
         } catch (Exception excepcion) {
             // Imprimir el error en consola para identificar fallos de BD
             System.out.println("Error UsuarioDAO.findRolByUsuarioId: " + excepcion.getMessage());
@@ -366,7 +361,7 @@ public class UsuarioDAO {
     /**
      * Mapea una fila del ResultSet a un objeto Usuario.
      * Método privado reutilizado por todos los métodos de consulta.
-     * Intenta leer google_id sin lanzar excepción si la columna no está disponible.
+     * Lee el correo desde el alias "correo" del JOIN con Correos_Usuarios.
      * @param resultado Fila del ResultSet con los datos del usuario
      * @return Objeto Usuario con los datos mapeados
      * @throws SQLException si ocurre un error al leer las columnas principales
@@ -375,21 +370,21 @@ public class UsuarioDAO {
         // Construir el objeto Usuario leyendo las columnas principales de la fila
         Usuario usuario = new Usuario(
                 // Leer el ID del usuario
-                resultado.getInt("id_usuario"),
+                resultado.getInt("ID_USUARIO"),
                 // Leer el nombre del usuario
-                resultado.getString("nombre"),
+                resultado.getString("NOMBRE_USUARIO"),
                 // Leer el apellido del usuario
-                resultado.getString("apellido"),
-                // Leer el correo del usuario
+                resultado.getString("APELLIDO_USUARIO"),
+                // Leer el correo del alias del JOIN (puede ser null si no tiene correo principal)
                 resultado.getString("correo"),
                 // Leer el hash BCrypt de la contraseña (puede ser null para cuentas Google)
-                resultado.getString("contrasena"),
+                resultado.getString("CONTRASENA"),
                 // Leer el estado activo/inactivo del usuario
-                resultado.getBoolean("estado"));
+                resultado.getBoolean("ESTADO_USUARIO"));
         // Intentar leer el Google ID de forma segura (puede no estar presente en todas las consultas)
         try {
             // Asignar el Google ID si la columna existe y tiene valor
-            usuario.setGoogleId(resultado.getString("google_id"));
+            usuario.setGoogleId(resultado.getString("GOOGLE_ID"));
         // Ignorar la excepción si la columna google_id no está en el ResultSet
         } catch (SQLException ignored) {}
         // Retornar el usuario con todos los campos mapeados

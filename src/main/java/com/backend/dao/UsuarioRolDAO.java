@@ -27,7 +27,7 @@ public class UsuarioRolDAO {
      */
     public static UsuarioRol findById(int id) {
         // SQL para seleccionar una relación usuario-rol por su clave primaria
-        String sql = "SELECT * FROM usuario_rol WHERE id_usuario_rol = ?";
+        String sql = "SELECT * FROM Usuarios_Roles WHERE ID_USUARIO_ROL = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -54,7 +54,7 @@ public class UsuarioRolDAO {
         // Lista donde se acumularán las relaciones encontradas
         List<UsuarioRol> lista = new ArrayList<>();
         // SQL para seleccionar todas las relaciones de un usuario específico
-        String sql = "SELECT * FROM usuario_rol WHERE usuario_id = ?";
+        String sql = "SELECT * FROM Usuarios_Roles WHERE USUARIO_ID = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -80,7 +80,7 @@ public class UsuarioRolDAO {
         // Lista donde se acumularán todas las relaciones encontradas
         List<UsuarioRol> lista = new ArrayList<>();
         // SQL para seleccionar todas las relaciones ordenadas por ID
-        String sql = "SELECT * FROM usuario_rol ORDER BY id_usuario_rol ASC";
+        String sql = "SELECT * FROM Usuarios_Roles ORDER BY ID_USUARIO_ROL ASC";
         // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -102,7 +102,7 @@ public class UsuarioRolDAO {
      */
     public static UsuarioRol create(UsuarioRol usuarioRol) {
         // SQL para insertar una nueva relación usuario-rol
-        String sql = "INSERT INTO usuario_rol (usuario_id, rol_id) VALUES (?, ?)";
+        String sql = "INSERT INTO Usuarios_Roles (USUARIO_ID, ROL_ID) VALUES (?, ?)";
         // Abrir conexión y preparar consulta solicitando las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -133,8 +133,8 @@ public class UsuarioRolDAO {
      * @return true si se actualizó al menos una fila, false en caso contrario
      */
     public static boolean update(UsuarioRol usuarioRol) {
-        // SQL para actualizar usuario_id y rol_id de una relación por su ID
-        String sql = "UPDATE usuario_rol SET usuario_id = ?, rol_id = ? WHERE id_usuario_rol = ?";
+        // SQL para actualizar USUARIO_ID y ROL_ID de una relación por su ID
+        String sql = "UPDATE Usuarios_Roles SET USUARIO_ID = ?, ROL_ID = ? WHERE ID_USUARIO_ROL = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -161,7 +161,7 @@ public class UsuarioRolDAO {
      */
     public static boolean delete(int id) {
         // SQL para eliminar una relación por su clave primaria
-        String sql = "DELETE FROM usuario_rol WHERE id_usuario_rol = ?";
+        String sql = "DELETE FROM Usuarios_Roles WHERE ID_USUARIO_ROL = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -185,7 +185,7 @@ public class UsuarioRolDAO {
      */
     public static boolean deleteByUsuarioId(int usuarioId) {
         // SQL para eliminar todas las relaciones de un usuario específico
-        String sql = "DELETE FROM usuario_rol WHERE usuario_id = ?";
+        String sql = "DELETE FROM Usuarios_Roles WHERE USUARIO_ID = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -210,11 +210,11 @@ public class UsuarioRolDAO {
     private static UsuarioRol mapRow(ResultSet resultado) throws SQLException {
         // Construir y retornar un UsuarioRol con los datos del registro actual
         return new UsuarioRol(
-                // Leer el ID de la relación desde la columna id_usuario_rol
-                resultado.getInt("id_usuario_rol"),
-                // Leer el ID del usuario desde la columna usuario_id
-                resultado.getInt("usuario_id"),
-                // Leer el ID del rol desde la columna rol_id
-                resultado.getInt("rol_id"));
+                // Leer el ID de la relación desde la columna ID_USUARIO_ROL
+                resultado.getInt("ID_USUARIO_ROL"),
+                // Leer el ID del usuario desde la columna USUARIO_ID
+                resultado.getInt("USUARIO_ID"),
+                // Leer el ID del rol desde la columna ROL_ID
+                resultado.getInt("ROL_ID"));
     }
 }

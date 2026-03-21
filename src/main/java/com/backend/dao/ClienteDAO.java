@@ -27,7 +27,7 @@ public class ClienteDAO {
      */
     public static Cliente findById(int id) {
         // SQL para seleccionar un cliente por su clave primaria
-        String sql = "SELECT * FROM clientes WHERE id_cliente = ?";
+        String sql = "SELECT * FROM Clientes WHERE ID_CLIENTE = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -53,7 +53,7 @@ public class ClienteDAO {
         // Lista donde se acumularán los clientes encontrados
         List<Cliente> lista = new ArrayList<>();
         // SQL para seleccionar todos los clientes ordenados por ID
-        String sql = "SELECT * FROM clientes ORDER BY id_cliente ASC";
+        String sql = "SELECT * FROM Clientes ORDER BY ID_CLIENTE ASC";
         // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -76,7 +76,7 @@ public class ClienteDAO {
      */
     public static Cliente findByDocumento(Long documento) {
         // SQL para seleccionar un cliente filtrando por número de documento
-        String sql = "SELECT * FROM clientes WHERE documento = ?";
+        String sql = "SELECT * FROM Clientes WHERE DOCUMENTO_CLIENTE = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -95,13 +95,65 @@ public class ClienteDAO {
     }
 
     /**
+     * Busca un cliente por su correo electrónico.
+     * Usado para verificar unicidad antes de crear o actualizar.
+     * @param correo Correo electrónico a buscar
+     * @return Cliente encontrado o null si no existe
+     */
+    public static Cliente findByCorreo(String correo) {
+        // SQL para seleccionar un cliente filtrando por correo electrónico
+        String sql = "SELECT * FROM Clientes WHERE CORREO_CLIENTE = ?";
+        // Abrir conexión y preparar consulta con auto-cierre
+        try (Connection conexion = dbConnection.getConnection();
+             PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            // Asignar el correo como parámetro de búsqueda
+            consulta.setString(1, correo);
+            // Ejecutar consulta y obtener resultado
+            ResultSet resultado = consulta.executeQuery();
+            // Si se encontró un registro, mapearlo y retornarlo
+            if (resultado.next()) return mapRow(resultado);
+        } catch (Exception excepcion) {
+            // Registrar error en consola
+            System.out.println("Error ClienteDAO.findByCorreo: " + excepcion.getMessage());
+        }
+        // Retornar null si no se encontró el cliente
+        return null;
+    }
+
+    /**
+     * Busca un cliente por su número de teléfono.
+     * Usado para verificar unicidad antes de crear o actualizar.
+     * @param telefono Número de teléfono a buscar
+     * @return Cliente encontrado o null si no existe
+     */
+    public static Cliente findByTelefono(String telefono) {
+        // SQL para seleccionar un cliente filtrando por número de teléfono
+        String sql = "SELECT * FROM Clientes WHERE TELEFONO_CLIENTE = ?";
+        // Abrir conexión y preparar consulta con auto-cierre
+        try (Connection conexion = dbConnection.getConnection();
+             PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            // Asignar el teléfono como parámetro de búsqueda
+            consulta.setString(1, telefono);
+            // Ejecutar consulta y obtener resultado
+            ResultSet resultado = consulta.executeQuery();
+            // Si se encontró un registro, mapearlo y retornarlo
+            if (resultado.next()) return mapRow(resultado);
+        } catch (Exception excepcion) {
+            // Registrar error en consola
+            System.out.println("Error ClienteDAO.findByTelefono: " + excepcion.getMessage());
+        }
+        // Retornar null si no se encontró el cliente
+        return null;
+    }
+
+    /**
      * Inserta un nuevo cliente en la base de datos y asigna el ID generado.
      * @param cliente Objeto Cliente con todos los campos a insertar
      * @return El mismo Cliente con su ID asignado, o null si falló la inserción
      */
     public static Cliente create(Cliente cliente) {
         // SQL para insertar un nuevo cliente con todos sus campos
-        String sql = "INSERT INTO clientes (nombre, documento, correo, telefono, direccion, ciudad, estado) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Clientes (NOMBRE_CLIENTE, DOCUMENTO_CLIENTE, CORREO_CLIENTE, TELEFONO_CLIENTE, DIRECCION_CLIENTE, CIUDAD_CLIENTE, ESTADO_CLIENTE) VALUES (?, ?, ?, ?, ?, ?, ?)";
         // Abrir conexión y preparar consulta solicitando las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -149,7 +201,7 @@ public class ClienteDAO {
      */
     public static boolean update(Cliente cliente) {
         // SQL para actualizar todos los campos del cliente por su ID
-        String sql = "UPDATE clientes SET nombre = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, ciudad = ?, estado = ? WHERE id_cliente = ?";
+        String sql = "UPDATE Clientes SET NOMBRE_CLIENTE = ?, DOCUMENTO_CLIENTE = ?, CORREO_CLIENTE = ?, TELEFONO_CLIENTE = ?, DIRECCION_CLIENTE = ?, CIUDAD_CLIENTE = ?, ESTADO_CLIENTE = ? WHERE ID_CLIENTE = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -192,27 +244,27 @@ public class ClienteDAO {
      * @throws SQLException si ocurre un error al leer las columnas
      */
     private static Cliente mapRow(ResultSet resultado) throws SQLException {
-        // Leer el documento numérico (BIGINT nullable) desde la columna documento
-        long docValor = resultado.getLong("documento");
+        // Leer el documento numérico (BIGINT nullable) desde la columna DOCUMENTO_CLIENTE
+        long docValor = resultado.getLong("DOCUMENTO_CLIENTE");
         // Si el valor fue NULL en la BD, getLong retorna 0 y wasNull() retorna true
         Long documento = resultado.wasNull() ? null : docValor;
         // Construir y retornar un Cliente con los datos del registro actual
         return new Cliente(
-                // Leer el ID del cliente desde la columna id_cliente
-                resultado.getInt("id_cliente"),
-                // Leer el nombre desde la columna nombre
-                resultado.getString("nombre"),
+                // Leer el ID del cliente desde la columna ID_CLIENTE
+                resultado.getInt("ID_CLIENTE"),
+                // Leer el nombre desde la columna NOMBRE_CLIENTE
+                resultado.getString("NOMBRE_CLIENTE"),
                 // Asignar el documento Long (null si era NULL en la BD)
                 documento,
-                // Leer el correo desde la columna correo
-                resultado.getString("correo"),
-                // Leer el teléfono desde la columna telefono
-                resultado.getString("telefono"),
-                // Leer la dirección desde la columna direccion
-                resultado.getString("direccion"),
-                // Leer la ciudad desde la columna ciudad
-                resultado.getString("ciudad"),
-                // Leer el estado desde la columna estado
-                resultado.getBoolean("estado"));
+                // Leer el correo desde la columna CORREO_CLIENTE
+                resultado.getString("CORREO_CLIENTE"),
+                // Leer el teléfono desde la columna TELEFONO_CLIENTE
+                resultado.getString("TELEFONO_CLIENTE"),
+                // Leer la dirección desde la columna DIRECCION_CLIENTE
+                resultado.getString("DIRECCION_CLIENTE"),
+                // Leer la ciudad desde la columna CIUDAD_CLIENTE
+                resultado.getString("CIUDAD_CLIENTE"),
+                // Leer el estado desde la columna ESTADO_CLIENTE
+                resultado.getBoolean("ESTADO_CLIENTE"));
     }
 }

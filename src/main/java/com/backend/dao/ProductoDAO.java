@@ -27,7 +27,7 @@ public class ProductoDAO {
      */
     public static Producto findById(int id) {
         // SQL para seleccionar un producto por su clave primaria
-        String sql = "SELECT * FROM producto WHERE id_producto = ?";
+        String sql = "SELECT * FROM Productos WHERE ID_PRODUCTO = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -53,7 +53,7 @@ public class ProductoDAO {
         // Lista donde se acumularán los productos encontrados
         List<Producto> lista = new ArrayList<>();
         // SQL para seleccionar todos los productos ordenados por ID
-        String sql = "SELECT * FROM producto ORDER BY id_producto ASC";
+        String sql = "SELECT * FROM Productos ORDER BY ID_PRODUCTO ASC";
         // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -77,7 +77,7 @@ public class ProductoDAO {
         // Lista donde se acumularán los productos de la categoría
         List<Producto> lista = new ArrayList<>();
         // SQL para seleccionar productos filtrando por categoría y ordenando por ID
-        String sql = "SELECT * FROM producto WHERE categoria_id = ? ORDER BY id_producto ASC";
+        String sql = "SELECT * FROM Productos WHERE CATEGORIA_ID = ? ORDER BY ID_PRODUCTO ASC";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -102,7 +102,7 @@ public class ProductoDAO {
      */
     public static Producto create(Producto producto) {
         // SQL para insertar un nuevo producto con todos sus campos
-        String sql = "INSERT INTO producto (nombre, descripcion, precio_venta, costo_promedio, stock, estado, categoria_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Productos (NOMBRE_PRODUCTO, DESCRIPCION_PRODUCTO, PRECIO_VENTA, COSTO_PROMEDIO, STOCK, ESTADO_PRODUCTO, CATEGORIA_ID) VALUES (?, ?, ?, ?, ?, ?, ?)";
         // Abrir conexión y preparar consulta solicitando las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -144,7 +144,7 @@ public class ProductoDAO {
      */
     public static boolean update(Producto producto) {
         // SQL para actualizar todos los campos del producto por su ID
-        String sql = "UPDATE producto SET nombre = ?, descripcion = ?, precio_venta = ?, costo_promedio = ?, stock = ?, estado = ?, categoria_id = ? WHERE id_producto = ?";
+        String sql = "UPDATE Productos SET NOMBRE_PRODUCTO = ?, DESCRIPCION_PRODUCTO = ?, PRECIO_VENTA = ?, COSTO_PROMEDIO = ?, STOCK = ?, ESTADO_PRODUCTO = ?, CATEGORIA_ID = ? WHERE ID_PRODUCTO = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -183,7 +183,7 @@ public class ProductoDAO {
      */
     public static boolean updateStock(int id, int nuevoStock) {
         // SQL para actualizar solo el campo stock de un producto por su ID
-        String sql = "UPDATE producto SET stock = ? WHERE id_producto = ?";
+        String sql = "UPDATE Productos SET STOCK = ? WHERE ID_PRODUCTO = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -210,21 +210,21 @@ public class ProductoDAO {
     private static Producto mapRow(ResultSet resultado) throws SQLException {
         // Construir y retornar un Producto con los datos del registro actual
         return new Producto(
-                // Leer el ID del producto desde la columna id_producto
-                resultado.getInt("id_producto"),
-                // Leer el nombre desde la columna nombre
-                resultado.getString("nombre"),
-                // Leer la descripción desde la columna descripcion
-                resultado.getString("descripcion"),
-                // Leer el precio de venta desde la columna precio_venta
-                resultado.getDouble("precio_venta"),
-                // Leer el costo promedio desde la columna costo_promedio
-                resultado.getDouble("costo_promedio"),
-                // Leer el stock desde la columna stock
-                resultado.getInt("stock"),
-                // Leer el estado desde la columna estado
-                resultado.getBoolean("estado"),
-                // Leer el ID de categoría desde la columna categoria_id
-                resultado.getInt("categoria_id"));
+                // Leer el ID del producto desde la columna ID_PRODUCTO
+                resultado.getInt("ID_PRODUCTO"),
+                // Leer el nombre desde la columna NOMBRE_PRODUCTO
+                resultado.getString("NOMBRE_PRODUCTO"),
+                // Leer la descripción desde la columna DESCRIPCION_PRODUCTO
+                resultado.getString("DESCRIPCION_PRODUCTO"),
+                // Leer el precio de venta desde la columna PRECIO_VENTA
+                resultado.getDouble("PRECIO_VENTA"),
+                // Leer el costo promedio desde la columna COSTO_PROMEDIO
+                resultado.getDouble("COSTO_PROMEDIO"),
+                // Leer el stock desde la columna STOCK
+                resultado.getInt("STOCK"),
+                // Leer el estado desde la columna ESTADO_PRODUCTO
+                resultado.getBoolean("ESTADO_PRODUCTO"),
+                // Leer el ID de categoría desde la columna CATEGORIA_ID
+                resultado.getInt("CATEGORIA_ID"));
     }
 }

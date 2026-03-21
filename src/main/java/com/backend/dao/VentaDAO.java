@@ -31,7 +31,7 @@ public class VentaDAO {
      */
     public static Venta findById(int id) {
         // SQL para seleccionar una venta por su clave primaria
-        String sql = "SELECT * FROM venta WHERE id_venta = ?";
+        String sql = "SELECT * FROM Ventas WHERE ID_VENTA = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -56,8 +56,11 @@ public class VentaDAO {
     public static List<Venta> findAll() {
         // Lista donde se acumularán las ventas encontradas
         List<Venta> lista = new ArrayList<>();
-        // SQL para seleccionar todas las ventas ordenadas por fecha y luego por ID descendente
-        String sql = "SELECT * FROM venta ORDER BY fecha_venta DESC, id_venta DESC";
+        // SQL con JOIN a Clientes para obtener el nombre del cliente en una sola consulta
+        String sql = "SELECT v.*, c.NOMBRE_CLIENTE " +
+                "FROM Ventas v " +
+                "JOIN Clientes c ON v.CLIENTE_ID = c.ID_CLIENTE " +
+                "ORDER BY v.FECHA_VENTA DESC, v.ID_VENTA DESC";
         // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -81,7 +84,7 @@ public class VentaDAO {
         // Lista donde se acumularán los detalles encontrados
         List<DetalleVenta> lista = new ArrayList<>();
         // SQL para seleccionar todos los ítems de una venta específica
-        String sql = "SELECT * FROM detalle_venta WHERE venta_id = ? ORDER BY id_det_venta ASC";
+        String sql = "SELECT * FROM Detalles_Ventas WHERE VENTA_ID = ? ORDER BY ID_DET_VENTA ASC";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -120,14 +123,14 @@ public class VentaDAO {
 
             // ===== PASO 1: INSERT en la tabla Venta =====
             // SQL para insertar el encabezado de la venta
-            String sqlVenta = "INSERT INTO venta (fecha_venta, total_venta, metodo_pago, usuario_id, cliente_id) VALUES (?, ?, ?, ?, ?)";
+            String sqlVenta = "INSERT INTO Ventas (FECHA_VENTA, TOTAL_VENTA, METODO_PAGO_VENTA, USUARIO_ID, CLIENTE_ID) VALUES (?, ?, ?, ?, ?)";
             // Preparar la consulta solicitando la clave generada por la BD
             PreparedStatement stmtVenta = conexion.prepareStatement(sqlVenta, Statement.RETURN_GENERATED_KEYS);
             // Asignar la fecha de la venta en formato "YYYY-MM-DD"
             stmtVenta.setString(1, venta.getFechaVenta());
             // Asignar el total calculado de la venta
             stmtVenta.setDouble(2, venta.getTotalVenta());
-            // Asignar el método de pago ("Transferencia" o "Efectivo")
+            // Asignar el método de pago de la venta ("Transferencia" o "Efectivo")
             stmtVenta.setString(3, venta.getMetodoPago());
             // Asignar el ID del usuario que registra la venta
             stmtVenta.setInt(4, venta.getUsuarioId());
@@ -144,9 +147,9 @@ public class VentaDAO {
 
             // ===== PASOS 2 y 3: INSERT Detalle_Venta y UPDATE stock por cada ítem =====
             // SQL para insertar cada ítem del detalle de venta
-            String sqlDetalle = "INSERT INTO detalle_venta (cantidad, precio_unitario, subtotal, venta_id, producto_id) VALUES (?, ?, ?, ?, ?)";
+            String sqlDetalle = "INSERT INTO Detalles_Ventas (CANTIDAD_VENTA, PRECIO_UNITARIO, SUBTOTAL_VENTA, VENTA_ID, PRODUCTO_ID) VALUES (?, ?, ?, ?, ?)";
             // SQL para descontar la cantidad vendida del stock del producto
-            String sqlStock = "UPDATE producto SET stock = stock - ? WHERE id_producto = ?";
+            String sqlStock = "UPDATE Productos SET STOCK = STOCK - ? WHERE ID_PRODUCTO = ?";
             // Recorrer cada ítem para insertarlo y descontar su stock
             for (DetalleVenta detalle : detalles) {
                 // Asignar el ID de la venta recién creada al detalle
@@ -158,7 +161,7 @@ public class VentaDAO {
                 stmtDetalle.setInt(1, detalle.getCantidad());
                 // Asignar el precio unitario del producto al momento de la venta
                 stmtDetalle.setDouble(2, detalle.getPrecioUnitario());
-                // Asignar el subtotal calculado del ítem (precio × cantidad)
+                // Asignar el subtotal calculado del ítem (precio x cantidad)
                 stmtDetalle.setDouble(3, detalle.getSubtotal());
                 // Asignar el ID de la venta a la que pertenece el ítem
                 stmtDetalle.setInt(4, detalle.getVentaId());
@@ -187,18 +190,14 @@ public class VentaDAO {
 
             // ===== PASO 4: Registrar movimiento financiero en la misma transacción =====
             // Delegar al MovimientoFinancieroDAO pasando la conexión activa para mantener la atomicidad
-            // tipo_movimiento_id = 1 → Venta (Ingreso); compra_id y gasto_adicional_id son null
+            // tipo_movimiento_id = 1 → Venta (Ingreso); ventaId = ID de la venta creada, compraId y gastoId = null
             MovimientoFinancieroDAO.insertEnTransaccion(
                     conexion,
-                    venta.getFechaVenta(),
                     "Venta #" + venta.getIdVenta(),
                     venta.getTotalVenta(),
-                    venta.getMetodoPago(),
+                    venta.getFechaVenta(),
                     1,
-                    venta.getUsuarioId(),
-                    venta.getIdVenta(),
-                    null,
-                    null);
+                    venta.getIdVenta(), null, null);
 
             // Confirmar todos los cambios de la transacción en la BD
             conexion.commit();
@@ -243,20 +242,29 @@ public class VentaDAO {
      * @throws SQLException si ocurre un error al leer las columnas
      */
     private static Venta mapRow(ResultSet resultado) throws SQLException {
-        // Construir y retornar una Venta con los datos del registro actual
-        return new Venta(
-                // Leer el ID de la venta desde la columna id_venta
-                resultado.getInt("id_venta"),
-                // Leer la fecha de la venta como String desde la columna fecha_venta
-                resultado.getString("fecha_venta"),
-                // Leer el total de la venta desde la columna total_venta
-                resultado.getDouble("total_venta"),
-                // Leer el método de pago desde la columna metodo_pago
-                resultado.getString("metodo_pago"),
-                // Leer el ID del usuario desde la columna usuario_id
-                resultado.getInt("usuario_id"),
-                // Leer el ID del cliente desde la columna cliente_id
-                resultado.getInt("cliente_id"));
+        // Construir la Venta con los datos del registro actual
+        Venta venta = new Venta(
+                // Leer el ID de la venta desde la columna ID_VENTA
+                resultado.getInt("ID_VENTA"),
+                // Leer la fecha de la venta como String desde la columna FECHA_VENTA
+                resultado.getString("FECHA_VENTA"),
+                // Leer el total de la venta desde la columna TOTAL_VENTA
+                resultado.getDouble("TOTAL_VENTA"),
+                // Leer el método de pago desde la columna METODO_PAGO_VENTA
+                resultado.getString("METODO_PAGO_VENTA"),
+                // Leer el ID del usuario desde la columna USUARIO_ID
+                resultado.getInt("USUARIO_ID"),
+                // Leer el ID del cliente desde la columna CLIENTE_ID
+                resultado.getInt("CLIENTE_ID"));
+        // Poblar el nombre del cliente si la columna existe en el ResultSet (viene del JOIN)
+        try {
+            // Leer el nombre del cliente desde la columna NOMBRE_CLIENTE del JOIN
+            venta.setNombreCliente(resultado.getString("NOMBRE_CLIENTE"));
+        } catch (SQLException excepcion) {
+            // Si la columna no existe (ej: findById sin JOIN), ignorar silenciosamente
+        }
+        // Retornar la venta con todos los campos poblados
+        return venta;
     }
 
     /**
@@ -268,17 +276,17 @@ public class VentaDAO {
     private static DetalleVenta mapDetalleRow(ResultSet resultado) throws SQLException {
         // Construir y retornar un DetalleVenta con los datos del registro actual
         return new DetalleVenta(
-                // Leer el ID del ítem desde la columna id_det_venta
-                resultado.getInt("id_det_venta"),
-                // Leer la cantidad vendida desde la columna cantidad
-                resultado.getInt("cantidad"),
-                // Leer el precio unitario desde la columna precio_unitario
-                resultado.getDouble("precio_unitario"),
-                // Leer el subtotal del ítem desde la columna subtotal
-                resultado.getDouble("subtotal"),
-                // Leer el ID de la venta desde la columna venta_id
-                resultado.getInt("venta_id"),
-                // Leer el ID del producto desde la columna producto_id
-                resultado.getInt("producto_id"));
+                // Leer el ID del ítem desde la columna ID_DET_VENTA
+                resultado.getInt("ID_DET_VENTA"),
+                // Leer la cantidad vendida desde la columna CANTIDAD_VENTA
+                resultado.getInt("CANTIDAD_VENTA"),
+                // Leer el precio unitario desde la columna PRECIO_UNITARIO
+                resultado.getDouble("PRECIO_UNITARIO"),
+                // Leer el subtotal del ítem desde la columna SUBTOTAL_VENTA
+                resultado.getDouble("SUBTOTAL_VENTA"),
+                // Leer el ID de la venta desde la columna VENTA_ID
+                resultado.getInt("VENTA_ID"),
+                // Leer el ID del producto desde la columna PRODUCTO_ID
+                resultado.getInt("PRODUCTO_ID"));
     }
 }

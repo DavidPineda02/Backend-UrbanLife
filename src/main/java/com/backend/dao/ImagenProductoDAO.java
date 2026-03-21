@@ -27,7 +27,7 @@ public class ImagenProductoDAO {
      */
     public static ImagenProducto findById(int id) {
         // Consulta SQL para buscar una imagen por su ID
-        String sql = "SELECT * FROM imagenes_producto WHERE imagen_producto = ?";
+        String sql = "SELECT * FROM Imagenes_Productos WHERE IMAGEN_PRODUCTO = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -54,7 +54,7 @@ public class ImagenProductoDAO {
         // Crear lista vacía para almacenar las imágenes encontradas
         List<ImagenProducto> lista = new ArrayList<>();
         // Consulta SQL para buscar imágenes por ID del producto
-        String sql = "SELECT * FROM imagenes_producto WHERE producto_id = ? ORDER BY imagen_producto ASC";
+        String sql = "SELECT * FROM Imagenes_Productos WHERE PRODUCTO_ID = ? ORDER BY IMAGEN_PRODUCTO ASC";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -80,7 +80,7 @@ public class ImagenProductoDAO {
         // Crear lista vacía para almacenar las imágenes encontradas
         List<ImagenProducto> lista = new ArrayList<>();
         // Consulta SQL para obtener todas las imágenes ordenadas por ID
-        String sql = "SELECT * FROM imagenes_producto ORDER BY imagen_producto ASC";
+        String sql = "SELECT * FROM Imagenes_Productos ORDER BY IMAGEN_PRODUCTO ASC";
         // Abrir conexión, preparar y ejecutar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -102,14 +102,14 @@ public class ImagenProductoDAO {
      */
     public static ImagenProducto create(ImagenProducto imagenProducto) {
         // Consulta SQL para insertar una nueva imagen de producto
-        String sql = "INSERT INTO imagenes_producto (url, fecha_registro, producto_id) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO Imagenes_Productos (URL, FECHA_REGISTRO, PRODUCTO_ID) VALUES (?, ?, ?)";
         // Abrir conexión y preparar la consulta solicitando las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             // Establecer la URL de la imagen como primer parámetro
             consulta.setString(1, imagenProducto.getUrl());
-            // Establecer la fecha de registro convertida a java.sql.Date como segundo parámetro
-            consulta.setDate(2, Date.valueOf(imagenProducto.getFechaRegistro()));
+            // Establecer la fecha de registro como String en formato YYYY-MM-DD
+            consulta.setString(2, imagenProducto.getFechaRegistro());
             // Establecer el ID del producto asociado como tercer parámetro
             consulta.setInt(3, imagenProducto.getProductoId());
             // Ejecutar la inserción y verificar que se insertó al menos un registro
@@ -136,14 +136,14 @@ public class ImagenProductoDAO {
      */
     public static boolean update(ImagenProducto imagenProducto) {
         // Consulta SQL para actualizar URL, fecha y producto de una imagen
-        String sql = "UPDATE imagenes_producto SET url = ?, fecha_registro = ?, producto_id = ? WHERE imagen_producto = ?";
+        String sql = "UPDATE Imagenes_Productos SET URL = ?, FECHA_REGISTRO = ?, PRODUCTO_ID = ? WHERE IMAGEN_PRODUCTO = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
             // Establecer la nueva URL como primer parámetro
             consulta.setString(1, imagenProducto.getUrl());
-            // Establecer la nueva fecha de registro convertida a java.sql.Date como segundo parámetro
-            consulta.setDate(2, Date.valueOf(imagenProducto.getFechaRegistro()));
+            // Establecer la nueva fecha de registro como String en formato YYYY-MM-DD
+            consulta.setString(2, imagenProducto.getFechaRegistro());
             // Establecer el nuevo ID del producto como tercer parámetro
             consulta.setInt(3, imagenProducto.getProductoId());
             // Establecer el ID de la imagen a actualizar como cuarto parámetro
@@ -165,7 +165,7 @@ public class ImagenProductoDAO {
      */
     public static boolean delete(int id) {
         // Consulta SQL para eliminar una imagen por su ID
-        String sql = "DELETE FROM imagenes_producto WHERE imagen_producto = ?";
+        String sql = "DELETE FROM Imagenes_Productos WHERE IMAGEN_PRODUCTO = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -188,7 +188,7 @@ public class ImagenProductoDAO {
      */
     public static int countByProductoId(int productoId) {
         // SQL para contar las imágenes de un producto
-        String sql = "SELECT COUNT(*) FROM imagenes_producto WHERE producto_id = ?";
+        String sql = "SELECT COUNT(*) FROM Imagenes_Productos WHERE PRODUCTO_ID = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -213,9 +213,9 @@ public class ImagenProductoDAO {
     private static ImagenProducto mapRow(ResultSet resultado) throws SQLException {
         // Crear y retornar un nuevo objeto ImagenProducto con los valores de las columnas
         return new ImagenProducto(
-                resultado.getInt("imagen_producto"),              // Obtener el ID de la imagen
-                resultado.getString("url"),                        // Obtener la URL de la imagen
-                resultado.getDate("fecha_registro").toLocalDate(), // Obtener la fecha convertida a LocalDate
-                resultado.getInt("producto_id"));                  // Obtener el ID del producto asociado
+                resultado.getInt("IMAGEN_PRODUCTO"),              // Obtener el ID de la imagen
+                resultado.getString("URL"),                        // Obtener la URL de la imagen
+                resultado.getString("FECHA_REGISTRO"),             // Obtener la fecha como String YYYY-MM-DD
+                resultado.getInt("PRODUCTO_ID"));                  // Obtener el ID del producto asociado
     }
 }

@@ -27,7 +27,7 @@ public class ProveedorDAO {
      */
     public static Proveedor findById(int id) {
         // SQL para seleccionar un proveedor por su clave primaria
-        String sql = "SELECT * FROM proveedores WHERE id_proveedor = ?";
+        String sql = "SELECT * FROM Proveedores WHERE ID_PROVEEDOR = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -53,7 +53,7 @@ public class ProveedorDAO {
         // Lista donde se acumularán los proveedores encontrados
         List<Proveedor> lista = new ArrayList<>();
         // SQL para seleccionar todos los proveedores ordenados por ID
-        String sql = "SELECT * FROM proveedores ORDER BY id_proveedor ASC";
+        String sql = "SELECT * FROM Proveedores ORDER BY ID_PROVEEDOR ASC";
         // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -76,7 +76,7 @@ public class ProveedorDAO {
      */
     public static Proveedor findByNit(String nit) {
         // SQL para seleccionar un proveedor filtrando por NIT
-        String sql = "SELECT * FROM proveedores WHERE nit = ?";
+        String sql = "SELECT * FROM Proveedores WHERE NIT = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -95,13 +95,65 @@ public class ProveedorDAO {
     }
 
     /**
+     * Busca un proveedor por su correo electrónico.
+     * Usado para verificar unicidad antes de crear o actualizar.
+     * @param correo Correo electrónico a buscar
+     * @return Proveedor encontrado o null si no existe
+     */
+    public static Proveedor findByCorreo(String correo) {
+        // SQL para seleccionar un proveedor filtrando por correo electrónico
+        String sql = "SELECT * FROM Proveedores WHERE CORREO_PROVEEDOR = ?";
+        // Abrir conexión y preparar consulta con auto-cierre
+        try (Connection conexion = dbConnection.getConnection();
+             PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            // Asignar el correo como parámetro de búsqueda
+            consulta.setString(1, correo);
+            // Ejecutar consulta y obtener resultado
+            ResultSet resultado = consulta.executeQuery();
+            // Si se encontró un registro, mapearlo y retornarlo
+            if (resultado.next()) return mapRow(resultado);
+        } catch (Exception excepcion) {
+            // Registrar error en consola
+            System.out.println("Error ProveedorDAO.findByCorreo: " + excepcion.getMessage());
+        }
+        // Retornar null si no se encontró el proveedor
+        return null;
+    }
+
+    /**
+     * Busca un proveedor por su número de teléfono.
+     * Usado para verificar unicidad antes de crear o actualizar.
+     * @param telefono Número de teléfono a buscar
+     * @return Proveedor encontrado o null si no existe
+     */
+    public static Proveedor findByTelefono(String telefono) {
+        // SQL para seleccionar un proveedor filtrando por número de teléfono
+        String sql = "SELECT * FROM Proveedores WHERE TELEFONO_PROVEEDOR = ?";
+        // Abrir conexión y preparar consulta con auto-cierre
+        try (Connection conexion = dbConnection.getConnection();
+             PreparedStatement consulta = conexion.prepareStatement(sql)) {
+            // Asignar el teléfono como parámetro de búsqueda
+            consulta.setString(1, telefono);
+            // Ejecutar consulta y obtener resultado
+            ResultSet resultado = consulta.executeQuery();
+            // Si se encontró un registro, mapearlo y retornarlo
+            if (resultado.next()) return mapRow(resultado);
+        } catch (Exception excepcion) {
+            // Registrar error en consola
+            System.out.println("Error ProveedorDAO.findByTelefono: " + excepcion.getMessage());
+        }
+        // Retornar null si no se encontró el proveedor
+        return null;
+    }
+
+    /**
      * Inserta un nuevo proveedor en la base de datos y asigna el ID generado.
      * @param proveedor Objeto Proveedor con todos los campos a insertar
      * @return El mismo Proveedor con su ID asignado, o null si falló la inserción
      */
     public static Proveedor create(Proveedor proveedor) {
         // SQL para insertar un nuevo proveedor con todos sus campos
-        String sql = "INSERT INTO proveedores (nombre, razon_social, nit, correo, telefono, direccion, ciudad, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Proveedores (NOMBRE_PROVEEDOR, RAZON_SOCIAL, NIT, CORREO_PROVEEDOR, TELEFONO_PROVEEDOR, DIRECCION_PROVEEDOR, CIUDAD_PROVEEDOR, ESTADO_PROVEEDOR) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         // Abrir conexión y preparar consulta solicitando las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -145,7 +197,7 @@ public class ProveedorDAO {
      */
     public static boolean update(Proveedor proveedor) {
         // SQL para actualizar todos los campos del proveedor por su ID
-        String sql = "UPDATE proveedores SET nombre = ?, razon_social = ?, nit = ?, correo = ?, telefono = ?, direccion = ?, ciudad = ?, estado = ? WHERE id_proveedor = ?";
+        String sql = "UPDATE Proveedores SET NOMBRE_PROVEEDOR = ?, RAZON_SOCIAL = ?, NIT = ?, CORREO_PROVEEDOR = ?, TELEFONO_PROVEEDOR = ?, DIRECCION_PROVEEDOR = ?, CIUDAD_PROVEEDOR = ?, ESTADO_PROVEEDOR = ? WHERE ID_PROVEEDOR = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -186,23 +238,23 @@ public class ProveedorDAO {
     private static Proveedor mapRow(ResultSet resultado) throws SQLException {
         // Construir y retornar un Proveedor con los datos del registro actual
         return new Proveedor(
-                // Leer el ID del proveedor desde la columna id_proveedor
-                resultado.getInt("id_proveedor"),
-                // Leer el nombre desde la columna nombre
-                resultado.getString("nombre"),
-                // Leer la razón social desde la columna razon_social
-                resultado.getString("razon_social"),
-                // Leer el NIT desde la columna nit
-                resultado.getString("nit"),
-                // Leer el correo desde la columna correo
-                resultado.getString("correo"),
-                // Leer el teléfono desde la columna telefono
-                resultado.getString("telefono"),
-                // Leer la dirección desde la columna direccion
-                resultado.getString("direccion"),
-                // Leer la ciudad desde la columna ciudad
-                resultado.getString("ciudad"),
-                // Leer el estado desde la columna estado
-                resultado.getBoolean("estado"));
+                // Leer el ID del proveedor desde la columna ID_PROVEEDOR
+                resultado.getInt("ID_PROVEEDOR"),
+                // Leer el nombre desde la columna NOMBRE_PROVEEDOR
+                resultado.getString("NOMBRE_PROVEEDOR"),
+                // Leer la razón social desde la columna RAZON_SOCIAL
+                resultado.getString("RAZON_SOCIAL"),
+                // Leer el NIT desde la columna NIT
+                resultado.getString("NIT"),
+                // Leer el correo desde la columna CORREO_PROVEEDOR
+                resultado.getString("CORREO_PROVEEDOR"),
+                // Leer el teléfono desde la columna TELEFONO_PROVEEDOR
+                resultado.getString("TELEFONO_PROVEEDOR"),
+                // Leer la dirección desde la columna DIRECCION_PROVEEDOR
+                resultado.getString("DIRECCION_PROVEEDOR"),
+                // Leer la ciudad desde la columna CIUDAD_PROVEEDOR
+                resultado.getString("CIUDAD_PROVEEDOR"),
+                // Leer el estado desde la columna ESTADO_PROVEEDOR
+                resultado.getBoolean("ESTADO_PROVEEDOR"));
     }
 }

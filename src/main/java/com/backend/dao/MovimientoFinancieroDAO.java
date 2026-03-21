@@ -18,6 +18,7 @@ import java.util.List;
  * Centraliza tanto las consultas de lectura como la inserción transaccional de movimientos.
  * El método insertEnTransaccion() es invocado por VentaDAO, CompraDAO y GastoAdicionalDAO
  * dentro de sus transacciones atómicas, pasando la conexión activa para mantener la atomicidad.
+ * Usa VENTA_ID, COMPRA_ID o GASTO_ADICIONAL_ID (FKs separadas) para identificar la operación origen.
  */
 public class MovimientoFinancieroDAO {
 
@@ -28,7 +29,7 @@ public class MovimientoFinancieroDAO {
      */
     public static MovimientoFinanciero findById(int id) {
         // SQL para seleccionar un movimiento por su clave primaria
-        String sql = "SELECT * FROM movimientos_financieros WHERE id_movs_financieros = ?";
+        String sql = "SELECT * FROM Movimientos_Financieros WHERE ID_MOVS_FINANCIEROS = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -53,8 +54,11 @@ public class MovimientoFinancieroDAO {
     public static List<MovimientoFinanciero> findAll() {
         // Lista donde se acumularán los movimientos encontrados
         List<MovimientoFinanciero> lista = new ArrayList<>();
-        // SQL para seleccionar todos los movimientos ordenados por fecha descendente
-        String sql = "SELECT * FROM movimientos_financieros ORDER BY fecha_movimiento DESC, id_movs_financieros DESC";
+        // SQL con JOIN a Tipos_Movimientos para obtener nombre del tipo y naturaleza en una sola consulta
+        String sql = "SELECT mf.*, tm.MOVIMIENTO, tm.NATURALEZA " +
+                "FROM Movimientos_Financieros mf " +
+                "JOIN Tipos_Movimientos tm ON mf.TIPO_MOVIMIENTO_ID = tm.ID_TIPO_MOVIMIENTOS " +
+                "ORDER BY mf.ID_MOVS_FINANCIEROS DESC";
         // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -76,46 +80,39 @@ public class MovimientoFinancieroDAO {
      * Lanza SQLException para que el DAO invocador pueda hacer rollback si falla.
      *
      * @param conexion          Conexión activa con auto-commit desactivado (de la transacción padre)
-     * @param fecha             Fecha del movimiento en formato "YYYY-MM-DD"
      * @param concepto          Descripción del movimiento (ej: "Venta #5", "Compra #3")
      * @param monto             Monto del movimiento financiero
-     * @param metodoPago        Método de pago ("Transferencia" o "Efectivo")
+     * @param fecha             Fecha del movimiento en formato "YYYY-MM-DD"
      * @param tipoMovimientoId  1=Venta(Ingreso), 2=Compra(Egreso), 3=Gasto(Egreso)
-     * @param usuarioId         ID del usuario que generó el movimiento
-     * @param ventaId           ID de la venta asociada, o null si no aplica
-     * @param compraId          ID de la compra asociada, o null si no aplica
-     * @param gastoAdicionalId  ID del gasto asociado, o null si no aplica
+     * @param ventaId           ID de la venta asociada (null si no es tipo Venta)
+     * @param compraId          ID de la compra asociada (null si no es tipo Compra)
+     * @param gastoAdicionalId  ID del gasto adicional asociado (null si no es tipo Gasto)
      * @throws SQLException si el INSERT falla, para que el DAO padre haga rollback
      */
-    public static void insertEnTransaccion(Connection conexion, String fecha, String concepto,
-                                            double monto, String metodoPago, int tipoMovimientoId,
-                                            int usuarioId, Integer ventaId, Integer compraId,
+    public static void insertEnTransaccion(Connection conexion, String concepto, double monto,
+                                            String fecha, int tipoMovimientoId,
+                                            Integer ventaId, Integer compraId,
                                             Integer gastoAdicionalId) throws SQLException {
-        // SQL para insertar el movimiento financiero en la transacción activa
-        String sql = "INSERT INTO movimientos_financieros " +
-                "(fecha_movimiento, concepto, monto, metodo_pago, tipo_movimiento_id, " +
-                "usuario_id, venta_id, compra_id, gasto_adicional_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // SQL para insertar el movimiento financiero con las 3 FKs separadas
+        String sql = "INSERT INTO Movimientos_Financieros " +
+                "(CONCEPTO, MONTO, FECHA, TIPO_MOVIMIENTO_ID, VENTA_ID, COMPRA_ID, GASTO_ADICIONAL_ID) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
         // Preparar la consulta usando la conexión de la transacción activa (no abrir una nueva)
         PreparedStatement stmt = conexion.prepareStatement(sql);
-        // Asignar la fecha del movimiento
-        stmt.setString(1, fecha);
         // Asignar el concepto descriptivo del movimiento
-        stmt.setString(2, concepto);
+        stmt.setString(1, concepto);
         // Asignar el monto del movimiento financiero
-        stmt.setDouble(3, monto);
-        // Asignar el método de pago del movimiento
-        stmt.setString(4, metodoPago);
+        stmt.setDouble(2, monto);
+        // Asignar la fecha del movimiento
+        stmt.setString(3, fecha);
         // Asignar el tipo de movimiento (1=Venta, 2=Compra, 3=Gasto)
-        stmt.setInt(5, tipoMovimientoId);
-        // Asignar el ID del usuario que originó el movimiento
-        stmt.setInt(6, usuarioId);
-        // Asignar el ID de la venta o NULL si el movimiento no es de tipo venta
-        if (ventaId != null) stmt.setInt(7, ventaId); else stmt.setNull(7, Types.INTEGER);
-        // Asignar el ID de la compra o NULL si el movimiento no es de tipo compra
-        if (compraId != null) stmt.setInt(8, compraId); else stmt.setNull(8, Types.INTEGER);
-        // Asignar el ID del gasto adicional o NULL si el movimiento no es de tipo gasto
-        if (gastoAdicionalId != null) stmt.setInt(9, gastoAdicionalId); else stmt.setNull(9, Types.INTEGER);
+        stmt.setInt(4, tipoMovimientoId);
+        // Asignar el ID de la venta (null si no aplica)
+        if (ventaId != null) stmt.setInt(5, ventaId); else stmt.setNull(5, Types.INTEGER);
+        // Asignar el ID de la compra (null si no aplica)
+        if (compraId != null) stmt.setInt(6, compraId); else stmt.setNull(6, Types.INTEGER);
+        // Asignar el ID del gasto adicional (null si no aplica)
+        if (gastoAdicionalId != null) stmt.setInt(7, gastoAdicionalId); else stmt.setNull(7, Types.INTEGER);
         // Ejecutar el INSERT del movimiento financiero dentro de la transacción padre
         stmt.executeUpdate();
         // Cerrar el statement para liberar recursos (la conexión sigue abierta para la transacción)
@@ -124,49 +121,45 @@ public class MovimientoFinancieroDAO {
 
     /**
      * Convierte una fila del ResultSet en un objeto MovimientoFinanciero.
-     * Maneja las columnas nullable (venta_id, compra_id, gasto_adicional_id)
-     * usando el patrón getInt + wasNull para obtener Integer nullable.
      * @param resultado ResultSet posicionado en la fila a mapear
      * @return Objeto MovimientoFinanciero con todos los campos del registro
      * @throws SQLException si ocurre un error al leer las columnas
      */
     private static MovimientoFinanciero mapRow(ResultSet resultado) throws SQLException {
-        // Leer el venta_id como int primitivo (retorna 0 si es NULL)
-        int ventaIdValor = resultado.getInt("venta_id");
-        // Convertir a Integer nullable: null si era NULL en la BD
-        Integer ventaId = resultado.wasNull() ? null : ventaIdValor;
-
-        // Leer el compra_id como int primitivo (retorna 0 si es NULL)
-        int compraIdValor = resultado.getInt("compra_id");
-        // Convertir a Integer nullable: null si era NULL en la BD
-        Integer compraId = resultado.wasNull() ? null : compraIdValor;
-
-        // Leer el gasto_adicional_id como int primitivo (retorna 0 si es NULL)
-        int gastoIdValor = resultado.getInt("gasto_adicional_id");
-        // Convertir a Integer nullable: null si era NULL en la BD
-        Integer gastoAdicionalId = resultado.wasNull() ? null : gastoIdValor;
-
-        // Construir y retornar un MovimientoFinanciero con los datos del registro
-        return new MovimientoFinanciero(
-                // Leer el ID del movimiento desde la columna id_movs_financieros
-                resultado.getInt("id_movs_financieros"),
-                // Leer la fecha del movimiento como String desde la columna fecha_movimiento
-                resultado.getString("fecha_movimiento"),
-                // Leer el concepto desde la columna concepto
-                resultado.getString("concepto"),
-                // Leer el monto desde la columna monto
-                resultado.getDouble("monto"),
-                // Leer el método de pago desde la columna metodo_pago
-                resultado.getString("metodo_pago"),
-                // Leer el ID del tipo de movimiento desde la columna tipo_movimiento_id
-                resultado.getInt("tipo_movimiento_id"),
-                // Leer el ID del usuario desde la columna usuario_id
-                resultado.getInt("usuario_id"),
-                // Asignar el ID de la venta (nullable)
+        // Leer VENTA_ID como Integer nullable (getObject retorna null si la columna es NULL)
+        Integer ventaId = (Integer) resultado.getObject("VENTA_ID");
+        // Leer COMPRA_ID como Integer nullable
+        Integer compraId = (Integer) resultado.getObject("COMPRA_ID");
+        // Leer GASTO_ADICIONAL_ID como Integer nullable
+        Integer gastoAdicionalId = (Integer) resultado.getObject("GASTO_ADICIONAL_ID");
+        // Construir el MovimientoFinanciero con los datos del registro
+        MovimientoFinanciero movimiento = new MovimientoFinanciero(
+                // Leer el ID del movimiento desde la columna ID_MOVS_FINANCIEROS
+                resultado.getInt("ID_MOVS_FINANCIEROS"),
+                // Leer el concepto desde la columna CONCEPTO
+                resultado.getString("CONCEPTO"),
+                // Leer el monto desde la columna MONTO
+                resultado.getDouble("MONTO"),
+                // Leer la fecha como String desde la columna FECHA
+                resultado.getString("FECHA"),
+                // Leer el ID del tipo de movimiento desde la columna TIPO_MOVIMIENTO_ID
+                resultado.getInt("TIPO_MOVIMIENTO_ID"),
+                // Pasar el ID de la venta asociada (null si no es tipo Venta)
                 ventaId,
-                // Asignar el ID de la compra (nullable)
+                // Pasar el ID de la compra asociada (null si no es tipo Compra)
                 compraId,
-                // Asignar el ID del gasto adicional (nullable)
+                // Pasar el ID del gasto adicional asociado (null si no es tipo Gasto)
                 gastoAdicionalId);
+        // Poblar campos del JOIN si las columnas existen en el ResultSet
+        try {
+            // Leer el nombre del tipo de movimiento desde la columna MOVIMIENTO del JOIN
+            movimiento.setTipoMovimiento(resultado.getString("MOVIMIENTO"));
+            // Leer la naturaleza del movimiento desde la columna NATURALEZA del JOIN
+            movimiento.setNaturaleza(resultado.getString("NATURALEZA"));
+        } catch (SQLException excepcion) {
+            // Si las columnas no existen (ej: findById sin JOIN), ignorar silenciosamente
+        }
+        // Retornar el movimiento con todos los campos poblados
+        return movimiento;
     }
 }

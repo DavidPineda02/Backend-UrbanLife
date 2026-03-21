@@ -27,7 +27,7 @@ public class RolPermisoDAO {
      */
     public static RolPermiso findById(int id) {
         // Consulta SQL para buscar una relación rol-permiso por su ID
-        String sql = "SELECT * FROM rol_permisos WHERE id_rol_permiso = ?";
+        String sql = "SELECT * FROM Roles_Permisos WHERE ID_ROL_PERMISO = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -54,7 +54,7 @@ public class RolPermisoDAO {
         // Crear lista vacía para almacenar las relaciones encontradas
         List<RolPermiso> lista = new ArrayList<>();
         // Consulta SQL para buscar relaciones por ID del rol
-        String sql = "SELECT * FROM rol_permisos WHERE rol_id = ?";
+        String sql = "SELECT * FROM Roles_Permisos WHERE ROL_ID = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -80,7 +80,7 @@ public class RolPermisoDAO {
         // Crear lista vacía para almacenar las relaciones encontradas
         List<RolPermiso> lista = new ArrayList<>();
         // Consulta SQL para obtener todas las relaciones ordenadas por ID
-        String sql = "SELECT * FROM rol_permisos ORDER BY id_rol_permiso ASC";
+        String sql = "SELECT * FROM Roles_Permisos ORDER BY ID_ROL_PERMISO ASC";
         // Abrir conexión, preparar y ejecutar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -102,7 +102,7 @@ public class RolPermisoDAO {
      */
     public static RolPermiso create(RolPermiso rolPermiso) {
         // Consulta SQL para insertar una nueva relación rol-permiso
-        String sql = "INSERT INTO rol_permisos (rol_id, permisos_id) VALUES (?, ?)";
+        String sql = "INSERT INTO Roles_Permisos (ROL_ID, PERMISOS_ID) VALUES (?, ?)";
         // Abrir conexión y preparar la consulta solicitando las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -134,7 +134,7 @@ public class RolPermisoDAO {
      */
     public static boolean update(RolPermiso rolPermiso) {
         // Consulta SQL para actualizar los IDs de rol y permiso de una relación
-        String sql = "UPDATE rol_permisos SET rol_id = ?, permisos_id = ? WHERE id_rol_permiso = ?";
+        String sql = "UPDATE Roles_Permisos SET ROL_ID = ?, PERMISOS_ID = ? WHERE ID_ROL_PERMISO = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -161,7 +161,7 @@ public class RolPermisoDAO {
      */
     public static boolean delete(int id) {
         // Consulta SQL para eliminar una relación por su ID
-        String sql = "DELETE FROM rol_permisos WHERE id_rol_permiso = ?";
+        String sql = "DELETE FROM Roles_Permisos WHERE ID_ROL_PERMISO = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -184,7 +184,7 @@ public class RolPermisoDAO {
      */
     public static boolean deleteByRolId(int rolId) {
         // Consulta SQL para eliminar todas las relaciones de un rol específico
-        String sql = "DELETE FROM rol_permisos WHERE rol_id = ?";
+        String sql = "DELETE FROM Roles_Permisos WHERE ROL_ID = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -209,8 +209,8 @@ public class RolPermisoDAO {
     private static RolPermiso mapRow(ResultSet resultado) throws SQLException {
         // Crear y retornar un nuevo objeto RolPermiso con los valores de las columnas
         return new RolPermiso(
-                resultado.getInt("id_rol_permiso"),  // Obtener el ID de la relación
-                resultado.getInt("rol_id"),           // Obtener el ID del rol
-                resultado.getInt("permisos_id"));     // Obtener el ID del permiso
+                resultado.getInt("ID_ROL_PERMISO"),  // Obtener el ID de la relación
+                resultado.getInt("ROL_ID"),           // Obtener el ID del rol
+                resultado.getInt("PERMISOS_ID"));     // Obtener el ID del permiso
     }
 }

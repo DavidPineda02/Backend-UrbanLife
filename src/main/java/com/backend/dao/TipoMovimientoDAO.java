@@ -28,7 +28,7 @@ public class TipoMovimientoDAO {
      */
     public static TipoMovimiento findById(int id) {
         // Consulta SQL para buscar un tipo de movimiento por su ID
-        String sql = "SELECT * FROM tipo_movimientos WHERE id_tipo_movimientos = ?";
+        String sql = "SELECT * FROM Tipos_Movimientos WHERE ID_TIPO_MOVIMIENTOS = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -54,7 +54,7 @@ public class TipoMovimientoDAO {
         // Crear lista vacía para almacenar los tipos de movimiento encontrados
         List<TipoMovimiento> lista = new ArrayList<>();
         // Consulta SQL para obtener todos los tipos de movimiento ordenados por ID
-        String sql = "SELECT * FROM tipo_movimientos ORDER BY id_tipo_movimientos ASC";
+        String sql = "SELECT * FROM Tipos_Movimientos ORDER BY ID_TIPO_MOVIMIENTOS ASC";
         // Abrir conexión, preparar y ejecutar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -76,7 +76,7 @@ public class TipoMovimientoDAO {
      */
     public static TipoMovimiento create(TipoMovimiento tipoMovimiento) {
         // Consulta SQL para insertar un nuevo tipo de movimiento
-        String sql = "INSERT INTO tipo_movimientos (movimiento, naturaleza) VALUES (?, ?)";
+        String sql = "INSERT INTO Tipos_Movimientos (MOVIMIENTO, NATURALEZA) VALUES (?, ?)";
         // Abrir conexión y preparar la consulta solicitando las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -108,7 +108,7 @@ public class TipoMovimientoDAO {
      */
     public static boolean update(TipoMovimiento tipoMovimiento) {
         // Consulta SQL para actualizar movimiento y naturaleza de un tipo
-        String sql = "UPDATE tipo_movimientos SET movimiento = ?, naturaleza = ? WHERE id_tipo_movimientos = ?";
+        String sql = "UPDATE Tipos_Movimientos SET MOVIMIENTO = ?, NATURALEZA = ? WHERE ID_TIPO_MOVIMIENTOS = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -135,7 +135,7 @@ public class TipoMovimientoDAO {
      */
     public static boolean delete(int id) {
         // Consulta SQL para eliminar un tipo de movimiento por su ID
-        String sql = "DELETE FROM tipo_movimientos WHERE id_tipo_movimientos = ?";
+        String sql = "DELETE FROM Tipos_Movimientos WHERE ID_TIPO_MOVIMIENTOS = ?";
         // Abrir conexión y preparar la consulta con try-with-resources
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -160,8 +160,8 @@ public class TipoMovimientoDAO {
     private static TipoMovimiento mapRow(ResultSet resultado) throws SQLException {
         // Crear y retornar un nuevo objeto TipoMovimiento con los valores de las columnas
         return new TipoMovimiento(
-                resultado.getInt("id_tipo_movimientos"),  // Obtener el ID del tipo de movimiento
-                resultado.getString("movimiento"),         // Obtener el nombre del movimiento
-                resultado.getString("naturaleza"));        // Obtener la naturaleza (Ingreso/Egreso)
+                resultado.getInt("ID_TIPO_MOVIMIENTOS"),  // Obtener el ID del tipo de movimiento
+                resultado.getString("MOVIMIENTO"),         // Obtener el nombre del movimiento
+                resultado.getString("NATURALEZA"));        // Obtener la naturaleza (Ingreso/Egreso)
     }
 }

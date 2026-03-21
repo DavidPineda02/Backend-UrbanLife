@@ -35,7 +35,7 @@ public class CategoriaDAO {
      */
     public static Categoria findById(int id) {
         // Consulta SQL para buscar la categoría por su ID
-        String sql = "SELECT * FROM categoria WHERE id_categoria = ?";
+        String sql = "SELECT * FROM Categorias WHERE ID_CATEGORIA = ?";
         // Abrir conexión y preparar la consulta (se cierran automáticamente con try-with-resources)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -61,7 +61,7 @@ public class CategoriaDAO {
         // Lista donde se acumularán las categorías encontradas
         List<Categoria> lista = new ArrayList<>();
         // Consulta SQL para obtener todas las categorías ordenadas por ID
-        String sql = "SELECT * FROM categoria ORDER BY id_categoria ASC";
+        String sql = "SELECT * FROM Categorias ORDER BY ID_CATEGORIA ASC";
         // Abrir conexión, preparar y ejecutar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -84,7 +84,7 @@ public class CategoriaDAO {
      */
     public static Categoria findByNombre(String nombre) {
         // Consulta SQL para buscar la categoría por nombre exacto
-        String sql = "SELECT * FROM categoria WHERE nombre = ?";
+        String sql = "SELECT * FROM Categorias WHERE NOMBRE_CATEGORIA = ?";
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -109,7 +109,7 @@ public class CategoriaDAO {
      */
     public static Categoria create(Categoria categoria) {
         // Consulta SQL para insertar una nueva categoría con sus tres campos
-        String sql = "INSERT INTO categoria (nombre, descripcion, estado) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO Categorias (NOMBRE_CATEGORIA, DESCRIPCION_CATEGORIA, ESTADO_CATEGORIA) VALUES (?, ?, ?)";
         // Abrir conexión y preparar la consulta solicitando que retorne las claves generadas
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -144,7 +144,7 @@ public class CategoriaDAO {
      */
     public static boolean update(Categoria categoria) {
         // Consulta SQL para actualizar los tres campos de la categoría por su ID
-        String sql = "UPDATE categoria SET nombre = ?, descripcion = ?, estado = ? WHERE id_categoria = ?";
+        String sql = "UPDATE Categorias SET NOMBRE_CATEGORIA = ?, DESCRIPCION_CATEGORIA = ?, ESTADO_CATEGORIA = ? WHERE ID_CATEGORIA = ?";
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -177,12 +177,12 @@ public class CategoriaDAO {
         // Construir y retornar un objeto Categoria leyendo cada columna de la fila
         return new Categoria(
                 // Leer el ID de la categoría
-                resultado.getInt("id_categoria"),
+                resultado.getInt("ID_CATEGORIA"),
                 // Leer el nombre de la categoría
-                resultado.getString("nombre"),
+                resultado.getString("NOMBRE_CATEGORIA"),
                 // Leer la descripción de la categoría
-                resultado.getString("descripcion"),
+                resultado.getString("DESCRIPCION_CATEGORIA"),
                 // Leer el estado activo/inactivo de la categoría
-                resultado.getBoolean("estado"));
+                resultado.getBoolean("ESTADO_CATEGORIA"));
     }
 }

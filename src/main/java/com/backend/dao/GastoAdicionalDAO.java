@@ -28,7 +28,7 @@ public class GastoAdicionalDAO {
      */
     public static GastoAdicional findById(int id) {
         // SQL para seleccionar un gasto por su clave primaria
-        String sql = "SELECT * FROM gastos_adicionales WHERE id_gastos_adic = ?";
+        String sql = "SELECT * FROM Gastos_Adicionales WHERE ID_GASTOS_ADIC = ?";
         // Abrir conexión y preparar consulta con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -54,7 +54,7 @@ public class GastoAdicionalDAO {
         // Lista donde se acumularán los gastos encontrados
         List<GastoAdicional> lista = new ArrayList<>();
         // SQL para seleccionar todos los gastos ordenados por fecha descendente
-        String sql = "SELECT * FROM gastos_adicionales ORDER BY fecha_registro DESC, id_gastos_adic DESC";
+        String sql = "SELECT * FROM Gastos_Adicionales ORDER BY FECHA_REGISTRO DESC, ID_GASTOS_ADIC DESC";
         // Abrir conexión, preparar consulta y ejecutarla con auto-cierre
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql);
@@ -71,15 +71,14 @@ public class GastoAdicionalDAO {
 
     /**
      * Crea un gasto adicional y su movimiento financiero de forma atómica.
-     * Pasos: (1) INSERT en Gastos_Adicionales,
+     * Pasos: (1) INSERT en Gastos_Adicionales con USUARIO_ID,
      * (2) Registrar movimiento financiero vía MovimientoFinancieroDAO.insertEnTransaccion()
      *     con tipo_movimiento_id=3 (Gasto Adicional/Egreso).
      * Si cualquier paso falla se hace rollback de toda la operación.
-     * @param gasto Objeto GastoAdicional con los datos a insertar
-     * @param usuarioId ID del usuario autenticado que registra el gasto (para el movimiento financiero)
+     * @param gasto Objeto GastoAdicional con los datos a insertar (incluye usuarioId)
      * @return El GastoAdicional con su ID asignado, o null si la transacción falló
      */
-    public static GastoAdicional create(GastoAdicional gasto, int usuarioId) {
+    public static GastoAdicional create(GastoAdicional gasto) {
         // Declarar la conexión fuera del try para poder acceder en catch y finally
         Connection conexion = null;
         try {
@@ -89,8 +88,8 @@ public class GastoAdicionalDAO {
             conexion.setAutoCommit(false);
 
             // ===== PASO 1: INSERT en la tabla Gastos_Adicionales =====
-            // SQL para insertar el gasto adicional con sus campos
-            String sqlGasto = "INSERT INTO gastos_adicionales (monto, descripcion, fecha_registro, metodo_pago) VALUES (?, ?, ?, ?)";
+            // SQL para insertar el gasto adicional con sus campos incluyendo USUARIO_ID
+            String sqlGasto = "INSERT INTO Gastos_Adicionales (MONTO, DESCRIPCION_GASTO, FECHA_REGISTRO, METODO_PAGO_GASTO, USUARIO_ID) VALUES (?, ?, ?, ?, ?)";
             // Preparar la consulta solicitando la clave generada por la BD
             PreparedStatement stmtGasto = conexion.prepareStatement(sqlGasto, Statement.RETURN_GENERATED_KEYS);
             // Asignar el monto del gasto
@@ -101,6 +100,8 @@ public class GastoAdicionalDAO {
             stmtGasto.setString(3, gasto.getFechaRegistro());
             // Asignar el método de pago ("Transferencia" o "Efectivo")
             stmtGasto.setString(4, gasto.getMetodoPago());
+            // Asignar el ID del usuario que registra el gasto
+            stmtGasto.setInt(5, gasto.getUsuarioId());
             // Ejecutar INSERT del gasto
             stmtGasto.executeUpdate();
             // Obtener la clave primaria generada por la BD para el gasto
@@ -112,18 +113,14 @@ public class GastoAdicionalDAO {
 
             // ===== PASO 2: Registrar movimiento financiero en la misma transacción =====
             // Delegar al MovimientoFinancieroDAO pasando la conexión activa para mantener la atomicidad
-            // tipo_movimiento_id = 3 → Gasto Adicional (Egreso); venta_id y compra_id son null
+            // tipo_movimiento_id = 3 → Gasto Adicional (Egreso); gastoAdicionalId = ID del gasto creado, ventaId y compraId = null
             MovimientoFinancieroDAO.insertEnTransaccion(
                     conexion,
-                    gasto.getFechaRegistro(),
                     "Gasto #" + gasto.getIdGastosAdic(),
                     gasto.getMonto(),
-                    gasto.getMetodoPago(),
+                    gasto.getFechaRegistro(),
                     3,
-                    usuarioId,
-                    null,
-                    null,
-                    gasto.getIdGastosAdic());
+                    null, null, gasto.getIdGastosAdic());
 
             // Confirmar todos los cambios de la transacción en la BD
             conexion.commit();
@@ -132,7 +129,7 @@ public class GastoAdicionalDAO {
 
         } catch (Exception excepcion) {
             // Registrar el error que causó el fallo de la transacción
-            System.out.println("Error GastoAdicionalDAO.createConMovimiento: " + excepcion.getMessage());
+            System.out.println("Error GastoAdicionalDAO.create: " + excepcion.getMessage());
             // Intentar revertir todos los cambios de la transacción fallida
             if (conexion != null) {
                 try {
@@ -170,15 +167,17 @@ public class GastoAdicionalDAO {
     private static GastoAdicional mapRow(ResultSet resultado) throws SQLException {
         // Construir y retornar un GastoAdicional con los datos del registro actual
         return new GastoAdicional(
-                // Leer el ID del gasto desde la columna id_gastos_adic
-                resultado.getInt("id_gastos_adic"),
-                // Leer el monto desde la columna monto
-                resultado.getDouble("monto"),
-                // Leer la descripción desde la columna descripcion
-                resultado.getString("descripcion"),
-                // Leer la fecha de registro como String desde la columna fecha_registro
-                resultado.getString("fecha_registro"),
-                // Leer el método de pago desde la columna metodo_pago
-                resultado.getString("metodo_pago"));
+                // Leer el ID del gasto desde la columna ID_GASTOS_ADIC
+                resultado.getInt("ID_GASTOS_ADIC"),
+                // Leer el monto desde la columna MONTO
+                resultado.getDouble("MONTO"),
+                // Leer la descripción desde la columna DESCRIPCION_GASTO
+                resultado.getString("DESCRIPCION_GASTO"),
+                // Leer la fecha de registro como String desde la columna FECHA_REGISTRO
+                resultado.getString("FECHA_REGISTRO"),
+                // Leer el método de pago desde la columna METODO_PAGO_GASTO
+                resultado.getString("METODO_PAGO_GASTO"),
+                // Leer el ID del usuario desde la columna USUARIO_ID
+                resultado.getInt("USUARIO_ID"));
     }
 }

@@ -42,7 +42,7 @@ public class TokenRecuperacionDAO {
         // Calcular el hash SHA-256 del token para almacenarlo de forma segura en la BD
         String tokenHash = sha256(token);
         // Consulta SQL para insertar el hash del token y su fecha de expiración
-        String sql = "INSERT INTO token_recuperacion (usuario_id, token, fecha_expiracion) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO Tokens_Recuperacion (USUARIO_ID, TOKEN, FECHA_EXPIRACION) VALUES (?, ?, ?)";
         // Abrir conexión y preparar la consulta (se cierran automáticamente con try-with-resources)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -74,8 +74,8 @@ public class TokenRecuperacionDAO {
         // Crear el objeto de respuesta
         JsonObject respuesta = new JsonObject();
         // Consulta SQL para buscar el token por su hash SHA-256, solo si no fue usado
-        String sql = "SELECT id_token, usuario_id, fecha_expiracion FROM token_recuperacion " +
-                    "WHERE token = ? AND usado = FALSE";
+        String sql = "SELECT ID_TOKEN, USUARIO_ID, FECHA_EXPIRACION FROM Tokens_Recuperacion " +
+                    "WHERE TOKEN = ? AND USADO = FALSE";
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -87,7 +87,7 @@ public class TokenRecuperacionDAO {
             // Verificar si se encontró un token válido (no usado) en la BD
             if (resultado.next()) {
                 // Leer la fecha de expiración del token encontrado
-                LocalDateTime fechaExpiracion = resultado.getObject("fecha_expiracion", LocalDateTime.class);
+                LocalDateTime fechaExpiracion = resultado.getObject("FECHA_EXPIRACION", LocalDateTime.class);
 
                 // Verificar si el token ya expiró comparando con la fecha actual
                 if (LocalDateTime.now().isAfter(fechaExpiracion)) {
@@ -101,9 +101,9 @@ public class TokenRecuperacionDAO {
                     // El token es válido y no ha expirado: retornar los IDs necesarios
                     respuesta.addProperty("success", true);
                     // ID del token para marcarlo como usado después del cambio de contraseña
-                    respuesta.addProperty("idToken", resultado.getInt("id_token"));
+                    respuesta.addProperty("idToken", resultado.getInt("ID_TOKEN"));
                     // ID del usuario para actualizar su contraseña
-                    respuesta.addProperty("usuarioId", resultado.getInt("usuario_id"));
+                    respuesta.addProperty("usuarioId", resultado.getInt("USUARIO_ID"));
                     // Código HTTP 200 OK
                     respuesta.addProperty("status", 200);
                 }
@@ -137,7 +137,7 @@ public class TokenRecuperacionDAO {
      */
     public static boolean marcarTokenUsado(int idToken) {
         // Consulta SQL para marcar el token como usado por su ID
-        String sql = "UPDATE token_recuperacion SET usado = TRUE WHERE id_token = ?";
+        String sql = "UPDATE Tokens_Recuperacion SET USADO = TRUE WHERE ID_TOKEN = ?";
         // Abrir conexión y preparar la consulta (se cierran automáticamente)
         try (Connection conexion = dbConnection.getConnection();
              PreparedStatement consulta = conexion.prepareStatement(sql)) {
