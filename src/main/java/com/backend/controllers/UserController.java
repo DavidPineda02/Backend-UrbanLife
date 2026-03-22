@@ -307,6 +307,28 @@ public class UserController {
                 return;
             }
 
+            // ----- Protección: ADMIN no puede editar SUPER_ADMIN -----
+
+            // Obtener el rol del usuario que se va a editar
+            List<UsuarioRol> rolesObjetivo = UsuarioRolDAO.findByUsuarioId(id);
+            // Variable para almacenar el nombre del rol del usuario objetivo
+            String rolObjetivo = "Sin rol";
+            // Si el usuario tiene al menos un rol asignado, obtener su nombre
+            if (!rolesObjetivo.isEmpty()) {
+                // Buscar el rol por su ID
+                Rol rolObj = RolDAO.findById(rolesObjetivo.get(0).getRolId());
+                // Asignar el nombre del rol si se encontró
+                if (rolObj != null) rolObjetivo = rolObj.getNombre();
+            }
+
+            // Si el usuario autenticado es ADMIN y el usuario objetivo es SUPER_ADMIN, denegar
+            if ("ADMIN".equalsIgnoreCase(rolUsuario) && "SUPER_ADMIN".equalsIgnoreCase(rolObjetivo)) {
+                // Error 403 Forbidden
+                ApiResponse.error(exchange, 403, "No tiene permiso para modificar un Super Administrador");
+                // Salir del handler
+                return;
+            }
+
             // Extraer cada campo, usando null como valor por defecto (null = no actualizar ese campo)
             String nombre = datosJson.has("nombre") ? datosJson.get("nombre").getAsString() : null;
             String apellido = datosJson.has("apellido") ? datosJson.get("apellido").getAsString() : null;
@@ -316,9 +338,42 @@ public class UserController {
             String contrasena = datosJson.has("contrasena") ? datosJson.get("contrasena").getAsString() : null;
             // Boolean (objeto) en lugar de boolean primitivo para poder diferenciar null de false (verificar que no sea JsonNull)
             Boolean estado = datosJson.has("estado") && !datosJson.get("estado").isJsonNull() ? datosJson.get("estado").getAsBoolean() : null;
-            // EMPLEADO no puede cambiar su propio estado: ignorar el campo si viene en el body
+            // Extraer el nuevo rol si fue enviado (solo SUPER_ADMIN y ADMIN pueden cambiar roles)
+            String nuevoRol = datosJson.has("rol") && !datosJson.get("rol").isJsonNull() ? datosJson.get("rol").getAsString() : null;
+            // EMPLEADO no puede cambiar su propio estado ni rol: ignorar los campos
             if ("EMPLEADO".equalsIgnoreCase(rolUsuario)) {
                 estado = null;
+                nuevoRol = null;
+            }
+
+            // Ningún usuario puede cambiar su propio estado ni su propio rol
+            if (idUsuarioToken.equals(String.valueOf(id))) {
+                estado = null;
+                nuevoRol = null;
+            }
+
+            // ----- Cambiar rol si fue enviado y es diferente al actual -----
+            if (nuevoRol != null && !nuevoRol.equalsIgnoreCase(rolObjetivo)) {
+                // Buscar el nuevo rol en la BD por su nombre
+                Rol rolNuevo = RolDAO.findByNombre(nuevoRol);
+                // Verificar que el rol existe
+                if (rolNuevo == null) {
+                    // Error 400 Bad Request
+                    ApiResponse.error(exchange, 400, "El rol especificado no existe");
+                    // Salir del handler
+                    return;
+                }
+                // ADMIN no puede asignar rol SUPER_ADMIN
+                if ("ADMIN".equalsIgnoreCase(rolUsuario) && "SUPER_ADMIN".equalsIgnoreCase(nuevoRol)) {
+                    // Error 403 Forbidden
+                    ApiResponse.error(exchange, 403, "No tiene permiso para asignar el rol Super Administrador");
+                    // Salir del handler
+                    return;
+                }
+                // Eliminar los roles actuales del usuario
+                UsuarioRolDAO.deleteByUsuarioId(id);
+                // Asignar el nuevo rol
+                UsuarioRolDAO.create(new UsuarioRol(id, rolNuevo.getIdRoles()));
             }
 
             // Delegar al servicio la actualizacion parcial (solo se actualizan los campos no nulos)
