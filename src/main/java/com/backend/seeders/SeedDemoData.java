@@ -550,8 +550,8 @@ public class SeedDemoData {
 
     /**
      * Inserta 10 ventas a clientes distribuidas entre febrero y marzo 2026.
-     * Las ventas 6-10 están en la última semana (12-18 marzo) para el dashboard.
-     * La venta 10 es de hoy (18 marzo) para las tarjetas de "hoy".
+     * Las ventas 6-10 están en la última semana (17-23 marzo) para el dashboard.
+     * La venta 10 es de hoy (23 marzo) para las tarjetas de "hoy".
      * Cliente ID 1 = Administracion (default), IDs 2-6 = clientes demo.
      * @param conexion Conexión activa con transacción en curso
      */
@@ -566,11 +566,11 @@ public class SeedDemoData {
                 {"2026-02-25", 135000.00, "Efectivo",      3, 4},
                 {"2026-03-03", 152000.00, "Transferencia", 3, 5},
                 {"2026-03-07", 156000.00, "Efectivo",      2, 6},
-                {"2026-03-12", 225000.00, "Transferencia", 3, 2},
-                {"2026-03-14", 270000.00, "Efectivo",      2, 3},
-                {"2026-03-15", 114000.00, "Transferencia", 3, 4},
-                {"2026-03-17", 178000.00, "Efectivo",      2, 5},
-                {"2026-03-18", 234000.00, "Transferencia", 3, 6}
+                {"2026-03-17", 225000.00, "Transferencia", 3, 2},
+                {"2026-03-19", 270000.00, "Efectivo",      2, 3},
+                {"2026-03-20", 114000.00, "Transferencia", 3, 4},
+                {"2026-03-21", 178000.00, "Efectivo",      2, 5},
+                {"2026-03-23", 234000.00, "Transferencia", 3, 6}
         };
         // Preparar consulta de inserción
         try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -639,7 +639,7 @@ public class SeedDemoData {
 
     /**
      * Inserta 6 gastos adicionales del negocio entre enero y marzo 2026.
-     * El gasto 6 es de hoy (18 marzo) para las tarjetas de "hoy" del dashboard.
+     * El gasto 6 es de hoy (23 marzo) para las tarjetas de "hoy" del dashboard.
      * @param conexion Conexión activa con transacción en curso
      */
     private static void insertGastosAdicionales(Connection conexion) throws Exception {
@@ -652,8 +652,8 @@ public class SeedDemoData {
                 { 85000.00, "Flete envío CalzaExpress Medellín",     "2026-01-20", "Transferencia", 0},
                 {350000.00, "IVA importación telas primer trimestre", "2026-02-05", "Transferencia", 1},
                 { 60000.00, "Cajas y bolsas para empaque febrero",    "2026-02-12", "Efectivo",      0},
-                { 95000.00, "Mantenimiento local comercial",          "2026-03-10", "Transferencia", 1},
-                {180000.00, "Servicios públicos local marzo",         "2026-03-18", "Efectivo",      0}
+                { 95000.00, "Mantenimiento local comercial",          "2026-03-15", "Transferencia", 1},
+                {180000.00, "Servicios públicos local marzo",         "2026-03-23", "Efectivo",      0}
         };
         // Preparar consulta de inserción
         try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
@@ -712,11 +712,11 @@ public class SeedDemoData {
                     {"Venta #3 - 1x Tenis Deportivos",       135000.00, "2026-02-25", 1, 3, null, null},
                     {"Venta #4 - 4x Cinturón Cuero",         152000.00, "2026-03-03", 1, 4, null, null},
                     {"Venta #5 - 2x Hoodie Oversize",        156000.00, "2026-03-07", 1, 5, null, null},
-                    {"Venta #6 - 5x Camiseta Básica",        225000.00, "2026-03-12", 1, 6, null, null},
-                    {"Venta #7 - 2x Tenis Deportivos",       270000.00, "2026-03-14", 1, 7, null, null},
-                    {"Venta #8 - 3x Cinturón Cuero",         114000.00, "2026-03-15", 1, 8, null, null},
-                    {"Venta #9 - 2x Jean Slim Fit",          178000.00, "2026-03-17", 1, 9, null, null},
-                    {"Venta #10 - 3x Hoodie Oversize",       234000.00, "2026-03-18", 1, 10, null, null}
+                    {"Venta #6 - 5x Camiseta Básica",        225000.00, "2026-03-17", 1, 6, null, null},
+                    {"Venta #7 - 2x Tenis Deportivos",       270000.00, "2026-03-19", 1, 7, null, null},
+                    {"Venta #8 - 3x Cinturón Cuero",         114000.00, "2026-03-20", 1, 8, null, null},
+                    {"Venta #9 - 2x Jean Slim Fit",          178000.00, "2026-03-21", 1, 9, null, null},
+                    {"Venta #10 - 3x Hoodie Oversize",       234000.00, "2026-03-23", 1, 10, null, null}
             };
             // Insertar movimientos de ventas
             insertMovimientos(consulta, movVentas);
@@ -727,8 +727,8 @@ public class SeedDemoData {
                     {"Gasto #2 - Flete CalzaExpress",          85000.00, "2026-01-20", 3, null, null, 2},
                     {"Gasto #3 - IVA importación telas",      350000.00, "2026-02-05", 3, null, null, 3},
                     {"Gasto #4 - Empaque febrero",             60000.00, "2026-02-12", 3, null, null, 4},
-                    {"Gasto #5 - Mantenimiento local",         95000.00, "2026-03-10", 3, null, null, 5},
-                    {"Gasto #6 - Servicios públicos marzo",   180000.00, "2026-03-18", 3, null, null, 6}
+                    {"Gasto #5 - Mantenimiento local",         95000.00, "2026-03-15", 3, null, null, 5},
+                    {"Gasto #6 - Servicios públicos marzo",   180000.00, "2026-03-23", 3, null, null, 6}
             };
             // Insertar movimientos de gastos
             insertMovimientos(consulta, movGastos);
