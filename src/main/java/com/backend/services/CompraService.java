@@ -26,6 +26,8 @@ import com.google.gson.JsonElement;
 // Para construir el objeto JSON de respuesta
 import com.google.gson.JsonObject;
 
+// Para obtener la fecha actual del servidor y compararla con la fecha recibida
+import java.time.LocalDate;
 // Lista dinámica para construir los detalles de la compra
 import java.util.ArrayList;
 // Interfaz de lista genérica
@@ -134,6 +136,17 @@ public class CompraService {
             respuesta.addProperty("success", false);
             // Mensaje indicando el formato requerido
             respuesta.addProperty("message", "La fecha debe tener el formato YYYY-MM-DD");
+            // Código HTTP 400 Bad Request
+            respuesta.addProperty("status", 400);
+            // Retornar respuesta de error
+            return respuesta;
+        }
+        // Verificar que la fecha de compra sea exactamente la fecha de hoy (no se permiten fechas pasadas ni futuras)
+        if (!fechaCompra.trim().equals(LocalDate.now().toString())) {
+            // Indicar que la operación falló
+            respuesta.addProperty("success", false);
+            // Mensaje indicando que solo se permite la fecha actual
+            respuesta.addProperty("message", "La fecha de compra debe ser la fecha de hoy");
             // Código HTTP 400 Bad Request
             respuesta.addProperty("status", 400);
             // Retornar respuesta de error
