@@ -30,6 +30,10 @@ import com.google.gson.JsonObject;
 import java.time.LocalDate;
 // Lista dinámica para construir los detalles de la venta
 import java.util.ArrayList;
+// Mapa para agrupar cantidades totales por producto y validar stock acumulado
+import java.util.HashMap;
+// Interfaz de mapa genérica
+import java.util.Map;
 // Interfaz de lista genérica
 import java.util.List;
 
@@ -230,6 +234,25 @@ public class VentaService {
             return respuesta;
         }
 
+        // ----- Agrupar cantidades totales por producto para validar stock acumulado -----
+
+        // Mapa que acumula la cantidad total solicitada por cada productoId
+        Map<Integer, Integer> cantidadTotalPorProducto = new HashMap<>();
+        // Recorrer cada ítem para sumar las cantidades por producto
+        for (JsonElement el : items) {
+            // Convertir el elemento a JsonObject
+            JsonObject obj = el.getAsJsonObject();
+            // Verificar que tenga productoId y cantidad antes de agrupar
+            if (obj.has("productoId") && obj.has("cantidad")) {
+                // Obtener el ID del producto
+                int pid = obj.get("productoId").getAsInt();
+                // Obtener la cantidad del ítem
+                int cant = obj.get("cantidad").getAsInt();
+                // Acumular la cantidad total para este producto
+                cantidadTotalPorProducto.put(pid, cantidadTotalPorProducto.getOrDefault(pid, 0) + cant);
+            }
+        }
+
         // ----- Procesar cada ítem: validar producto, stock y calcular subtotales -----
 
         // Lista donde se acumularán los objetos DetalleVenta validados
@@ -333,12 +356,14 @@ public class VentaService {
             // Obtener el precio de venta directamente de la BD (previene manipulación del frontend)
             precioUnitario = producto.getPrecioVenta();
 
-            // Verificar que el stock del producto sea suficiente para la cantidad solicitada
-            if (producto.getStock() < cantidad) {
+            // Obtener la cantidad total acumulada de este producto en toda la venta
+            int cantidadTotalSolicitada = cantidadTotalPorProducto.getOrDefault(productoId, cantidad);
+            // Verificar que el stock del producto sea suficiente para la cantidad TOTAL solicitada
+            if (producto.getStock() < cantidadTotalSolicitada) {
                 // Indicar que la operación falló
                 respuesta.addProperty("success", false);
-                // Mensaje indicando el stock insuficiente con la disponibilidad actual
-                respuesta.addProperty("message", "Stock insuficiente para '" + producto.getNombre() + "'. Disponible: " + producto.getStock() + ", solicitado: " + cantidad);
+                // Mensaje indicando el stock insuficiente con la disponibilidad actual y el total solicitado
+                respuesta.addProperty("message", "Stock insuficiente para '" + producto.getNombre() + "'. Disponible: " + producto.getStock() + ", total solicitado: " + cantidadTotalSolicitada);
                 // Código HTTP 400 Bad Request
                 respuesta.addProperty("status", 400);
                 // Retornar respuesta de error
