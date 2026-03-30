@@ -1,2 +1,6 @@
 target/
 .vscode/
+.env
+.env.example.local
+uploads/
+.claude/
